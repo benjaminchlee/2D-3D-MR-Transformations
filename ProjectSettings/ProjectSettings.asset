@@ -122,9 +122,7 @@ PlayerSettings:
     16:9: 1
     Others: 1
   bundleVersion: 0.1
-  preloadedAssets:
-  - {fileID: 4450626963329667943, guid: 90d6271e1730ba44a948fe9e42088822, type: 2}
-  - {fileID: -1791364144827680826, guid: f6be104f42e9d084ba79991e3a813983, type: 2}
+  preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -590,16 +588,16 @@ PlayerSettings:
   apiCompatibilityLevelPerPlatform: {}
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  metroPackageName: Template3D
+  metroPackageName: ARCollabFRAUS
   metroPackageVersion: 1.0.0.0
   metroCertificatePath: Assets\WSATestCertificate.pfx
   metroCertificatePassword: 
   metroCertificateSubject: DefaultCompany
   metroCertificateIssuer: DefaultCompany
   metroCertificateNotAfter: 00695475e383d701
-  metroApplicationDescription: Template_3D
+  metroApplicationDescription: ARCollabFRAUS
   wsaImages: {}
-  metroTileShortName: 
+  metroTileShortName: ARCollabFRAUS
   metroTileShowName: 0
   metroMediumTileShowName: 0
   metroLargeTileShowName: 0
