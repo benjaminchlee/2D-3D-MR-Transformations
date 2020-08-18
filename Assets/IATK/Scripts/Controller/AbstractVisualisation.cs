@@ -158,12 +158,14 @@ namespace IATK
         /// <returns></returns>
         public void SerializeViewConfiguration(CreationConfiguration creationConfiguration)
         {
+/*
             string path = ConfigurationFileName();
             if (!Directory.Exists(Path.GetDirectoryName(path)))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
             }
             creationConfiguration.Serialize(ConfigurationFileName());
+*/
         }
 
         private string ConfigurationFileName()
@@ -213,6 +215,7 @@ namespace IATK
                     mt = new Material(Shader.Find("IATK/OutlineDots"));
                     mt.mainTexture = Resources.Load("circle-outline-basic") as Texture2D;
                     mt.renderQueue = 3000;
+                    mt.enableInstancing = true;
                     return builder.updateView().
                        apply(gameObject, mt);
 

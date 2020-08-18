@@ -199,7 +199,9 @@ namespace IATK
 
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.None);
 
+            /*
             RuntimeEditorLoadAndSaveConfiguration();
+            */
 
             key = (GameObject)Instantiate(Resources.Load("Key"));
             key.transform.parent = transform;
@@ -341,6 +343,7 @@ namespace IATK
                 }
             }
 
+/*
             // load serialized view configuration from disk
             if (File.Exists(ConfigurationFileName()))
             {
@@ -439,6 +442,7 @@ namespace IATK
 
                 theVisualizationObject.creationConfiguration.disableWriting = false;
             }
+*/
         }
 
         private string ConfigurationFileName()
@@ -470,12 +474,13 @@ namespace IATK
             if(key!=null) DestroyImmediate(key);
 
         }
-
+/*
         void OnApplicationQuit()
         {
             if (theVisualizationObject.creationConfiguration != null)
                 theVisualizationObject.SerializeViewConfiguration(theVisualizationObject.creationConfiguration);
         }
+*/
 
         void OnDestroy()
         {
