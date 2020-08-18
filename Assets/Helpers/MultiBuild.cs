@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 
+#if UNITY_EDITOR
 [CreateAssetMenu]
 [System.Serializable]
 public class MultiBuild : ScriptableObject
@@ -14,3 +15,4 @@ public class MultiBuild : ScriptableObject
     public List<SceneAsset> sceneHL = new List<SceneAsset>();
 
 }
+#endif

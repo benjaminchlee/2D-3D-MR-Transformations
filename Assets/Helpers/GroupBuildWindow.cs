@@ -2,8 +2,9 @@
 using UnityEditor;
 using UnityEngine;
 using System.IO;
-using UnityEditor.Build.Reporting;
 
+# if UNITY_EDITOR
+using UnityEditor.Build.Reporting;
 public class GroupBuildWindow : EditorWindow
 {
     private enum MultiBuildTab
@@ -278,3 +279,4 @@ public class GroupBuildWindow : EditorWindow
         Debug.Log(summary.result.ToString());
     }
 }
+#endif
