@@ -574,7 +574,7 @@ PlayerSettings:
     1: 
     4: 
     7: 
-    14: 
+    14: release
   platformArchitecture: {}
   scriptingBackend: {}
   il2cppCompilerConfiguration: {}
@@ -589,12 +589,12 @@ PlayerSettings:
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
   metroPackageName: ARCollabFRAUS
-  metroPackageVersion: 1.0.0.0
+  metroPackageVersion: 1.0.22.0
   metroCertificatePath: Assets\WSATestCertificate.pfx
   metroCertificatePassword: 
   metroCertificateSubject: DefaultCompany
   metroCertificateIssuer: DefaultCompany
-  metroCertificateNotAfter: 00695475e383d701
+  metroCertificateNotAfter: 00ed37042687d701
   metroApplicationDescription: ARCollabFRAUS
   wsaImages: {}
   metroTileShortName: ARCollabFRAUS
