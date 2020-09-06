@@ -1,12 +1,20 @@
 ﻿using DG.Tweening;
+using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Experimental.SurfacePlacement
 {
+
+    [System.Serializable]
+    public class SurfacePlacementEvent : UnityEvent<PlacedObjectEventData>
+    {}
+
+
     /// <summary>
     /// Exposes MRTK's object handling events programmatically for subclasses to use.
     /// </summary>
@@ -14,6 +22,8 @@ namespace Experimental.SurfacePlacement
     [RequireComponent(typeof(Collider))]
     public abstract class PlaceableObject : MonoBehaviour
     {
+        #region Public variables
+
         [Tooltip("If true, the object will animate to the surface over a period of time defined by AnimationTime.")]
         public bool AnimateToSurface = true;
         [Tooltip("Duration of the animation when the object is placed on a surface. Does nothing if AnimateToSurface is false.")] [Range(0, 1)]
@@ -21,7 +31,23 @@ namespace Experimental.SurfacePlacement
         [Tooltip("If true, the object's z-axis rotation will be locked to be aligned with the horizontal plane.")]
         public bool LockObjectZAxisRotation = true;
 
+        [Tooltip("Unity events that get called whenever this object is placed on a surface.")]
+        public SurfacePlacementEvent OnObjectPlacedOnSurface = new SurfacePlacementEvent();
+        [Tooltip("Unity events that get called whenever this object is lifted from a surface.")]
+        public SurfacePlacementEvent OnObjectLiftedFromSurface = new SurfacePlacementEvent();
+
+        #endregion
+
+
+        #region Protected variables
+
         protected ObjectManipulator objectManipulatorScript;
+        protected bool isBeingManipulated = false;
+        protected IMixedRealityPointer manipulationPointer;
+        protected bool isPlacedOnSurface = false;
+
+        #endregion
+
 
         protected virtual void Start()
         {
@@ -30,9 +56,16 @@ namespace Experimental.SurfacePlacement
             objectManipulatorScript.OnManipulationEnded.AddListener(ManipulationEnded);
         }
 
-
-        public abstract void ManipulationStarted(ManipulationEventData eventData);
-        public abstract void ManipulationEnded(ManipulationEventData eventData);
+        public virtual void ManipulationStarted(ManipulationEventData eventData)
+        {
+            isBeingManipulated = true;
+            manipulationPointer = eventData.Pointer;
+        }
+        public virtual void ManipulationEnded(ManipulationEventData eventData)
+        {
+            isBeingManipulated = false;
+            manipulationPointer = null;
+        }
 
         protected bool CheckIsPlaceableSurface(GameObject goToCheck)
         {
@@ -57,8 +90,7 @@ namespace Experimental.SurfacePlacement
         }
 
         /// <summary>
-        /// Updates the given localPos to ensure that this gameobject is set within the bounds of the given surface.
-        /// 
+        /// Updates the given localPos to ensure that this gameobject is set within the bounds of the given surface. 
         /// It does so by calculating how much to move the position of the gameobject such that it fits "inside" of the surface, based on the
         /// two opposing corners of the gameobject's boxcollider.
         /// 
@@ -78,8 +110,6 @@ namespace Experimental.SurfacePlacement
             // Convert corner vectors into surface's local space
             tl = surface.transform.InverseTransformPoint(tl);
             br = surface.transform.InverseTransformPoint(br);
-
-            Debug.Log(tl.ToString("F3"));
 
             Vector3 translation = Vector3.zero;
 
@@ -136,6 +166,28 @@ namespace Experimental.SurfacePlacement
             {
                 gameObject.transform.SetPositionAndRotation(pos, rot);
             }
+        }
+
+        protected virtual void SetPlacedOnSurface(GameObject surface)
+        {
+            isPlacedOnSurface = true;
+
+            OnObjectPlacedOnSurface.Invoke(new PlacedObjectEventData {
+                PlacedObject = gameObject,
+                Surface = surface,
+                ManipulationPointer = manipulationPointer
+            });
+        }
+
+        protected virtual void SetLiftedFromSurface(GameObject surface)
+        {
+            isPlacedOnSurface = false;
+
+            OnObjectLiftedFromSurface.Invoke(new PlacedObjectEventData {
+                PlacedObject = gameObject,
+                Surface = surface,
+                ManipulationPointer = manipulationPointer
+            });
         }
     }
 }

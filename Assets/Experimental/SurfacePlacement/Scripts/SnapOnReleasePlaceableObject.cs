@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace Experimental.SurfacePlacement
 {
+    /// <summary>
+    /// Places this gameobject on a compatible surface when manipulation is released
+    /// </summary>
     public class SnapOnReleasePlaceableObject : PlaceableObject
     {
         private List<GameObject> allTouchedSurfaces = new List<GameObject>();
@@ -12,16 +15,22 @@ namespace Experimental.SurfacePlacement
 
         public override void ManipulationStarted(ManipulationEventData eventData)
         {
+            base.ManipulationStarted(eventData);
+
+            SetLiftedFromSurface(touchedSurface);
         }
 
         public override void ManipulationEnded(ManipulationEventData eventData)
         {
+            base.ManipulationEnded(eventData);
+
             if (touchedSurface != null)
             {
                 Vector3 TargetPosition = CalculatePositionOnSurface(touchedSurface);
                 Quaternion TargetRotation = CalculateRotationOnSurface(touchedSurface);
 
                 MoveToPositionAndRotation(TargetPosition, TargetRotation);
+                SetPlacedOnSurface(touchedSurface);
             }
         }
 

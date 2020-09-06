@@ -5,7 +5,10 @@ using UnityEngine;
 
 namespace Experimental.SurfacePlacement
 {
-    public class PushButtonToPlace : PlaceableObject
+    /// <summary>
+    /// Places this gameobject on the nearest compatible surface when a button is pushed
+    /// </summary>
+    public class PushButtonToSnapPlaceableObject: PlaceableObject
     {
         [Tooltip("The radius which this object checks for nearby surfaces to snap to.")] [Range(0.1f, 10)]
         public float SurfaceSearchRadius = 3f;
@@ -14,10 +17,9 @@ namespace Experimental.SurfacePlacement
 
         public override void ManipulationStarted(ManipulationEventData eventData)
         {
-        }
+            base.ManipulationEnded(eventData);
 
-        public override void ManipulationEnded(ManipulationEventData eventData)
-        {
+            SetLiftedFromSurface(nearestSurface);
         }
 
         public void PlaceOnNearestSurface()
@@ -30,6 +32,7 @@ namespace Experimental.SurfacePlacement
                 Quaternion TargetRotation = CalculateRotationOnSurface(nearestSurface);
 
                 MoveToPositionAndRotation(TargetPosition, TargetRotation);
+                SetPlacedOnSurface(nearestSurface);
             }
         }
 
@@ -59,47 +62,6 @@ namespace Experimental.SurfacePlacement
             }
 
             return nearest;
-        }
-
-
-        private Vector3 FitPositionInsideSurfaceBounds(Vector3 position, Vector3 vertex)
-        {
-            Vector3 localPos = transform.InverseTransformPoint(position);
-            Vector3 localVertex = transform.InverseTransformPoint(vertex);
-            
-            // Case 1: vertex is too far to the left
-            if (localVertex.x <= -0.5f)
-            {
-                float delta = Mathf.Abs(-0.5f - localVertex.x);
-                localPos.x += delta;
-            }
-            // Case 2: vertex is too far to the right
-            else if (0.5f <= localVertex.x)
-            {
-                float delta = localVertex.x - 0.5f;
-                localPos.x -= delta;
-            }
-            // Case 3: vertex is too far to the top
-            if (0.5f <= localVertex.y)
-            {
-                float delta = localVertex.y - 0.5f;
-                localPos.y -= delta;
-            }
-            // Case 4: vertex is too far to the bottom
-            else if (localVertex.y <= -0.5f)
-            {
-                float delta = Mathf.Abs(-0.5f - localVertex.y);
-                localPos.y += delta;
-            }
-            // Case 5: vertex is behind the screen
-            if (0f <= localVertex.z)
-            {
-                float delta = localVertex.z;
-                localPos.z -= delta;
-            }
-
-            Vector3 worldPos = transform.TransformPoint(localPos);
-            return worldPos;
         }
     }
 }
