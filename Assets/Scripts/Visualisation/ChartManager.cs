@@ -58,4 +58,14 @@ public class ChartManager : MonoBehaviour
 
         //return chart;
     }
+
+    public void DestroyAllCharts()
+    {
+        foreach (var chart in Charts.Values)
+        {
+            Destroy(chart.gameObject);
+        }
+
+        Charts.Clear();
+    }
 }
