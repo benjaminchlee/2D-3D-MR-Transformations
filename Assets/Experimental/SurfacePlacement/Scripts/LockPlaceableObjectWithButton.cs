@@ -1,18 +1,25 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Microsoft.MixedReality.Toolkit.UI;
 using UnityEngine;
 
-public class LockPlaceableObjectWithButton : MonoBehaviour
+namespace Experimental.SurfacePlacement
 {
-    // Start is called before the first frame update
-    void Start()
+    /// <summary>
+    /// Prevents an object from being manipulated until the corresponding button is pushed
+    /// </summary>
+    [RequireComponent(typeof(PlaceableObject))]
+    [RequireComponent(typeof(ObjectManipulator))]
+    public class LockPlaceableObjectWithButton : MonoBehaviour
     {
-        
-    }
+        public void LockObjectToSurface()
+        {
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        }
+
+        public void ReleaseObjectFromSurface()
+        {
+            
+        }
     }
 }
