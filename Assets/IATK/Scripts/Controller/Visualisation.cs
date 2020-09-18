@@ -5,18 +5,16 @@ using System.IO;
 using System.Linq;
 using System;
 
-
 namespace IATK
 {
-   
     /// <summary>
     /// Visualisation class to act as a view controller - reads the model to create the view
     /// </summary>
     [ExecuteInEditMode]
     public class Visualisation : MonoBehaviour
     {
-       
-        //// DATA
+        #region Public variables
+
         [Tooltip("The source for the data")]
         public DataSource dataSource;
 
@@ -50,19 +48,15 @@ namespace IATK
         public AttributeFilter[] attributeFilters;
 
         [Tooltip("The x dimensions represented in a scatterplot matrix")]
-        [SerializeField]
         public DimensionFilter[] xScatterplotMatrixDimensions;
 
         [Tooltip("The y dimensions represented in a scatterplot matrix")]
-        [SerializeField]
         public DimensionFilter[] yScatterplotMatrixDimensions;
 
         [Tooltip("The z dimensions represented in a scatterplot matrix")]
-        [SerializeField]
         public DimensionFilter[] zScatterplotMatrixDimensions;
 
         [Tooltip("The dimensions of the Parallel Coordinates")]
-        [SerializeField]
         public DimensionFilter[] parallelCoordinatesDimensions;
 
         [Tooltip("The dimension to map the colour to")]
@@ -72,11 +66,9 @@ namespace IATK
         public Gradient dimensionColour;
 
         [Tooltip("The blending mode source")]
-//        public UnityEngine.Rendering.BlendMode blendingModeSource;
         public string blendingModeSource = UnityEngine.Rendering.BlendMode.SrcAlpha.ToString();
 
         [Tooltip("The blending mode destination")]
-        //        public UnityEngine.Rendering.BlendMode blendingModeDestination;
         public string blendingModeDestination = UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha.ToString();
 
         [Tooltip("The dimension to map the size to")]
@@ -95,7 +87,7 @@ namespace IATK
         public int fontAxesSize = 500;
 
         [Tooltip("The type of the visualisation you want to display")]
-        public AbstractVisualisation.VisualisationTypes visualisationType;// = AbstractViualisation.VisualisationTypes.SIMPLE_VISUALISATION;
+        public AbstractVisualisation.VisualisationTypes visualisationType;
 
         [Tooltip("The color palette for discrete variables mapping")]
         public Color[] coloursPalette;
@@ -107,7 +99,7 @@ namespace IATK
         public string colorPaletteDimension;
 
         [HideInInspector]
-        public AbstractVisualisation theVisualizationObject;// = null;
+        public AbstractVisualisation theVisualizationObject;
 
         // Unique ID for visualisation creation
         public string uid = null;
@@ -115,49 +107,49 @@ namespace IATK
         public delegate void UpdateViewAction(AbstractVisualisation.PropertyType propertyType);
         public static event UpdateViewAction OnUpdateViewAction;
 
-        //Private
-        // Key
-        GameObject key;
 
-        int MAX_INIT_SCATTERPLOTMATRIX = 5;
+        #endregion
+
+        private GameObject key;
+        private readonly int MAX_INIT_SCATTERPLOTMATRIX = 5;
 
 
-        // PUBLIC
+        #region Public functions
+
         public void CreateVisualisation(AbstractVisualisation.VisualisationTypes visualizationType)
         {
-            //destroy the previous visualisations
+            // Destroy all previous visualisations
             AbstractVisualisation[] previousVisualizations = GetComponentsInChildren<AbstractVisualisation>();
-
             foreach (var item in previousVisualizations)
             {
-                item.destroyView();
+                item.DestroyView();
                 DestroyImmediate(item);
             }
 
-            //destroy the previous axes
+            // Destroy all previous axes
             Axis[] previousAxes = GetComponentsInChildren<Axis>();
-
             foreach (var item in previousAxes)
             {
                 DestroyImmediate(item.gameObject);
             }
 
-            //destroy previous key
+            // Destroy the previous key (legend)
             if(key!=null)
-            DestroyImmediate(key.gameObject);
+                DestroyImmediate(key.gameObject);
 
+
+            // Create the visualisation based on given type
             visualisationType = visualizationType;
-
             switch (visualisationType)
             {
                 case AbstractVisualisation.VisualisationTypes.SCATTERPLOT:
-                    theVisualizationObject = gameObject.AddComponent<ScatterplotVisualisation>();// new Simple2D3DVisualisation();                    
+                    theVisualizationObject = gameObject.AddComponent<ScatterplotVisualisation>();                  
                     theVisualizationObject.visualisationReference = this;
 
                     theVisualizationObject.CreateVisualisation();
                     break;
+
                 case AbstractVisualisation.VisualisationTypes.SCATTERPLOT_MATRIX:
-        
                     int dimensionCount = dataSource.DimensionCount;
                     if (dimensionCount > MAX_INIT_SCATTERPLOTMATRIX) dimensionCount = MAX_INIT_SCATTERPLOTMATRIX;
 
@@ -170,11 +162,12 @@ namespace IATK
                         yScatterplotMatrixDimensions[i] = new DimensionFilter { Attribute = dataSource[i].Identifier };
                     }
 
-                    theVisualizationObject = gameObject.AddComponent<ScatterplotMatrixVisualisation>();// new Simple2D3DVisualisation();                    
+                    theVisualizationObject = gameObject.AddComponent<ScatterplotMatrixVisualisation>();                  
                     theVisualizationObject.visualisationReference = this;
 
                     theVisualizationObject.CreateVisualisation();
                     break;
+
                 case AbstractVisualisation.VisualisationTypes.PARALLEL_COORDINATES:
                     parallelCoordinatesDimensions = new DimensionFilter[dataSource.DimensionCount];
 
@@ -188,47 +181,33 @@ namespace IATK
                     theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.DimensionChange);
 
                     theVisualizationObject.CreateVisualisation();
-
-
                     break;
+
                 case AbstractVisualisation.VisualisationTypes.GRAPH_LAYOUT:
                     break;
+
                 default:
                     break;
             }
 
+            // We call this to initialise the creation configuration
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.None);
 
-            /*
+            #if !WINDOWS_UWP
             RuntimeEditorLoadAndSaveConfiguration();
-            */
+            #endif
 
+            // Create and position the key
             key = (GameObject)Instantiate(Resources.Load("Key"));
             key.transform.parent = transform;
-            key.transform.localPosition = new Vector3(-1f, 1f, 0f);
+            UpdateKeyTransform();
         }
 
-        public void updateView(AbstractVisualisation.PropertyType propertyType)
+        public void UpdateView(AbstractVisualisation.PropertyType propertyType)
         {
-            theVisualizationObject.CreateVisualisation();// UpdateVisualisation(propertyType);
+            theVisualizationObject.CreateVisualisation();
         }
-        
-        /// <summary>
-        /// Gets the axies.
-        /// </summary>
-        /// <returns>The axies.</returns>
-        /// <param name="axies">Axies.</param>
-        private string getAxis(Dictionary<CreationConfiguration.Axis, string> axies, CreationConfiguration.Axis axis)
-        {
-
-            string axes = null;
-            string retVal = "";
-            if (axies.TryGetValue(axis, out axes))
-                retVal = axes;
-
-            return retVal;
-        }
-        
+                
         public void updateViewProperties(AbstractVisualisation.PropertyType propertyType)
         {
             if (theVisualizationObject == null) CreateVisualisation(visualisationType);
@@ -238,7 +217,10 @@ namespace IATK
             OnUpdateViewAction(propertyType);
 
             if (key != null)
+            {
                 key.GetComponent<Key>().UpdateProperties(propertyType, this);
+                UpdateKeyTransform();
+            }
 
         }
 
@@ -285,8 +267,38 @@ namespace IATK
             return indices.ToArray();
         }
 
+        #endregion
 
-        void OnEnable()
+        #region Private functions
+
+        private void UpdateKeyTransform()
+        {
+            Vector3 pos = Vector3.zero;
+
+            pos.x = (xDimension.Attribute != "Undefined") ? 0.2f : 0f;
+            pos.y = (yDimension.Attribute != "Undefined") ? height + 0.165f : 0.165f;
+            pos.z = 0;
+
+            key.transform.localPosition = pos;
+        }
+
+        /// <summary>
+        /// Gets the axies.
+        /// </summary>
+        /// <returns>The axies.</returns>
+        /// <param name="axies">Axies.</param>
+        private string getAxis(Dictionary<CreationConfiguration.Axis, string> axies, CreationConfiguration.Axis axis)
+        {
+
+            string axes = null;
+            string retVal = "";
+            if (axies.TryGetValue(axis, out axes))
+                retVal = axes;
+
+            return retVal;
+        }
+
+        private void OnEnable()
         {
 
             if (uid == null)
@@ -299,7 +311,7 @@ namespace IATK
 
         }
 
-        void RuntimeEditorLoadAndSaveConfiguration()
+        private void RuntimeEditorLoadAndSaveConfiguration()
         {
             // get the pre existing views in the hierarchy
             View[] views = GetComponentsInChildren<View>();
@@ -311,7 +323,7 @@ namespace IATK
             foreach (var view in views)
             {
                 view.BigMesh = view.GetComponentInChildren<BigMesh>();
-                view.onViewChangeEvent += updateView;   // Receive notifications when the view configuration changes
+                view.onViewChangeEvent += UpdateView;   // Receive notifications when the view configuration changes
                 theVisualizationObject.viewList.Add(view);
             }
             
@@ -343,7 +355,7 @@ namespace IATK
                 }
             }
 
-/*
+            #if !WINDOWS_UWP
             // load serialized view configuration from disk
             if (File.Exists(ConfigurationFileName()))
             {
@@ -442,7 +454,7 @@ namespace IATK
 
                 theVisualizationObject.creationConfiguration.disableWriting = false;
             }
-*/
+            #endif
         }
 
         private string ConfigurationFileName()
@@ -454,7 +466,7 @@ namespace IATK
         //<summary>
         //Destroy immediately all the views
         //</summary>
-        void destroyView()
+        private void destroyView()
         {
             string backupname = name;
             List<GameObject> children = new List<GameObject>();
@@ -474,22 +486,21 @@ namespace IATK
             if(key!=null) DestroyImmediate(key);
 
         }
-/*
-        void OnApplicationQuit()
+
+        private void OnApplicationQuit()
         {
+            #if !WINDOWS_UWP
             if (theVisualizationObject.creationConfiguration != null)
                 theVisualizationObject.SerializeViewConfiguration(theVisualizationObject.creationConfiguration);
+            #endif
         }
-*/
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             destroyView();
-
         }
 
-        
-
+        #endregion
         
     }
 

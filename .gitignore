@@ -58,3 +58,6 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# Project specific ignores
+/Assets/StreamingAssets
+/Assets/StreamingAssets.meta

@@ -84,7 +84,7 @@ namespace IATK
             if (visualisationReference.parallelCoordinatesDimensions.Length > 1 && visualisationReference.parallelCoordinatesDimensions.None(x => x == null || x.Attribute == "Undefined"))
             {
                 viewList.Clear();
-                destroyView();
+                DestroyView();
 
                 ViewBuilder viewParallel;
 

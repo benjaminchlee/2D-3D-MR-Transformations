@@ -16,7 +16,7 @@ namespace IATK {
         public override void CreateVisualisation()
         {
             viewList.Clear();
-            destroyView();
+            DestroyView();
 
             //TODO: not optimal - destroying all the axes when creating the new visualisation again...
             for (int i = 0; i < 64; i++)
@@ -298,7 +298,7 @@ namespace IATK {
                                 }
                                 else
                                 {
-                                    viewList[i].SetSizeChannel(Enumerable.Repeat(1f, visualisationReference.dataSource[0].Data.Length).ToArray());
+                                    viewList[i].SetSizeChannel(Enumerable.Repeat(0f, visualisationReference.dataSource[0].Data.Length).ToArray());
                                 }
                             }
                             creationConfiguration.SizeDimension = visualisationReference.sizeDimension;

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Microsoft.MixedReality.Toolkit.UI;
+using Microsoft.MixedReality.Toolkit.Utilities.Solvers;
 using UnityEngine;
 
 namespace Experimental.SurfacePlacement
@@ -12,26 +13,35 @@ namespace Experimental.SurfacePlacement
     {
         public ObjectManipulator ObjectManipulatorScript;
         public BoundingBox BoundingBoxScript;
+        public TapToPlace TapToPlaceScript;
+
+        private bool isActive = false;
 
         private void Start()
         {
-            if (ObjectManipulatorScript == null)
-            {
-                ObjectManipulatorScript = gameObject.GetComponent<ObjectManipulator>();
-            }
-            if (BoundingBoxScript == null)
-            {
-                BoundingBoxScript = gameObject.GetComponent<BoundingBox>();
-            }
-
-            ObjectManipulatorScript.enabled = false;
-            BoundingBoxScript.enabled = false;
+            SetScriptStatus(false);
         }
 
         public void ToggleSurfacePlacement()
         {
-            ObjectManipulatorScript.enabled = !ObjectManipulatorScript.enabled;
-            BoundingBoxScript.enabled = ObjectManipulatorScript.enabled;
+            isActive = !isActive;
+            SetScriptStatus(isActive);
+        }
+
+        private void SetScriptStatus(bool active)
+        {
+            if (ObjectManipulatorScript != null)
+            {
+                ObjectManipulatorScript.enabled = active;
+            }
+            if (BoundingBoxScript != null)
+            {
+                BoundingBoxScript.enabled = active;
+            }
+            if (TapToPlaceScript != null)
+            {
+                TapToPlaceScript.enabled = active;
+            }
         }
     }
 }

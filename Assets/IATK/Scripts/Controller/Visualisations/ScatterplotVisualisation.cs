@@ -47,6 +47,7 @@ namespace IATK
                 creationConfiguration.Size = visualisationReference.size;
                 creationConfiguration.MinSize = visualisationReference.minSize;
                 creationConfiguration.MaxSize = visualisationReference.maxSize;
+                creationConfiguration.colour = visualisationReference.colour;
             }
 
             View view = CreateSimpleVisualisation(creationConfiguration);
@@ -233,7 +234,7 @@ namespace IATK
                                 }
                                 else
                                 {
-                                    viewList[i].SetSizeChannel(Enumerable.Repeat(1f, visualisationReference.dataSource[0].Data.Length).ToArray());
+                                    viewList[i].SetSizeChannel(Enumerable.Repeat(0f, visualisationReference.dataSource[0].Data.Length).ToArray());
                                 }
                             }
                             creationConfiguration.SizeDimension = visualisationReference.sizeDimension;       
@@ -521,7 +522,7 @@ namespace IATK
                         builder.setDataDimension(visualisationReference.dataSource[getAxis(configuration.Axies, CreationConfiguration.Axis.Z)].Data, ViewBuilder.VIEW_DIMENSION.Z);
 
                     //destroy the view to clean the big mesh
-                    destroyView();
+                    DestroyView();
 
                     //return the appropriate geometry view
                     return ApplyGeometryAndRendering(creationConfiguration, ref builder);
