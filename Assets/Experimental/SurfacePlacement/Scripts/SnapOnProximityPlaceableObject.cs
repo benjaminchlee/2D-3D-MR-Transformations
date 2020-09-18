@@ -28,15 +28,23 @@ namespace Experimental.SurfacePlacement
 
             if (nearestSurface != null)
             {
+                if (!isPlacedOnSurface)
+                    BeforeObjectPlacedOnSurface(nearestSurface);
+
                 Vector3 TargetPosition = CalculatePositionOnSurface(nearestSurface);
                 Quaternion TargetRotation = CalculateRotationOnSurface(nearestSurface);
 
                 MoveToPositionAndRotation(TargetPosition, TargetRotation);
-                SetPlacedOnSurface(nearestSurface);
+                
+                if (!isPlacedOnSurface)
+                    AfterObjectPlacedOnSurface(nearestSurface);
             }
             else
             {
-                SetLiftedFromSurface(nearestSurface);
+                if (isPlacedOnSurface)
+                {
+                    ObjectLiftedFromSurface(nearestSurface);
+                }
             }
         }
 

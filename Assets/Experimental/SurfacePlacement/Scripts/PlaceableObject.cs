@@ -32,10 +32,14 @@ namespace Experimental.SurfacePlacement
         public bool LockObjectZAxisRotation = true;
         [Tooltip("If false, does not set the depth position relative to the surface. Use this for custom calculations.")]
         public bool SetDepthRelativeToSurface = true;
+        [Tooltip("If true, depth position is based on collider size, otherwise it is based on transform scale.")]
+        public bool DepthBasedOnCollider = false;
 
-        [Tooltip("Unity events that get called whenever this object is placed on a surface.")]
-        public SurfacePlacementEvent OnObjectPlacedOnSurface = new SurfacePlacementEvent();
-        [Tooltip("Unity events that get called whenever this object is lifted from a surface.")]
+        [Tooltip("Unity event that gets called immediately before the object begins being placed on a surface.")]
+        public SurfacePlacementEvent OnBeforeObjectPlacedOnSurface = new SurfacePlacementEvent();
+        [Tooltip("Unity event that gets called after the object has been placed on a surface.")]
+        public SurfacePlacementEvent OnAfterObjectPlacedOnSurface = new SurfacePlacementEvent();
+        [Tooltip("Unity event that gets called when an object is lifted from a surface.")]
         public SurfacePlacementEvent OnObjectLiftedFromSurface = new SurfacePlacementEvent();
 
         #endregion
@@ -92,9 +96,10 @@ namespace Experimental.SurfacePlacement
             {
                 // Move this object away from the surface based on its depth
                 Vector3 surfaceNormal = surface.transform.forward;
+                float depthSize = (DepthBasedOnCollider) ? gameObject.GetComponent<BoxCollider>().size.z : gameObject.transform.localScale.z;
                 localPosOnSurface.z = 0;
                 worldPos = surface.transform.TransformPoint(localPosOnSurface);
-                worldPos = worldPos - surfaceNormal * (gameObject.transform.localScale.z / 2);
+                worldPos = worldPos - surfaceNormal * (depthSize / 2);
             }
             else
             {
@@ -183,26 +188,37 @@ namespace Experimental.SurfacePlacement
             }
         }
 
-        protected virtual void SetPlacedOnSurface(GameObject surface)
-        {
-            isPlacedOnSurface = true;
+        #region Event functions
 
-            OnObjectPlacedOnSurface.Invoke(new PlacedObjectEventData {
+        protected virtual void BeforeObjectPlacedOnSurface(GameObject surface)
+        {
+            OnBeforeObjectPlacedOnSurface.Invoke(new PlacedObjectEventData {
                 PlacedObject = gameObject,
                 Surface = surface,
                 ManipulationPointer = manipulationPointer
             });
         }
 
-        protected virtual void SetLiftedFromSurface(GameObject surface)
+        protected virtual void AfterObjectPlacedOnSurface(GameObject surface)
         {
-            isPlacedOnSurface = false;
+            isPlacedOnSurface = true;
 
+            OnAfterObjectPlacedOnSurface.Invoke(new PlacedObjectEventData {
+                PlacedObject = gameObject,
+                Surface = surface,
+                ManipulationPointer = manipulationPointer
+            });
+        }
+            
+        protected virtual void ObjectLiftedFromSurface(GameObject surface)
+        {
             OnObjectLiftedFromSurface.Invoke(new PlacedObjectEventData {
                 PlacedObject = gameObject,
                 Surface = surface,
                 ManipulationPointer = manipulationPointer
             });
         }
+
+        #endregion
     }
 }

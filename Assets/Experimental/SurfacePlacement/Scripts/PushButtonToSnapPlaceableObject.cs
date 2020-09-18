@@ -19,7 +19,10 @@ namespace Experimental.SurfacePlacement
         {
             base.ManipulationEnded(eventData);
 
-            SetLiftedFromSurface(nearestSurface);
+            if (isPlacedOnSurface)
+            {
+                ObjectLiftedFromSurface(nearestSurface);
+            }
         }
 
         public void PlaceOnNearestSurface()
@@ -28,11 +31,14 @@ namespace Experimental.SurfacePlacement
 
             if (nearestSurface != null)
             {
+                BeforeObjectPlacedOnSurface(nearestSurface);
+
                 Vector3 TargetPosition = CalculatePositionOnSurface(nearestSurface);
                 Quaternion TargetRotation = CalculateRotationOnSurface(nearestSurface);
 
                 MoveToPositionAndRotation(TargetPosition, TargetRotation);
-                SetPlacedOnSurface(nearestSurface);
+                
+                AfterObjectPlacedOnSurface(nearestSurface);
             }
         }
 

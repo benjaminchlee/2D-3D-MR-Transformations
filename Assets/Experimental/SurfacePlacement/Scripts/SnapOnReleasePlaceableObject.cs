@@ -17,7 +17,10 @@ namespace Experimental.SurfacePlacement
         {
             base.ManipulationStarted(eventData);
 
-            SetLiftedFromSurface(touchedSurface);
+            if (isPlacedOnSurface)
+            {
+                ObjectLiftedFromSurface(touchedSurface);
+            }
         }
 
         public override void ManipulationEnded(ManipulationEventData eventData)
@@ -26,11 +29,14 @@ namespace Experimental.SurfacePlacement
 
             if (touchedSurface != null)
             {
+                BeforeObjectPlacedOnSurface(touchedSurface);
+
                 Vector3 TargetPosition = CalculatePositionOnSurface(touchedSurface);
                 Quaternion TargetRotation = CalculateRotationOnSurface(touchedSurface);
 
                 MoveToPositionAndRotation(TargetPosition, TargetRotation);
-                SetPlacedOnSurface(touchedSurface);
+
+                AfterObjectPlacedOnSurface(touchedSurface);
             }
         }
 
