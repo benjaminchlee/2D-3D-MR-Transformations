@@ -30,6 +30,8 @@ namespace Experimental.SurfacePlacement
         public float AnimationTime = 0.25f;
         [Tooltip("If true, the object's z-axis rotation will be locked to be aligned with the horizontal plane.")]
         public bool LockObjectZAxisRotation = true;
+        [Tooltip("If false, does not set the depth position relative to the surface. Use this for custom calculations.")]
+        public bool SetDepthRelativeToSurface = true;
 
         [Tooltip("Unity events that get called whenever this object is placed on a surface.")]
         public SurfacePlacementEvent OnObjectPlacedOnSurface = new SurfacePlacementEvent();
@@ -72,19 +74,32 @@ namespace Experimental.SurfacePlacement
             return goToCheck.tag == "PlaceableSurface";
         }
 
+        /// <summary>
+        /// Returns a Vector3 in world space of the position to place this GameObject such that it aligns with the surface.
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="setDepthPosition">Determines if the depth dimension should be set automatically by this function. Set to false if depth will be calculated by other means.</param>
+        /// <returns></returns>
         protected virtual Vector3 CalculatePositionOnSurface(GameObject surface)
         {
-            Vector3 surfaceNormal = surface.transform.forward;
-
-            // Move this object to be flush against the touched surface
+            // Trap this GameObject within the confines of the given surface
             Vector3 localPosOnSurface = surface.transform.InverseTransformPoint(gameObject.transform.position);
-            localPosOnSurface.z = 0;
-
             localPosOnSurface = FixLocalPositionWithinSurfaceBounds(localPosOnSurface, surface);
 
-            // Move this object away from the surface based on its width
-            Vector3 worldPos = surface.transform.TransformPoint(localPosOnSurface);
-            worldPos = worldPos - surfaceNormal * (gameObject.transform.localScale.z / 2);
+            // By default, this function automatically sets the depth position of the GameObject
+            Vector3 worldPos;
+            if (SetDepthRelativeToSurface)
+            {
+                // Move this object away from the surface based on its depth
+                Vector3 surfaceNormal = surface.transform.forward;
+                localPosOnSurface.z = 0;
+                worldPos = surface.transform.TransformPoint(localPosOnSurface);
+                worldPos = worldPos - surfaceNormal * (gameObject.transform.localScale.z / 2);
+            }
+            else
+            {
+                worldPos = surface.transform.TransformPoint(localPosOnSurface);
+            }
 
             return worldPos;
         }
