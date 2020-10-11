@@ -82,7 +82,7 @@ public class ChartSettingGroup : MonoBehaviour
         buttons[0].IconStyle = ButtonIconStyle.Quad;
         buttons[0].SetQuadIconByName("IconDone");
 
-        ScrollMenu.UpdateCollection();
+        ScrollMenu.UpdateContent();
     }
 
 
