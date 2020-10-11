@@ -34,6 +34,8 @@ namespace Experimental.SurfacePlacement
         public bool SetDepthRelativeToSurface = true;
         [Tooltip("If true, depth position is based on collider size, otherwise it is based on transform scale.")]
         public bool DepthBasedOnCollider = false;
+        [Tooltip("If set, overrides the collider used to this one.")]
+        public BoxCollider BoxColliderOverride;
 
         [Tooltip("Unity event that gets called immediately before the object begins being placed on a surface.")]
         public SurfacePlacementEvent OnBeforeObjectPlacedOnSurface = new SurfacePlacementEvent();
@@ -96,7 +98,7 @@ namespace Experimental.SurfacePlacement
             {
                 // Move this object away from the surface based on its depth
                 Vector3 surfaceNormal = surface.transform.forward;
-                float depthSize = (DepthBasedOnCollider) ? gameObject.GetComponent<BoxCollider>().size.z : gameObject.transform.localScale.z;
+                float depthSize = (DepthBasedOnCollider) ? ((BoxColliderOverride != null) ? BoxColliderOverride.size.z : gameObject.GetComponent<BoxCollider>().size.z) : gameObject.transform.localScale.z;
                 localPosOnSurface.z = 0;
                 worldPos = surface.transform.TransformPoint(localPosOnSurface);
                 worldPos = worldPos - surfaceNormal * (depthSize / 2);
@@ -212,6 +214,8 @@ namespace Experimental.SurfacePlacement
             
         protected virtual void ObjectLiftedFromSurface(GameObject surface)
         {
+            isPlacedOnSurface = false;
+            
             OnObjectLiftedFromSurface.Invoke(new PlacedObjectEventData {
                 PlacedObject = gameObject,
                 Surface = surface,

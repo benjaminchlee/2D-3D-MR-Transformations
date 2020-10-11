@@ -23,7 +23,7 @@ public class Chart : MonoBehaviour
         set { visualisation.dataSource = value; }
     }
 
-    private void Awake()
+    private void Start()
     {
         // Set blank IATK values
         visualisation.visualisationType = AbstractVisualisation.VisualisationTypes.SCATTERPLOT;
@@ -31,6 +31,8 @@ public class Chart : MonoBehaviour
         visualisation.colorPaletteDimension = "Undefined";
         visualisation.sizeDimension = "Undefined";
         visualisation.linkingDimension = "Undefined";
+        
+        GeometryType = AbstractVisualisation.GeometryType.Points;
 
         dataSource = ChartManager.Instance.DataSource;
     }

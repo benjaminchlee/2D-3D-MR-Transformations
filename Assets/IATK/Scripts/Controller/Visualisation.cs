@@ -92,8 +92,11 @@ namespace IATK
         [Tooltip("The color palette for discrete variables mapping")]
         public Color[] coloursPalette;
         
+        [Min(0)]
         public float width = 1.0f;
+        [Min(0)]
         public float height = 1.0f;
+        [Min(0)]
         public float depth = 1.0f;
 
         public string colorPaletteDimension;
@@ -136,7 +139,6 @@ namespace IATK
             // Destroy the previous key (legend)
             if(key!=null)
                 DestroyImmediate(key.gameObject);
-
 
             // Create the visualisation based on given type
             visualisationType = visualizationType;
@@ -193,7 +195,7 @@ namespace IATK
             // We call this to initialise the creation configuration
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.None);
 
-            #if !WINDOWS_UWP
+            #if UNITY_EDITOR
             RuntimeEditorLoadAndSaveConfiguration();
             #endif
 
@@ -210,18 +212,19 @@ namespace IATK
                 
         public void updateViewProperties(AbstractVisualisation.PropertyType propertyType)
         {
-            if (theVisualizationObject == null) CreateVisualisation(visualisationType);
+            if (theVisualizationObject == null)
+                CreateVisualisation(visualisationType);
+                
             theVisualizationObject.UpdateVisualisation(propertyType);
 
             if(OnUpdateViewAction!=null)
-            OnUpdateViewAction(propertyType);
+                OnUpdateViewAction(propertyType);
 
             if (key != null)
             {
                 key.GetComponent<Key>().UpdateProperties(propertyType, this);
                 UpdateKeyTransform();
             }
-
         }
 
         public void updateProperties()
@@ -242,6 +245,7 @@ namespace IATK
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.X);
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.Y);
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.Z);
+            theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.VisualisationSize);
         }
 
         /// <summary>
@@ -280,22 +284,6 @@ namespace IATK
             pos.z = 0;
 
             key.transform.localPosition = pos;
-        }
-
-        /// <summary>
-        /// Gets the axies.
-        /// </summary>
-        /// <returns>The axies.</returns>
-        /// <param name="axies">Axies.</param>
-        private string getAxis(Dictionary<CreationConfiguration.Axis, string> axies, CreationConfiguration.Axis axis)
-        {
-
-            string axes = null;
-            string retVal = "";
-            if (axies.TryGetValue(axis, out axes))
-                retVal = axes;
-
-            return retVal;
         }
 
         private void OnEnable()
@@ -355,7 +343,7 @@ namespace IATK
                 }
             }
 
-            #if !WINDOWS_UWP
+            #if UNITY_EDITOR
             // load serialized view configuration from disk
             if (File.Exists(ConfigurationFileName()))
             {
@@ -370,14 +358,18 @@ namespace IATK
                 switch (visualisationType)
                 {
                     case AbstractVisualisation.VisualisationTypes.SCATTERPLOT:
-                        if (theVisualizationObject.creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.X)) xDimension.Attribute = theVisualizationObject.creationConfiguration.Axies[CreationConfiguration.Axis.X];
-                        if (theVisualizationObject.creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.Y)) yDimension.Attribute = theVisualizationObject.creationConfiguration.Axies[CreationConfiguration.Axis.Y];
-                        if (theVisualizationObject.creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.Z)) zDimension.Attribute = theVisualizationObject.creationConfiguration.Axies[CreationConfiguration.Axis.Z];
-
+                        xDimension.Attribute = theVisualizationObject.creationConfiguration.XDimension;
+                        yDimension.Attribute = theVisualizationObject.creationConfiguration.YDimension;
+                        zDimension.Attribute = theVisualizationObject.creationConfiguration.ZDimension;
+                        
                         linkingDimension = string.IsNullOrEmpty(theVisualizationObject.creationConfiguration.LinkingDimension) ? "Undefined" : theVisualizationObject.creationConfiguration.LinkingDimension;
                         geometry = theVisualizationObject.creationConfiguration.Geometry;
                         minSize = theVisualizationObject.creationConfiguration.MinSize;
                         maxSize = theVisualizationObject.creationConfiguration.MaxSize;
+                        
+                        width = theVisualizationObject.creationConfiguration.VisualisationWidth;
+                        height = theVisualizationObject.creationConfiguration.VisualisationHeight;
+                        depth = theVisualizationObject.creationConfiguration.VisualisationDepth;
 
                         theVisualizationObject.CreateVisualisation();
 
@@ -387,6 +379,7 @@ namespace IATK
                         updateViewProperties(AbstractVisualisation.PropertyType.Z);
                         updateViewProperties(AbstractVisualisation.PropertyType.GeometryType);
                         updateViewProperties(AbstractVisualisation.PropertyType.LinkingDimension);
+                        updateViewProperties(AbstractVisualisation.PropertyType.VisualisationSize);
 
                         colourDimension = string.IsNullOrEmpty(theVisualizationObject.creationConfiguration.ColourDimension) ? "Undefined" : theVisualizationObject.creationConfiguration.ColourDimension;
                         sizeDimension = string.IsNullOrEmpty(theVisualizationObject.creationConfiguration.SizeDimension) ? "Undefined" : theVisualizationObject.creationConfiguration.SizeDimension;
@@ -489,7 +482,7 @@ namespace IATK
 
         private void OnApplicationQuit()
         {
-            #if !WINDOWS_UWP
+            #if UNITY_EDITOR
             if (theVisualizationObject.creationConfiguration != null)
                 theVisualizationObject.SerializeViewConfiguration(theVisualizationObject.creationConfiguration);
             #endif
@@ -498,6 +491,7 @@ namespace IATK
         private void OnDestroy()
         {
             destroyView();
+
         }
 
         #endregion

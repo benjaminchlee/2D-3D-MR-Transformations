@@ -506,7 +506,7 @@ namespace IATK
             {
                 dirtyFlags = AbstractVisualisation.PropertyType.AttributeFiltering;
             }
-            // Size
+            // Mark size
             EditorGUI.BeginChangeCheck();
 
             EditorGUILayout.PropertyField(sizeProperty);
@@ -526,7 +526,7 @@ namespace IATK
 
             if (EditorGUI.EndChangeCheck())
             {
-                dirtyFlags = AbstractVisualisation.PropertyType.Scaling;
+                dirtyFlags = AbstractVisualisation.PropertyType.VisualisationSize;
             }
 
             // Update the options for this visualisation

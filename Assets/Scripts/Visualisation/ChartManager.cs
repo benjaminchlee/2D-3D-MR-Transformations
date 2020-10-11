@@ -41,7 +41,7 @@ public class ChartManager : MonoBehaviour
 
     private void Start()
     {
-        CreateChart();
+        //CreateChart();
     }
 
     public void CreateChart()

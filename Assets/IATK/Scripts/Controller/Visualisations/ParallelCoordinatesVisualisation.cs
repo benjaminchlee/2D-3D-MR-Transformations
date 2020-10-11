@@ -149,7 +149,7 @@ namespace IATK
                 creationConfiguration.Geometry = visualisationReference.geometry;
                 creationConfiguration.LinkingDimension = visualisationReference.linkingDimension;
                 creationConfiguration.SizeDimension = visualisationReference.sizeDimension;
-                creationConfiguration.Axies = new Dictionary<CreationConfiguration.Axis, string>();
+                //creationConfiguration.Axies = new Dictionary<CreationConfiguration.Axis, string>();
 
                 //restore properties
                 UpdateVisualisation(AbstractVisualisation.PropertyType.Colour);
@@ -369,7 +369,7 @@ namespace IATK
                         if (GameObject_Axes_Holders[i] != null)
                         {
                             Axis axis = GameObject_Axes_Holders[i].GetComponent<Axis>();
-                            axis.Init(visualisationReference.dataSource, visualisationReference.parallelCoordinatesDimensions[i], visualisationReference);
+                            axis.Initialise(visualisationReference.dataSource, visualisationReference.parallelCoordinatesDimensions[i], visualisationReference);
                             BindMinMaxAxisValues(axis, visualisationReference.parallelCoordinatesDimensions[i]);
                             axis.AttributeName = visualisationReference.parallelCoordinatesDimensions[i].Attribute;
                         }
