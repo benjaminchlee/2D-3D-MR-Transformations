@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.MixedReality.Toolkit.UI;
 using UnityEngine;
 
-namespace Experimental.SurfacePlacement
+namespace Experimental.CrossDimensionalTransfer
 {
     /// <summary>
     /// Prevents an object from being manipulated until the corresponding button is pushed

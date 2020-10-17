@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Experimental.SurfaceBasedVisualisations
+namespace Experimental.CrossDimensionalTransfer
 {
     /// <summary>
     /// A prototype surface based visualisation which creates new visualisations when the handle is pulled away from the screen.

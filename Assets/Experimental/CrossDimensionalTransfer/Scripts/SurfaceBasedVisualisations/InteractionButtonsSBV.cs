@@ -1,10 +1,9 @@
 ﻿using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
-using Experimental.SurfacePlacement;
 using UnityEngine;
 
-namespace Experimental.SurfaceBasedVisualisations
+namespace Experimental.CrossDimensionalTransfer
 {
     public class InteractionButtonsSBV : MonoBehaviour
     {

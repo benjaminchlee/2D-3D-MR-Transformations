@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Experimental/SurfaceBasedVisualisations/Scenes/SurfaceBasedVisualisationsScene.unity
+    path: Assets/Experimental/CrossDimensionalTransfer/Scenes/SurfaceBasedVisualisationsScene.unity
     guid: c46d6da9bf3633f43a7b93a392f30383
   m_configObjects:
     Unity.XR.WindowsMR.Settings: {fileID: 11400000, guid: 90d6271e1730ba44a948fe9e42088822,

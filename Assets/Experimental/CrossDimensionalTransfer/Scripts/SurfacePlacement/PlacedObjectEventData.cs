@@ -1,7 +1,7 @@
 using Microsoft.MixedReality.Toolkit.Input;
 using UnityEngine;
 
-namespace Experimental.SurfacePlacement
+namespace Experimental.CrossDimensionalTransfer
 {
     /// <summary>
     /// Information associated with objects being placed and lifted from surfaces

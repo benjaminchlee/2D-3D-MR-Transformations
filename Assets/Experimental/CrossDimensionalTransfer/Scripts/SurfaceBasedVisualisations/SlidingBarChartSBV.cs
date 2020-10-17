@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Experimental.SurfaceBasedVisualisations
+namespace Experimental.CrossDimensionalTransfer
 {
     /// <summary>
     /// A prototype surface based visualisation which slides apart separate groups in a 3D bar chart.

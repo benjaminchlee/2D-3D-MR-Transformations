@@ -1,27 +1,24 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using Microsoft.MixedReality.Toolkit.UI;
 using UnityEngine;
 
-namespace Experimental.SurfacePlacement
+namespace Experimental.CrossDimensionalTransfer
 {
     /// <summary>
-    /// Places this gameobject on the nearest compatible surface when a button is pushed
+    /// Places this gameobject on a compatible surface based on proximity during manipulation
     /// </summary>
-    public class PushButtonToSnapPlaceableObject: PlaceableObject
+    public class SnapOnProximityPlaceableObject : PlaceableObject
     {
-        [Tooltip("The radius which this object checks for nearby surfaces to snap to.")] [Range(0.1f, 10)]
-        public float SurfaceSearchRadius = 3f;
+        [Tooltip("The radius which this object checks for nearby surfaces to snap to when being manipulated.")] [Range(0, 2)]
+        public float SurfaceSearchRadius = 0.05f;
 
         private GameObject nearestSurface;
-
-        public override void ManipulationStarted(ManipulationEventData eventData)
+        
+        private void Update()
         {
-            base.ManipulationEnded(eventData);
-
-            if (isPlacedOnSurface)
+            if (isBeingManipulated)
             {
-                ObjectLiftedFromSurface(nearestSurface);
+                PlaceOnNearestSurface();
             }
         }
 
@@ -31,14 +28,21 @@ namespace Experimental.SurfacePlacement
 
             if (nearestSurface != null)
             {
-                BeforeObjectPlacedOnSurface(nearestSurface);
+                if (!isPlacedOnSurface)
+                    BeforeObjectPlacedOnSurface(nearestSurface);
 
                 Vector3 TargetPosition = CalculatePositionOnSurface(nearestSurface);
                 Quaternion TargetRotation = CalculateRotationOnSurface(nearestSurface);
 
-                MoveToPositionAndRotation(TargetPosition, TargetRotation);
-                
-                AfterObjectPlacedOnSurface(nearestSurface);
+                MoveToPositionAndRotation(TargetPosition, TargetRotation, nearestSurface);
+            }
+            else
+            {
+                if (isPlacedOnSurface)
+                {
+                    BeforeObjectLiftedFromSurface(nearestSurface);
+                    AfterObjectLiftedFromSurface(nearestSurface);
+                }
             }
         }
 
@@ -57,8 +61,8 @@ namespace Experimental.SurfacePlacement
 
             foreach (var surface in placeableSurfaces)
             {
-                Vector3 closestPoint = surface.GetComponent<Collider>().ClosestPoint(gameObject.transform.position);
-                float distance = Vector3.Distance(closestPoint, gameObject.transform.position);
+                Vector3 closestPoint = surface.GetComponent<Collider>().ClosestPoint(manipulationPointer.Position);
+                float distance = Vector3.Distance(closestPoint, manipulationPointer.Position);
 
                 if (distance < SurfaceSearchRadius && distance < nearestDistance)
                 {
@@ -71,4 +75,3 @@ namespace Experimental.SurfacePlacement
         }
     }
 }
-

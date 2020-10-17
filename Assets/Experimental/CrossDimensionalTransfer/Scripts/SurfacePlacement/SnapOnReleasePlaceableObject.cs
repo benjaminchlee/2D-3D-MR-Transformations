@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.MixedReality.Toolkit.UI;
 using UnityEngine;
 
-namespace Experimental.SurfacePlacement
+namespace Experimental.CrossDimensionalTransfer
 {
     /// <summary>
     /// Places this gameobject on a compatible surface when manipulation is released
@@ -19,7 +19,8 @@ namespace Experimental.SurfacePlacement
 
             if (isPlacedOnSurface)
             {
-                ObjectLiftedFromSurface(touchedSurface);
+                BeforeObjectLiftedFromSurface(touchedSurface);
+                AfterObjectLiftedFromSurface(touchedSurface);
             }
         }
 
@@ -34,9 +35,7 @@ namespace Experimental.SurfacePlacement
                 Vector3 TargetPosition = CalculatePositionOnSurface(touchedSurface);
                 Quaternion TargetRotation = CalculateRotationOnSurface(touchedSurface);
 
-                MoveToPositionAndRotation(TargetPosition, TargetRotation);
-
-                AfterObjectPlacedOnSurface(touchedSurface);
+                MoveToPositionAndRotation(TargetPosition, TargetRotation, touchedSurface);
             }
         }
 

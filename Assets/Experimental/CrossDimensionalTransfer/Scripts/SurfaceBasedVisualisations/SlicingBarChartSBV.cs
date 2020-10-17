@@ -1,11 +1,10 @@
-﻿using Experimental.SurfacePlacement;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
 
-namespace Experimental.SurfaceBasedVisualisations
+namespace Experimental.CrossDimensionalTransfer
 {
     public class SlicingBarChartSBV : MonoBehaviour
     {

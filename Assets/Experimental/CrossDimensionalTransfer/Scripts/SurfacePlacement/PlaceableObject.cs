@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Experimental.SurfacePlacement
+namespace Experimental.CrossDimensionalTransfer
 {
 
     [System.Serializable]
@@ -28,8 +28,8 @@ namespace Experimental.SurfacePlacement
         public bool AnimateToSurface = true;
         [Tooltip("Duration of the animation when the object is placed on a surface. Does nothing if AnimateToSurface is false.")] [Range(0, 1)]
         public float AnimationTime = 0.25f;
-        [Tooltip("If true, the object's z-axis rotation will be locked to be aligned with the horizontal plane.")]
-        public bool LockObjectZAxisRotation = true;
+        [Tooltip("If true, rotates the object such that its nearest orthogonal axis aligns with the surface normal, otherwise it is rotated to be the same as the surface normal.")]
+        public bool SetNearestOrthogonalRoatation = true;
         [Tooltip("If false, does not set the depth position relative to the surface. Use this for custom calculations.")]
         public bool SetDepthRelativeToSurface = true;
         [Tooltip("If true, depth position is based on collider size, otherwise it is based on transform scale.")]
@@ -41,8 +41,10 @@ namespace Experimental.SurfacePlacement
         public SurfacePlacementEvent OnBeforeObjectPlacedOnSurface = new SurfacePlacementEvent();
         [Tooltip("Unity event that gets called after the object has been placed on a surface.")]
         public SurfacePlacementEvent OnAfterObjectPlacedOnSurface = new SurfacePlacementEvent();
-        [Tooltip("Unity event that gets called when an object is lifted from a surface.")]
-        public SurfacePlacementEvent OnObjectLiftedFromSurface = new SurfacePlacementEvent();
+        [Tooltip("Unity event that gets called immediately before the object is lifted from a surface.")]
+        public SurfacePlacementEvent OnBeforeObjectLiftedFromSurface = new SurfacePlacementEvent();
+        [Tooltip("Unity event that gets called after the object has been lifted from a surface.")]
+        public SurfacePlacementEvent OnAfterObjectLiftedFromSurface = new SurfacePlacementEvent();
 
         #endregion
 
@@ -166,27 +168,51 @@ namespace Experimental.SurfacePlacement
         protected virtual Quaternion CalculateRotationOnSurface(GameObject surface)
         {
             Vector3 surfaceNormal = surface.transform.forward;
-
-            return Quaternion.LookRotation(surfaceNormal, Vector3.up);
+            
+            if (SetNearestOrthogonalRoatation)
+            {
+                // Get the axis which is closest to the surface's normal
+                Vector3[] directions = new Vector3[] {
+                    gameObject.transform.right,
+                    -gameObject.transform.right,
+                    gameObject.transform.up,
+                    -gameObject.transform.up,
+                    gameObject.transform.forward,
+                    -gameObject.transform.forward
+                };
+                
+                int idx = 0;
+                float min = Mathf.Infinity;
+                for (int i = 0; i < 6; i++)
+                {
+                    float angle = Vector3.Angle(directions[i], surfaceNormal);
+                    if (angle < min)
+                    {
+                        idx = i;
+                        min = angle;
+                    }
+                }
+                
+                Vector3 objectDirection = directions[idx];
+                return Quaternion.FromToRotation(objectDirection, surfaceNormal) * transform.rotation;
+            }
+            else
+            {
+                return Quaternion.LookRotation(surfaceNormal, Vector3.up);
+            }
         }
 
-        protected void MoveToPositionAndRotation(Vector3 pos, Quaternion rot)
+        protected void MoveToPositionAndRotation(Vector3 pos, Quaternion rot, GameObject surface)
         {
-            if (LockObjectZAxisRotation)
-            {
-                Vector3 euler = rot.eulerAngles;
-                euler.z = 0;
-                rot = Quaternion.Euler(euler);
-            }
-
             if (AnimateToSurface)
             {
-                gameObject.transform.DOMove(pos, AnimationTime).SetEase(Ease.OutQuint);
+                gameObject.transform.DOMove(pos, AnimationTime).SetEase(Ease.OutQuint).OnComplete(() => AfterObjectPlacedOnSurface(surface));
                 gameObject.transform.DORotateQuaternion(rot, AnimationTime).SetEase(Ease.OutQuint);
             }
             else
             {
                 gameObject.transform.SetPositionAndRotation(pos, rot);
+                AfterObjectPlacedOnSurface(surface);
             }
         }
 
@@ -212,11 +238,20 @@ namespace Experimental.SurfacePlacement
             });
         }
             
-        protected virtual void ObjectLiftedFromSurface(GameObject surface)
+        protected virtual void BeforeObjectLiftedFromSurface(GameObject surface)
+        {
+            OnBeforeObjectLiftedFromSurface.Invoke(new PlacedObjectEventData {
+                PlacedObject = gameObject,
+                Surface = surface,
+                ManipulationPointer = manipulationPointer
+            });
+        }
+
+        protected virtual void AfterObjectLiftedFromSurface(GameObject surface)
         {
             isPlacedOnSurface = false;
             
-            OnObjectLiftedFromSurface.Invoke(new PlacedObjectEventData {
+            OnAfterObjectLiftedFromSurface.Invoke(new PlacedObjectEventData {
                 PlacedObject = gameObject,
                 Surface = surface,
                 ManipulationPointer = manipulationPointer

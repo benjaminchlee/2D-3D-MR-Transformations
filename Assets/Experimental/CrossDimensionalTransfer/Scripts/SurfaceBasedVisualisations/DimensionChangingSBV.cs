@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Experimental.SurfaceBasedVisualisations
+namespace Experimental.CrossDimensionalTransfer
 {
     public class DimensionChangingSBV : MonoBehaviour
     {
