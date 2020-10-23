@@ -134,6 +134,8 @@ namespace IATK
                         {
                             SetXLocalPosition(label.transform, -label.transform.localPosition.x);
                         }
+                        
+                        axisTickLabelPrefab.GetComponent<RectTransform>().pivot = new Vector2(0, 0.5f);
                     }
                     transform.localEulerAngles = new Vector3(0, 0, -90);
                     SetXLocalPosition(axisTickLabelHolder.transform, 0);

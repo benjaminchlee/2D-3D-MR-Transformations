@@ -25,23 +25,23 @@ namespace IATK
             }
 
             // Size by
-            if (v.sizeDimension != "Undefined")
+            if (v.sizeDimension != "Undefined" && v.sizeDimension != "")
                 legend += "<b>Size By:</b> " + v.sizeDimension + "\n";
 
             // Linking dimension
-            if (v.linkingDimension != "Undefined")
+            if (v.linkingDimension != "Undefined" && v.linkingDimension != "")
                 legend += "<b>Linking Attribute:<b> " + v.linkingDimension + "\n";
 
             // Visualisation can only have a color dimension or a color palette dimension, not both
             // Color by
-            if (v.colourDimension != "Undefined")
+            if (v.colourDimension != "Undefined" && v.colourDimension != "")
             {
                 gradientColorLineRenderer.gameObject.SetActive(true);
                 legend += "<b>Colour By:</b> " + v.colourDimension + "\n";
                 SetGradientColor(v.dimensionColour);
             }
             // Color palette
-            else if (v.colorPaletteDimension != "Undefined")
+            else if (v.colorPaletteDimension != "Undefined" && v.colorPaletteDimension != "")
             {
                 gradientColorLineRenderer.gameObject.SetActive(false);
                 legend += "<b>Colour:</b> " + v.colorPaletteDimension + "\n";
@@ -65,7 +65,7 @@ namespace IATK
             }
 
             // Hide the gradient if no color by
-            if (v.colourDimension == "Undefined")
+            if (v.colourDimension == "Undefined" && v.colourDimension == "")
             {
                 gradientColorLineRenderer.gameObject.SetActive(false);
             }

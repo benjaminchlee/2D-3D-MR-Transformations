@@ -71,12 +71,12 @@ namespace IATK
                     
                     // Set colours of the view's points based on visualisation configuration
                     // Continuous colour dimension
-                    if (visualisationReference.colourDimension != "Undefined")
+                    if (visualisationReference.colourDimension != "Undefined" && visualisationReference.colourDimension != "")
                     {
                         thisView.SetColors(mapColoursContinuous(visualisationReference.dataSource[visualisationReference.colourDimension].Data));
                     }
                     // Discrete colour palette dimension
-                    else if (visualisationReference.colorPaletteDimension != "Undefined")
+                    else if (visualisationReference.colorPaletteDimension != "Undefined" && visualisationReference.colorPaletteDimension != "")
                     {
                         thisView.SetColors(mapColoursPalette(visualisationReference.dataSource[visualisationReference.colorPaletteDimension].Data, visualisationReference.coloursPalette));
                     }
@@ -95,7 +95,7 @@ namespace IATK
                     thisView.SetSize(visualisationReference.size);
                     thisView.SetMinSize(visualisationReference.minSize);
                     thisView.SetMaxSize(visualisationReference.maxSize);
-                    if (visualisationReference.sizeDimension != "Undefined")
+                    if (visualisationReference.sizeDimension != "Undefined" && visualisationReference.sizeDimension != "")
                         thisView.SetSizeChannel(visualisationReference.dataSource[visualisationReference.sizeDimension].Data);
 
                     thisView.SetMinNormX(visualisationReference.xDimension.minScale);
@@ -173,12 +173,12 @@ namespace IATK
                         
                     case AbstractVisualisation.PropertyType.Colour:
                         // Continuous colour dimension
-                        if (visualisationReference.colourDimension != "Undefined")
+                        if (visualisationReference.colourDimension != "Undefined" && visualisationReference.colourDimension != "")
                         {
                             thisView.SetColors(mapColoursContinuous(visualisationReference.dataSource[visualisationReference.colourDimension].Data));
                         }
                         // Discrete colour palette dimension
-                        else if (visualisationReference.colorPaletteDimension != "Undefined")
+                        else if (visualisationReference.colorPaletteDimension != "Undefined" && visualisationReference.colorPaletteDimension != "")
                         {
                             thisView.SetColors(mapColoursPalette(visualisationReference.dataSource[visualisationReference.colorPaletteDimension].Data, visualisationReference.coloursPalette));
                         }
@@ -196,7 +196,7 @@ namespace IATK
                         break;
                         
                     case AbstractVisualisation.PropertyType.Size:
-                        if (visualisationReference.sizeDimension != "Undefined")
+                        if (visualisationReference.sizeDimension != "Undefined" && visualisationReference.sizeDimension != "")
                             thisView.SetSizeChannel(visualisationReference.dataSource[visualisationReference.sizeDimension].Data);
                         else
                             thisView.SetSizeChannel(Enumerable.Repeat(0f, visualisationReference.dataSource[0].Data.Length).ToArray());

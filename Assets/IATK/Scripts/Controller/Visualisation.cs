@@ -60,7 +60,7 @@ namespace IATK
         public DimensionFilter[] parallelCoordinatesDimensions;
 
         [Tooltip("The dimension to map the colour to")]
-        public string colourDimension;
+        public string colourDimension = "";
 
         [Tooltip("The colour gradient used to map to the colour data dimension")]
         public Gradient dimensionColour;
@@ -72,10 +72,10 @@ namespace IATK
         public string blendingModeDestination = UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha.ToString();
 
         [Tooltip("The dimension to map the size to")]
-        public string sizeDimension;
+        public string sizeDimension = "";
 
         [Tooltip("The dimension that links data points")]
-        public string linkingDimension;
+        public string linkingDimension = "";
 
         [Tooltip("The number of loaded data points")]
         public string dataPoints = "";
@@ -99,7 +99,7 @@ namespace IATK
         [Min(0)]
         public float depth = 1.0f;
 
-        public string colorPaletteDimension;
+        public string colorPaletteDimension = "";
 
         [HideInInspector]
         public AbstractVisualisation theVisualizationObject;
