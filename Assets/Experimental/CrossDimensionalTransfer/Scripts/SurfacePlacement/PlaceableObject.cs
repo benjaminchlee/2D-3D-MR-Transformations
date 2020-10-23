@@ -48,6 +48,11 @@ namespace Experimental.CrossDimensionalTransfer
 
         #endregion
 
+        #region Public properties
+        
+        public bool IsPlacedOnSurface { get { return isPlacedOnSurface; }}
+        
+        #endregion
 
         #region Protected variables
 

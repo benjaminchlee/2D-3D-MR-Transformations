@@ -21,6 +21,7 @@ namespace Experimental.CrossDimensionalTransfer
         private void Start()
         {
             visualisations = new List<Visualisation>();
+            visualisations.Add(GetComponentInChildren<Visualisation>());
         }
         
         private void Update()
@@ -71,14 +72,17 @@ namespace Experimental.CrossDimensionalTransfer
             vis.visualisationType = AbstractVisualisation.VisualisationTypes.SCATTERPLOT;
             vis.xDimension = DataSource[Mathf.FloorToInt(Random.Range(0, DataSource.DimensionCount))].Identifier;
             vis.yDimension = DataSource[Mathf.FloorToInt(Random.Range(0, DataSource.DimensionCount))].Identifier;
-            vis.width = 0.4f;
-            vis.height = 0.4f;
-            vis.depth = 0.4f;
+            vis.width = 0.2f;
+            vis.height = 0.2f;
+            vis.depth = 0.2f;
+            vis.size = 0.1f;
             
             vis.updateViewProperties(AbstractVisualisation.PropertyType.VisualisationType);
             vis.updateViewProperties(AbstractVisualisation.PropertyType.GeometryType);
             vis.updateViewProperties(AbstractVisualisation.PropertyType.X);
             vis.updateViewProperties(AbstractVisualisation.PropertyType.Y);
+            vis.updateViewProperties(AbstractVisualisation.PropertyType.Size);
+            vis.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
             
             
             // theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.AttributeFiltering);

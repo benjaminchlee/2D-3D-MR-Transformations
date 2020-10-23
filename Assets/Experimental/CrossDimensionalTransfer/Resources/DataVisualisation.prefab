@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 2343517218027979324}
   - component: {fileID: 7447826392846287728}
   - component: {fileID: 6554173540630511705}
+  - component: {fileID: 8921639962956700066}
+  - component: {fileID: 1087838904650364543}
   m_Layer: 0
   m_Name: DataVisualisation
   m_TagString: Untagged
@@ -47,7 +49,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ID: 
-  visualisation: {fileID: 7490654622255188624}
+  visualisationHolder: {fileID: 5406650190426103410}
+  boxCollider: {fileID: 1087838904650364543}
 --- !u!114 &7447826392846287728
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102,6 +105,33 @@ MonoBehaviour:
   onHoverExited:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &8921639962956700066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2343517218027979327}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5afd5316c63705643b3daba5a6e923bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTetherWhenManipulating: 0
+  IsBoundsHandles: 0
+--- !u!65 &1087838904650364543
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2343517218027979327}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &5406650190426103410
 GameObject:
   m_ObjectHideFlags: 0
@@ -111,7 +141,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7786075964878212848}
-  - component: {fileID: 7490654622255188624}
   m_Layer: 0
   m_Name: '[IATK] New Visualisation'
   m_TagString: Untagged
@@ -133,89 +162,3 @@ Transform:
   m_Father: {fileID: 5276731332836295871}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7490654622255188624
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5406650190426103410}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 018f8d34a0baaa6469c2cd182d3d381a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  dataSource: {fileID: 0}
-  geometry: 0
-  colour: {r: 1, g: 1, b: 1, a: 1}
-  size: 0.3
-  minSize: 0.01
-  maxSize: 1
-  xDimension:
-    Attribute: Undefined
-    minFilter: 0
-    maxFilter: 1
-    minScale: 0
-    maxScale: 1
-  yDimension:
-    Attribute: Undefined
-    minFilter: 0
-    maxFilter: 1
-    minScale: 0
-    maxScale: 1
-  zDimension:
-    Attribute: Undefined
-    minFilter: 0
-    maxFilter: 1
-    minScale: 0
-    maxScale: 1
-  attributeFilters: []
-  xScatterplotMatrixDimensions: []
-  yScatterplotMatrixDimensions: []
-  zScatterplotMatrixDimensions: []
-  parallelCoordinatesDimensions: []
-  colourDimension: 
-  dimensionColour:
-    serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
-    key2: {r: 0, g: 0, b: 0, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 0
-    ctime1: 65535
-    ctime2: 0
-    ctime3: 0
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_NumColorKeys: 2
-    m_NumAlphaKeys: 2
-  blendingModeSource: SrcAlpha
-  blendingModeDestination: OneMinusSrcAlpha
-  sizeDimension: 
-  linkingDimension: 
-  dataPoints: 
-  dataDimensions: 
-  fontAxesSize: 500
-  visualisationType: 0
-  coloursPalette: []
-  width: 1
-  height: 1
-  depth: 1
-  colorPaletteDimension: 
-  theVisualizationObject: {fileID: 0}
-  uid: 54604eb4

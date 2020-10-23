@@ -11,30 +11,43 @@ namespace Experimental.CrossDimensionalTransfer
         public string ID;
 
         [SerializeField]
+        private GameObject visualisationHolder;
+        [SerializeField]
         private Visualisation visualisation;
         [SerializeField]
         private BoxCollider boxCollider;
+        
+        private void Awake()
+        {
+            if (visualisation == null)
+                visualisation = visualisationHolder.AddComponent<Visualisation>();      
+        }
+        
+        private void Start()
+        {      
+            
+            DataSource = DataVisualisationManager.Instance.DataSource;
+            
+            // Set blank IATK values
+            visualisation.visualisationType = AbstractVisualisation.VisualisationTypes.SCATTERPLOT;
+            if (visualisation.colourDimension == "")
+                visualisation.colourDimension = "Undefined";
+            if (visualisation.colorPaletteDimension == "")
+                visualisation.colorPaletteDimension = "Undefined";
+            if (visualisation.sizeDimension == "")
+                visualisation.sizeDimension = "Undefined";
+            if (visualisation.linkingDimension == "")
+                visualisation.linkingDimension = "Undefined";
+                
+            GeometryType = AbstractVisualisation.GeometryType.Points;
+        }
 
-        private DataSource dataSource
+        public DataSource DataSource
         {
             get { return visualisation.dataSource; }
             set { visualisation.dataSource = value; }
         }
-
-        private void Start()
-        {
-            // Set blank IATK values
-            visualisation.visualisationType = AbstractVisualisation.VisualisationTypes.SCATTERPLOT;
-            visualisation.colourDimension = "Undefined";
-            visualisation.colorPaletteDimension = "Undefined";
-            visualisation.sizeDimension = "Undefined";
-            visualisation.linkingDimension = "Undefined";
-            
-            GeometryType = AbstractVisualisation.GeometryType.Points;
-
-            dataSource = DataVisualisationManager.Instance.DataSource;
-        }
-
+        
         public string XDimension
         {
             get { return visualisation.xDimension.Attribute; }
@@ -67,11 +80,31 @@ namespace Experimental.CrossDimensionalTransfer
 
         public string SizeByDimension
         {
-            get {return visualisation.sizeDimension; }
+            get { return visualisation.sizeDimension; }
             set
             {
                 visualisation.sizeDimension = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Size);
+            }
+        }
+        
+        public string ColourByDimension
+        {
+            get { return visualisation.colourDimension; }
+            set
+            {
+                visualisation.colourDimension = value;
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Colour);
+            }
+        }
+        
+        public Gradient ColourByGradient
+        {
+            get { return visualisation.dimensionColour; }
+            set 
+            {
+                visualisation.dimensionColour = value;
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Colour);
             }
         }
 
@@ -114,17 +147,27 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
             }
         }
+        
+        public float Size
+        {
+            get { return visualisation.size; }
+            set
+            {
+                visualisation.size = value;
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Size);
+            }
+        }
 
         public Vector3 Scale
         {
-            get {return new Vector3(Width, Height, Depth); }
+            get { return new Vector3(Width, Height, Depth); }
             set
             {
                 visualisation.width = value.x;
                 visualisation.height = value.y;
                 visualisation.depth = value.z;
 
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.VisualisationSize);
             }
         }
 

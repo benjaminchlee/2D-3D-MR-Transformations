@@ -5,9 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Experimental/CrossDimensionalTransfer/Scenes/SurfaceBasedVisualisationsScene.unity
     guid: c46d6da9bf3633f43a7b93a392f30383
+  - enabled: 1
+    path: Assets/Experimental/CrossDimensionalTransfer/Scenes/CrossDimensionalTransferScene.unity
+    guid: 91fe878d48dd2a74d8ef5c98664d11c6
   m_configObjects:
     Unity.XR.WindowsMR.Settings: {fileID: 11400000, guid: 90d6271e1730ba44a948fe9e42088822,
       type: 2}
