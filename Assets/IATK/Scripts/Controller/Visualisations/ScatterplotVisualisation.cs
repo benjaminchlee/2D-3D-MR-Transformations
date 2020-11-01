@@ -25,28 +25,20 @@ namespace IATK
 
             // Create the configuration object
             if (creationConfiguration == null)
-                creationConfiguration = new CreationConfiguration()
-                {
-                    XDimension = visualisationReference.xDimension.Attribute,
-                    YDimension = visualisationReference.yDimension.Attribute,
-                    ZDimension = visualisationReference.zDimension.Attribute,
-                    Geometry = visualisationReference.geometry
-                };
-            else
-            {
-                creationConfiguration.Geometry = visualisationReference.geometry;
-                creationConfiguration.XDimension = visualisationReference.xDimension.Attribute;
-                creationConfiguration.YDimension = visualisationReference.yDimension.Attribute;
-                creationConfiguration.ZDimension = visualisationReference.zDimension.Attribute;
-                creationConfiguration.LinkingDimension = visualisationReference.linkingDimension;
-                creationConfiguration.Size = visualisationReference.size;
-                creationConfiguration.MinSize = visualisationReference.minSize;
-                creationConfiguration.MaxSize = visualisationReference.maxSize;
-                creationConfiguration.colour = visualisationReference.colour;
-                creationConfiguration.VisualisationWidth = visualisationReference.width;
-                creationConfiguration.VisualisationHeight = visualisationReference.height;
-                creationConfiguration.VisualisationDepth = visualisationReference.depth;
-            }
+                creationConfiguration = new CreationConfiguration();
+                
+            creationConfiguration.Geometry = visualisationReference.geometry;
+            creationConfiguration.XDimension = visualisationReference.xDimension.Attribute;
+            creationConfiguration.YDimension = visualisationReference.yDimension.Attribute;
+            creationConfiguration.ZDimension = visualisationReference.zDimension.Attribute;
+            creationConfiguration.LinkingDimension = visualisationReference.linkingDimension;
+            creationConfiguration.Size = visualisationReference.size;
+            creationConfiguration.MinSize = visualisationReference.minSize;
+            creationConfiguration.MaxSize = visualisationReference.maxSize;
+            creationConfiguration.colour = visualisationReference.colour;
+            creationConfiguration.VisualisationWidth = visualisationReference.width;
+            creationConfiguration.VisualisationHeight = visualisationReference.height;
+            creationConfiguration.VisualisationDepth = visualisationReference.depth;
 
             // Create the visualisation view (i.e., the mesh with visualisation marks)
             View view = CreateSimpleVisualisation(creationConfiguration);
@@ -119,7 +111,7 @@ namespace IATK
 
         public override void UpdateVisualisation(PropertyType propertyType){
 
-            if (viewList.Count == 0)
+            if (viewList.Count == 0 || creationConfiguration == null)
                 CreateVisualisation();
 
             // Update creation configuration properties to most up-to-date values

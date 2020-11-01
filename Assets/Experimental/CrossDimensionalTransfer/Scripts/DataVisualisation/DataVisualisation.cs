@@ -21,15 +21,8 @@ namespace Experimental.CrossDimensionalTransfer
         {
             if (visualisation == null)
                 visualisation = visualisationHolder.AddComponent<Visualisation>();      
-        }
-        
-        private void Start()
-        {      
-            
-            DataSource = DataVisualisationManager.Instance.DataSource;
-            
+                
             // Set blank IATK values
-            visualisation.visualisationType = AbstractVisualisation.VisualisationTypes.SCATTERPLOT;
             if (visualisation.colourDimension == "")
                 visualisation.colourDimension = "Undefined";
             if (visualisation.colorPaletteDimension == "")
@@ -39,6 +32,12 @@ namespace Experimental.CrossDimensionalTransfer
             if (visualisation.linkingDimension == "")
                 visualisation.linkingDimension = "Undefined";
                 
+            DataSource = DataVisualisationManager.Instance.DataSource;
+        }
+        
+        private void Start()
+        {      
+            visualisation.visualisationType = AbstractVisualisation.VisualisationTypes.SCATTERPLOT;
             GeometryType = AbstractVisualisation.GeometryType.Points;
         }
 
@@ -75,6 +74,16 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 visualisation.zDimension = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Z);
+            }
+        }
+
+        public Color Colour
+        {
+            get { return visualisation.colour; }
+            set
+            {
+                visualisation.colour = value;
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Colour);
             }
         }
 

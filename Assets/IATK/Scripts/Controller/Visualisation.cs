@@ -288,15 +288,15 @@ namespace IATK
 
         private void OnEnable()
         {
-
             if (uid == null)
             {
                 uid = Guid.NewGuid().ToString().Substring(0, 8);
             }
 
+            #if UNITY_EDITOR
             if (theVisualizationObject != null)
                 RuntimeEditorLoadAndSaveConfiguration();
-
+            #endif
         }
 
         private void RuntimeEditorLoadAndSaveConfiguration()

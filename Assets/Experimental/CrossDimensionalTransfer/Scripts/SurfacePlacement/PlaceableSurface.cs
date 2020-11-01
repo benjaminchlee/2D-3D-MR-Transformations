@@ -11,37 +11,27 @@ namespace Experimental.CrossDimensionalTransfer
     /// </summary>
     public class PlaceableSurface : MonoBehaviour
     {
-        public ObjectManipulator ObjectManipulatorScript;
-        public BoundingBox BoundingBoxScript;
         public TapToPlace TapToPlaceScript;
+        public Renderer SurfaceRenderer;
+        public Color activeColour = Color.yellow;
 
-        private bool isActive = false;
+        private Color inactiveColour;
 
         private void Start()
         {
-            SetScriptStatus(false);
+            if (TapToPlaceScript == null) TapToPlaceScript = GetComponent<TapToPlace>();
+            if (SurfaceRenderer == null) SurfaceRenderer = GetComponent<Renderer>();
+            
+            inactiveColour = SurfaceRenderer.material.color;
+            
+            SetSurfacePlacement(false);
         }
 
-        public void ToggleSurfacePlacement()
+        public void SetSurfacePlacement(bool active)
         {
-            isActive = !isActive;
-            SetScriptStatus(isActive);
-        }
-
-        private void SetScriptStatus(bool active)
-        {
-            if (ObjectManipulatorScript != null)
-            {
-                ObjectManipulatorScript.enabled = active;
-            }
-            if (BoundingBoxScript != null)
-            {
-                BoundingBoxScript.enabled = active;
-            }
-            if (TapToPlaceScript != null)
-            {
-                TapToPlaceScript.enabled = active;
-            }
+            TapToPlaceScript.enabled = active;
+            
+            SurfaceRenderer.material.color = active ? activeColour : inactiveColour;
         }
     }
 }
