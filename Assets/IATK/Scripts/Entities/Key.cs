@@ -17,34 +17,27 @@ namespace IATK
         {
             legend = "";
 
-            // Facet by
-            if (v.attributeFilters != null && v.attributeFilters.Length > 0 &&
-                v.attributeFilters[0].Attribute != "Undefined")
-            {
-                legend += "<b>Facet By:</b> " + v.attributeFilters[0].Attribute + "\n";
-            }
-
             // Size by
-            if (v.sizeDimension != "Undefined" && v.sizeDimension != "")
+            if (v.sizeDimension != "Undefined")
                 legend += "<b>Size By:</b> " + v.sizeDimension + "\n";
 
             // Linking dimension
-            if (v.linkingDimension != "Undefined" && v.linkingDimension != "")
+            if (v.linkingDimension != "Undefined")
                 legend += "<b>Linking Attribute:<b> " + v.linkingDimension + "\n";
 
             // Visualisation can only have a color dimension or a color palette dimension, not both
             // Color by
-            if (v.colourDimension != "Undefined" && v.colourDimension != "")
+            if (v.colourDimension != "Undefined")
             {
                 gradientColorLineRenderer.gameObject.SetActive(true);
                 legend += "<b>Colour By:</b> " + v.colourDimension + "\n";
                 SetGradientColor(v.dimensionColour);
             }
             // Color palette
-            else if (v.colorPaletteDimension != "Undefined" && v.colorPaletteDimension != "")
+            else if (v.colorPaletteDimension != "Undefined")
             {
                 gradientColorLineRenderer.gameObject.SetActive(false);
-                legend += "<b>Colour:</b> " + v.colorPaletteDimension + "\n";
+                legend += "<b>Colour Palette:</b> " + v.colorPaletteDimension + "\n";
 
                 List<float> categories = v.dataSource[v.colorPaletteDimension].MetaData.categories.ToList();
                 string[] values = new string[categories.Count];
@@ -65,7 +58,7 @@ namespace IATK
             }
 
             // Hide the gradient if no color by
-            if (v.colourDimension == "Undefined" && v.colourDimension == "")
+            if (v.colourDimension == "Undefined")
             {
                 gradientColorLineRenderer.gameObject.SetActive(false);
             }

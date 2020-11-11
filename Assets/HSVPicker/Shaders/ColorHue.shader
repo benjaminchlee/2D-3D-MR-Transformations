@@ -40,7 +40,7 @@ Shader "ColorPicker/ColorHue"
 			
 			half4 frag(v2f input) : COLOR
 			{
-    			UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(inputv);
+    			UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 				
 				half p = floor(input.uv.x*6);
 				half i = input.uv.x*6-p;

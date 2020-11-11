@@ -16,6 +16,8 @@ namespace Experimental.CrossDimensionalTransfer
         private Visualisation visualisation;
         [SerializeField]
         private BoxCollider boxCollider;
+        [SerializeField]
+        private DataSource dataSource;
         
         private void Awake()
         {
@@ -23,28 +25,55 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisation = visualisationHolder.AddComponent<Visualisation>();      
                 
             // Set blank IATK values
-            if (visualisation.colourDimension == "")
+            if (visualisation.colourDimension == null || visualisation.colourDimension == "")
                 visualisation.colourDimension = "Undefined";
-            if (visualisation.colorPaletteDimension == "")
+            if (visualisation.colorPaletteDimension == null ||visualisation.colorPaletteDimension == "")
                 visualisation.colorPaletteDimension = "Undefined";
-            if (visualisation.sizeDimension == "")
+            if (visualisation.sizeDimension == null ||visualisation.sizeDimension == "")
                 visualisation.sizeDimension = "Undefined";
-            if (visualisation.linkingDimension == "")
+            if (visualisation.linkingDimension == null ||visualisation.linkingDimension == "")
                 visualisation.linkingDimension = "Undefined";
-                
-            DataSource = DataVisualisationManager.Instance.DataSource;
+            if (dataSource == null)
+                DataSource = DataVisualisationManager.Instance.DataSource;
+            else
+                DataSource = dataSource;
         }
         
         private void Start()
         {      
-            visualisation.visualisationType = AbstractVisualisation.VisualisationTypes.SCATTERPLOT;
-            GeometryType = AbstractVisualisation.GeometryType.Points;
+            //visualisation.visualisationType = AbstractVisualisation.VisualisationTypes.SCATTERPLOT;
+            //GeometryType = AbstractVisualisation.GeometryType.Points;
+        }
+
+        public Visualisation Visualisation
+        {
+            get { return visualisation; }
         }
 
         public DataSource DataSource
         {
             get { return visualisation.dataSource; }
             set { visualisation.dataSource = value; }
+        }
+        
+        public AbstractVisualisation.VisualisationTypes VisualisationType
+        {
+            get { return visualisation.visualisationType; }
+            set
+            {
+                visualisation.visualisationType = value;
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.VisualisationType);
+            }
+        }
+        
+        public AbstractVisualisation.GeometryType GeometryType
+        {
+            get { return visualisation.geometry; }
+            set
+            {
+                visualisation.geometry = value;
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.GeometryType);
+            }
         }
         
         public string XDimension
@@ -54,6 +83,9 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 visualisation.xDimension = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.X);
+                
+                AdjustVisualisationLocalPosition();
+                AdjustCollider();
             }
         }
 
@@ -64,6 +96,9 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 visualisation.yDimension = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Y);
+                
+                AdjustVisualisationLocalPosition();
+                AdjustCollider();
             }
         }
 
@@ -74,6 +109,9 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 visualisation.zDimension = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Z);
+                
+                AdjustVisualisationLocalPosition();
+                AdjustCollider();
             }
         }
 
@@ -117,16 +155,6 @@ namespace Experimental.CrossDimensionalTransfer
             }
         }
 
-        public AbstractVisualisation.GeometryType GeometryType
-        {
-            get { return visualisation.geometry; }
-            set
-            {
-                visualisation.geometry = value;
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.GeometryType);
-            }
-        }
-
         public float Width
         {
             get { return visualisation.width; }
@@ -163,7 +191,7 @@ namespace Experimental.CrossDimensionalTransfer
             set
             {
                 visualisation.size = value;
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Size);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.SizeValues);
             }
         }
 
@@ -176,33 +204,61 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisation.height = value.y;
                 visualisation.depth = value.z;
 
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.VisualisationSize);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+            }
+        }
+
+        public GameObject XAxisObject
+        {
+            get
+            {
+                return visualisation.theVisualizationObject.X_AXIS;
+            }
+        }
+
+        public GameObject YAxisObject
+        {
+            get
+            {
+                return visualisation.theVisualizationObject.Y_AXIS;
+            }
+        }
+
+        public GameObject ZAxisObject
+        {
+            get
+            {
+                return visualisation.theVisualizationObject.Z_AXIS;
             }
         }
 
         private void Update()
         {
-            AdjustVisualisationPosition();
-            AdjustColliderSize();
+            AdjustVisualisationLocalPosition();
+            AdjustCollider();
         }
 
 
-        private void AdjustVisualisationPosition()
+        private void AdjustVisualisationLocalPosition()
         {
             float xPos = (XDimension != "Undefined") ? -Width / 2 : 0;
             float yPos = (YDimension != "Undefined") ? -Height / 2 : 0;
-            float zPos = (ZDimension != "Undefined") ? -Depth / 2 : 0;
+            float zPos = (ZDimension != "Undefined") ? -Depth : 0;
 
             visualisation.transform.localPosition = new Vector3(xPos, yPos, zPos);
         }
         
-        private void AdjustColliderSize()
+        private void AdjustCollider()
         {
-            float xScale = (XDimension != "Undefined") ? Width : 0.1f;
-            float yScale = (YDimension != "Undefined") ? Height : 0.1f;
-            float zScale = (ZDimension != "Undefined") ? Depth : 0.1f;
-
+            float xScale = (XDimension != "Undefined") ? Width : 0.075f;
+            float yScale = (YDimension != "Undefined") ? Height : 0.075f;
+            float zScale = (ZDimension != "Undefined") ? Depth : 0.075f;
             boxCollider.size = new Vector3(xScale, yScale, zScale);
+
+            float xPos = 0;
+            float yPos = 0;
+            float zPos = (ZDimension != "Undefined") ? -Depth / 2 : 0;
+            boxCollider.center = new Vector3(xPos, yPos, zPos);
         }
 
         // private void AdjustBoundingBoxSize()

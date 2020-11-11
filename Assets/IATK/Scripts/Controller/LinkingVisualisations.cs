@@ -35,6 +35,9 @@ namespace IATK
         public Visualisation visualisationTarget = null;
 
         public bool showLinks;
+        [Range(0f,1f)]
+        public float linkTransparency;
+
         bool toggleShow;
 
         Material linkerMaterial;
@@ -52,13 +55,15 @@ namespace IATK
         {
             Visualisation.OnUpdateViewAction += Visualisation_OnUpdateViewAction;
 
-            linkerMaterial = new Material(Shader.Find("Staxestk/Linked-Views-Material"))
+            linkerMaterial = new Material(Shader.Find("IATK/Linked-Views-Material"))
             {
-                renderQueue = 3000
+                renderQueue = 3000,
+                enableInstancing = true
             };
 
             if(visualisationSource != null && visualisationTarget !=null) LinkVisualisations();
             toggleShow = showLinks;
+            
         }
 
         private void OnDestroy()
@@ -155,6 +160,12 @@ namespace IATK
                 linkerMaterial.SetFloat("_MaxNormZ1", visualisationSource.zDimension.maxScale);
                 linkerMaterial.SetFloat("_MaxNormZ2", visualisationTarget.zDimension.maxScale);
 
+                //set alpha
+                linkerMaterial.SetFloat("_Alpha", linkTransparency);
+
+                // Set scaling matrices based on visualisation size
+                linkerMaterial.SetMatrix("_ScaleMatrix1", Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(visualisationSource.width, visualisationSource.height, visualisationSource.depth)));
+                linkerMaterial.SetMatrix("_ScaleMatrix2", Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(visualisationTarget.width, visualisationTarget.height, visualisationTarget.depth)));
             }
             toggleShow = showLinks;
         }

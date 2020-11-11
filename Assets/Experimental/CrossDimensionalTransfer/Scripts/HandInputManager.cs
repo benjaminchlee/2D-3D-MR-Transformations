@@ -10,6 +10,8 @@ namespace Experimental.CrossDimensionalTransfer
     public class HandInputManager : MonoBehaviour, IMixedRealitySourceStateHandler, IMixedRealityHandJointHandler
     {
         public static HandInputManager Instance { get; private set; }
+    
+        IMixedRealityHandJointService handJointService;
         
         private void Awake()
         {
@@ -25,11 +27,11 @@ namespace Experimental.CrossDimensionalTransfer
             
             CoreServices.InputSystem?.RegisterHandler<IMixedRealitySourceStateHandler>(this);
             CoreServices.InputSystem?.RegisterHandler<IMixedRealityHandJointHandler>(this);
+            handJointService = CoreServices.GetInputSystemDataProvider<IMixedRealityHandJointService>();
         }
         
         public bool IsFingerClosed(Handedness handedness, TrackedHandJoint handJoint)
         {
-            var handJointService = CoreServices.GetInputSystemDataProvider<IMixedRealityHandJointService>();
             float distance = Mathf.Infinity;
             
             switch (handJoint)
@@ -59,8 +61,37 @@ namespace Experimental.CrossDimensionalTransfer
                     break;
             }
             
-            Debug.Log(distance);
             return (distance < 0.04f);
+        }
+
+        public bool IsHandClosed(Handedness handedness)
+        {
+            if (!handJointService.IsHandTracked(handedness))
+                return false;
+            
+            float closedDistance = 0.035f;
+            
+            var thumbTip = handJointService.RequestJointTransform(TrackedHandJoint.ThumbTip, handedness);
+            var indexTip = handJointService.RequestJointTransform(TrackedHandJoint.IndexTip, handedness);
+            var middleTip = handJointService.RequestJointTransform(TrackedHandJoint.MiddleTip, handedness);
+            var ringTip = handJointService.RequestJointTransform(TrackedHandJoint.RingTip, handedness);
+            var pinkyTip = handJointService.RequestJointTransform(TrackedHandJoint.PinkyTip, handedness);
+            
+            if (Vector3.Distance(thumbTip.position, indexTip.position) < closedDistance  &&
+                Vector3.Distance(indexTip.position, middleTip.position) < closedDistance &&
+                Vector3.Distance(middleTip.position, ringTip.position) < closedDistance &&
+                Vector3.Distance(ringTip.position, pinkyTip.position) < closedDistance)
+                return true;
+            
+            return false; 
+        }
+
+        public Transform GetJointTransform(Handedness handedness, TrackedHandJoint trackedHandJoint)
+        {
+            if (!handJointService.IsHandTracked(handedness))
+                return null;
+            
+            return handJointService.RequestJointTransform(TrackedHandJoint.IndexTip, handedness);
         }
 
         public void OnSourceDetected(SourceStateEventData eventData)

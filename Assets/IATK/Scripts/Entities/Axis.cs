@@ -44,7 +44,7 @@ namespace IATK
         private Transform maxFilterObject;
         [Header("Axis Visual Properties")]
         [SerializeField]
-        [Tooltip("The amount of spacing that each axis tick label should have between each other.")]
+        [Tooltip("The maximum amount of spacing that each axis tick label should have between each other.")]
         private float AxisTickSpacing = 0.075f;
         
         [HideInInspector]
@@ -70,7 +70,6 @@ namespace IATK
 
         private Visualisation visualisationReference;
         private DataSource dataSource;
-        private List<GameObject> axisTickLabels = new List<GameObject>();
 
         #endregion
 
@@ -120,27 +119,31 @@ namespace IATK
             {
                 case 1:
                     // Fix the alignment of the axis tick labels
-                    foreach (Transform label in axisTickLabelHolder.GetComponentsInChildren<Transform>(true))
+                    foreach (Transform child in axisTickLabelHolder.GetComponentsInChildren<Transform>(true))
                     {
-                        TextMeshPro tmp = label.GetComponent<TextMeshPro>();
-                        // Label text
-                        if (tmp != null)
+                        if (child.gameObject.name.Contains("Text"))
                         {
-                            tmp.GetComponent<RectTransform>().pivot = new Vector2(0, 0.5f);
-                            tmp.alignment = TextAlignmentOptions.MidlineLeft;
+                            TextMeshPro labelText = child.GetComponent<TextMeshPro>();
+                            labelText.alignment = TextAlignmentOptions.MidlineLeft;
+                            labelText.GetComponent<RectTransform>().pivot = new Vector2(0, 0.5f);
+                            // Set pivot on the container as well, otherwise it doesn't actually update in play mode
+                            TextContainer container = child.GetComponent<TextContainer>();
+                            container.anchorPosition = TextContainerAnchors.Custom;
+                            container.pivot = new Vector2(0, 0.5f);
                         }
-                        // Label tick (cube gameobject)
-                        else
+                        else if (child.gameObject.name.Contains("Tick"))
                         {
-                            SetXLocalPosition(label.transform, -label.transform.localPosition.x);
+                            SetXLocalPosition(child, -child.localPosition.x);
                         }
-                        
-                        axisTickLabelPrefab.GetComponent<RectTransform>().pivot = new Vector2(0, 0.5f);
                     }
+                    
+                    
                     transform.localEulerAngles = new Vector3(0, 0, -90);
                     SetXLocalPosition(axisTickLabelHolder.transform, 0);
-                    SetXLocalPosition(attributeLabel.transform, 0.1f);
                     attributeLabel.alignment = TextAlignmentOptions.Top;  
+                    attributeLabel.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
+                    attributeLabel.GetComponent<TextContainer>().anchorPosition = TextContainerAnchors.Custom;
+                    attributeLabel.GetComponent<TextContainer>().pivot = new Vector2(0.5f, 0.5f);
                     UpdateLength(visualisationReference.width);
                     break;
                     
@@ -164,6 +167,7 @@ namespace IATK
             }
         }
 
+        
         /// <summary>
         /// Updates the length of this axis.
         /// </summary>
@@ -189,6 +193,7 @@ namespace IATK
         /// </summary>
         public void UpdateAxisTickLabels()
         {
+            List<GameObject> axisTickLabels = GetAxisTickLabels();
             int currentNumberOfLabels = axisTickLabels.Count;
             int targetNumberOfLabels = CalculateNumAxisTickLabels();
             
@@ -199,23 +204,23 @@ namespace IATK
                 // Create new labels
                 for (int i = 0; i < targetNumberOfLabels; i++)
                 {
-                    var go = Instantiate(axisTickLabelPrefab, axisTickLabelHolder.transform);
-                    axisTickLabels.Add(go);
+                    Instantiate(axisTickLabelPrefab, axisTickLabelHolder.transform);
                 }
             }
             
             // Update label positions and text
+            axisTickLabels = GetAxisTickLabels();
             for (int i = 0; i < targetNumberOfLabels; i++)
             {
-                TextMeshPro textMesh = axisTickLabels[i].GetComponent<TextMeshPro>();
-                
+                GameObject label = axisTickLabels[i];
+                label.SetActive(true);
                 float y = GetAxisTickLabelPosition(i, targetNumberOfLabels);
-                SetYLocalPosition(textMesh.transform, y * Length);
-                textMesh.gameObject.SetActive(y >= 0.0f && y <= 1.0f);
+                SetYLocalPosition(label.transform, y * Length);
                 
-                textMesh.text = GetAxisTickLabelText(i, targetNumberOfLabels);
-                
-                textMesh.color = new Color(1, 1, 1, GetAxisTickLabelFiltered(i, targetNumberOfLabels) ? 0.4f : 1.0f);
+                TextMeshPro labelText = label.GetComponentInChildren<TextMeshPro>();
+                labelText.gameObject.SetActive(y >= 0.0f && y <= 1.0f);
+                labelText.text = GetAxisTickLabelText(i, targetNumberOfLabels);
+                labelText.color = new Color(1, 1, 1, GetAxisTickLabelFiltered(i, targetNumberOfLabels) ? 0.4f : 1.0f);
             }
         }
         
@@ -224,30 +229,14 @@ namespace IATK
         /// </summary>
         public void DestroyAxisTickLabels()
         {
-            foreach (Transform t in axisTickLabelHolder.transform)
-            {
-                if (t.gameObject.name.Contains("Clone"))
-                {
-                    axisTickLabels.Remove(t.gameObject);
-                    
-                    #if !UNITY_EDITOR
-                    Destroy(t.gameObject);
-                    #else
-                    DestroyImmediate(t.gameObject);
-                    #endif
-                }
-            }
-            
-            foreach (GameObject go in axisTickLabels)
+            foreach (GameObject label in GetAxisTickLabels())
             {
                 #if !UNITY_EDITOR
-                Destroy(go.gameObject);
+                Destroy(label);
                 #else
-                DestroyImmediate(go.gameObject);
+                DestroyImmediate(label);
                 #endif
             }
-            
-            axisTickLabels.Clear();
         }
         
         public void SetMinFilter(float val)
@@ -283,6 +272,19 @@ namespace IATK
         }
         
         #region Private helper functions
+        
+        private List<GameObject> GetAxisTickLabels()
+        {
+            List<GameObject> labels = new List<GameObject>();
+            foreach (Transform t in axisTickLabelHolder.transform)
+            {
+                if (t.gameObject.name.Contains("Clone"))
+                {
+                    labels.Add(t.gameObject);
+                }
+            }
+            return labels;
+        }
         
         private int CalculateNumAxisTickLabels()
         {

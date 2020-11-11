@@ -84,7 +84,7 @@ namespace IATK
             if (visualisationReference.parallelCoordinatesDimensions.Length > 1 && visualisationReference.parallelCoordinatesDimensions.None(x => x == null || x.Attribute == "Undefined"))
             {
                 viewList.Clear();
-                DestroyView();
+                destroyView();
 
                 ViewBuilder viewParallel;
 
@@ -107,10 +107,18 @@ namespace IATK
                     }
                 }
 
+                List<float> parallelCoordinatesIndices = new List<float>();
+                List<float> repeatPattern = Enumerable.Range(0, visualisationReference.dataSource.DataCount).Select(x => x*1f).ToList();
+
+                for (int i = 0; i < visualisationReference.parallelCoordinatesDimensions.Length; i++)
+                {
+                    parallelCoordinatesIndices.AddRange(repeatPattern);
+                }
+
                 //build indices
                 for (int i = 0; i < visualisationReference.dataSource.DataCount; i++)
                 {
-                    for (int j = 0; j < visualisationReference.parallelCoordinatesDimensions.Length - 1; j++)
+                    for (int j = 0; j < visualisationReference.parallelCoordinatesDimensions.Length- 1; j++)
                     {
                         indices.Add(j * visualisationReference.dataSource.DataCount + i);
                         indices.Add((j + 1) * visualisationReference.dataSource.DataCount + i);
@@ -123,17 +131,23 @@ namespace IATK
                     lineLength[i] = visualisationReference.parallelCoordinatesDimensions.Length;
                 }
 
-                viewParallel = new ViewBuilder(MeshTopology.Lines, "parallel coordinates");
+                viewParallel = new ViewBuilder(MeshTopology.Lines, "[IATK] Parallel Coordinates");
                 viewParallel.initialiseDataView(positionsLocalX.Count);
                 viewParallel.setDataDimension(positionsLocalX.ToArray(), ViewBuilder.VIEW_DIMENSION.X);
                 viewParallel.setDataDimension(positionsLocalY.ToArray(), ViewBuilder.VIEW_DIMENSION.Y);
                 viewParallel.setDataDimension(positionsLocalZ.ToArray(), ViewBuilder.VIEW_DIMENSION.Z);
                 viewParallel.Indices = indices;
                 viewParallel.LineLength = lineLength.ToList();
+                //viewParallel.;
+
                 Material mt = new Material(Shader.Find("IATK/PCPShader"));
                 mt.renderQueue = 3000;
-                viewParallel.updateView();
-                View v = viewParallel.apply(gameObject, mt);
+                mt.enableInstancing = true;
+                View v = viewParallel.
+                    createIndicesPointTopology(parallelCoordinatesIndices.ToArray()).
+                    updateView().apply(gameObject, mt);
+                
+                //v.SetVertexIdChannel(parallelCoordinatesIndices.ToArray());
 
                 viewList.Add(v);
 
@@ -149,7 +163,7 @@ namespace IATK
                 creationConfiguration.Geometry = visualisationReference.geometry;
                 creationConfiguration.LinkingDimension = visualisationReference.linkingDimension;
                 creationConfiguration.SizeDimension = visualisationReference.sizeDimension;
-                //creationConfiguration.Axies = new Dictionary<CreationConfiguration.Axis, string>();
+                creationConfiguration.Axies = new Dictionary<CreationConfiguration.Axis, string>();
 
                 //restore properties
                 UpdateVisualisation(AbstractVisualisation.PropertyType.Colour);
@@ -207,7 +221,7 @@ namespace IATK
                                 }
                                 else
                                 {
-                                    viewList[i].SetSizeChannel(Enumerable.Repeat(1f, visualisationReference.dataSource[0].Data.Length).ToArray());
+                                    viewList[i].SetSizeChannel(new float[visualisationReference.dataSource.DataCount]);
                                 }
                             }
                             creationConfiguration.SizeDimension = visualisationReference.sizeDimension;

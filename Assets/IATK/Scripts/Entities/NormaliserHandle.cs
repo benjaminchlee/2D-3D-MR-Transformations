@@ -7,8 +7,8 @@ using DG.Tweening;
 
 namespace IATK
 {
-    public class NormaliserHandle : MonoBehaviour
-    {
+    public class NormaliserHandle : MonoBehaviour {
+
         [SerializeField]
         UnityEvent OnEntered;
 

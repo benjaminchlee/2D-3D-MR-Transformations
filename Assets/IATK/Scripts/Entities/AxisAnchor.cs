@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace IATK
 {
-    public class AxisAnchor : MonoBehaviour
-    {
+    public class AxisAnchor : MonoBehaviour {
+
         Axis axis { get { return transform.GetComponentInParent<Axis>(); } }
         
         void OnTriggerEnter(Collider col)

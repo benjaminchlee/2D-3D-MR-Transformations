@@ -5,16 +5,18 @@ using System.IO;
 using System.Linq;
 using System;
 
+
 namespace IATK
 {
+   
     /// <summary>
     /// Visualisation class to act as a view controller - reads the model to create the view
     /// </summary>
     [ExecuteInEditMode]
     public class Visualisation : MonoBehaviour
     {
-        #region Public variables
-
+       
+        //// DATA
         [Tooltip("The source for the data")]
         public DataSource dataSource;
 
@@ -48,19 +50,23 @@ namespace IATK
         public AttributeFilter[] attributeFilters;
 
         [Tooltip("The x dimensions represented in a scatterplot matrix")]
+        [SerializeField]
         public DimensionFilter[] xScatterplotMatrixDimensions;
 
         [Tooltip("The y dimensions represented in a scatterplot matrix")]
+        [SerializeField]
         public DimensionFilter[] yScatterplotMatrixDimensions;
 
         [Tooltip("The z dimensions represented in a scatterplot matrix")]
+        [SerializeField]
         public DimensionFilter[] zScatterplotMatrixDimensions;
 
         [Tooltip("The dimensions of the Parallel Coordinates")]
+        [SerializeField]
         public DimensionFilter[] parallelCoordinatesDimensions;
 
         [Tooltip("The dimension to map the colour to")]
-        public string colourDimension = "";
+        public string colourDimension;
 
         [Tooltip("The colour gradient used to map to the colour data dimension")]
         public Gradient dimensionColour;
@@ -72,10 +78,19 @@ namespace IATK
         public string blendingModeDestination = UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha.ToString();
 
         [Tooltip("The dimension to map the size to")]
-        public string sizeDimension = "";
+        public string sizeDimension;
 
-        [Tooltip("The dimension that links data points")]
-        public string linkingDimension = "";
+        [Tooltip("The dimension that links data points for trajectories")]
+        public string linkingDimension;
+
+        [Tooltip("The dimension that links origin points to destination")]
+        public string originDimension;
+
+        [Tooltip("The dimension that links origin points to destination")]
+        public string destinationDimension;
+
+        [Tooltip("The graph dimension that links data points for networks")]
+        public string graphDimension;
 
         [Tooltip("The number of loaded data points")]
         public string dataPoints = "";
@@ -87,22 +102,19 @@ namespace IATK
         public int fontAxesSize = 500;
 
         [Tooltip("The type of the visualisation you want to display")]
-        public AbstractVisualisation.VisualisationTypes visualisationType;
+        public AbstractVisualisation.VisualisationTypes visualisationType;// = AbstractViualisation.VisualisationTypes.SIMPLE_VISUALISATION;
 
         [Tooltip("The color palette for discrete variables mapping")]
         public Color[] coloursPalette;
         
-        [Min(0)]
         public float width = 1.0f;
-        [Min(0)]
         public float height = 1.0f;
-        [Min(0)]
         public float depth = 1.0f;
 
-        public string colorPaletteDimension = "";
+        public string colorPaletteDimension;
 
         [HideInInspector]
-        public AbstractVisualisation theVisualizationObject;
+        public AbstractVisualisation theVisualizationObject;// = null;
 
         // Unique ID for visualisation creation
         public string uid = null;
@@ -110,48 +122,49 @@ namespace IATK
         public delegate void UpdateViewAction(AbstractVisualisation.PropertyType propertyType);
         public static event UpdateViewAction OnUpdateViewAction;
 
+        //Private
+        // Key
+        GameObject key;
 
-        #endregion
-
-        private GameObject key;
-        private readonly int MAX_INIT_SCATTERPLOTMATRIX = 5;
+        int MAX_INIT_SCATTERPLOTMATRIX = 5;
 
 
-        #region Public functions
-
+        // PUBLIC
         public void CreateVisualisation(AbstractVisualisation.VisualisationTypes visualizationType)
         {
-            // Destroy all previous visualisations
+            //destroy the previous visualisations
             AbstractVisualisation[] previousVisualizations = GetComponentsInChildren<AbstractVisualisation>();
+
             foreach (var item in previousVisualizations)
             {
-                item.DestroyView();
+                item.destroyView();
                 DestroyImmediate(item);
             }
 
-            // Destroy all previous axes
+            //destroy the previous axes
             Axis[] previousAxes = GetComponentsInChildren<Axis>();
+
             foreach (var item in previousAxes)
             {
                 DestroyImmediate(item.gameObject);
             }
 
-            // Destroy the previous key (legend)
+            //destroy previous key
             if(key!=null)
-                DestroyImmediate(key.gameObject);
+            DestroyImmediate(key.gameObject);
 
-            // Create the visualisation based on given type
             visualisationType = visualizationType;
+
             switch (visualisationType)
             {
                 case AbstractVisualisation.VisualisationTypes.SCATTERPLOT:
-                    theVisualizationObject = gameObject.AddComponent<ScatterplotVisualisation>();                  
+                    theVisualizationObject = gameObject.AddComponent<ScatterplotVisualisation>();// new Simple2D3DVisualisation();                    
                     theVisualizationObject.visualisationReference = this;
 
                     theVisualizationObject.CreateVisualisation();
                     break;
-
                 case AbstractVisualisation.VisualisationTypes.SCATTERPLOT_MATRIX:
+        
                     int dimensionCount = dataSource.DimensionCount;
                     if (dimensionCount > MAX_INIT_SCATTERPLOTMATRIX) dimensionCount = MAX_INIT_SCATTERPLOTMATRIX;
 
@@ -164,12 +177,11 @@ namespace IATK
                         yScatterplotMatrixDimensions[i] = new DimensionFilter { Attribute = dataSource[i].Identifier };
                     }
 
-                    theVisualizationObject = gameObject.AddComponent<ScatterplotMatrixVisualisation>();                  
+                    theVisualizationObject = gameObject.AddComponent<ScatterplotMatrixVisualisation>();// new Simple2D3DVisualisation();                    
                     theVisualizationObject.visualisationReference = this;
 
                     theVisualizationObject.CreateVisualisation();
                     break;
-
                 case AbstractVisualisation.VisualisationTypes.PARALLEL_COORDINATES:
                     parallelCoordinatesDimensions = new DimensionFilter[dataSource.DimensionCount];
 
@@ -183,47 +195,56 @@ namespace IATK
                     theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.DimensionChange);
 
                     theVisualizationObject.CreateVisualisation();
-                    break;
 
+
+                    break;
                 case AbstractVisualisation.VisualisationTypes.GRAPH_LAYOUT:
                     break;
-
                 default:
                     break;
             }
 
-            // We call this to initialise the creation configuration
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.None);
 
-            #if UNITY_EDITOR
             RuntimeEditorLoadAndSaveConfiguration();
-            #endif
 
-            // Create and position the key
             key = (GameObject)Instantiate(Resources.Load("Key"));
             key.transform.parent = transform;
-            UpdateKeyTransform();
+            key.transform.localPosition = new Vector3(0.15f, 1.165f, 0f);
         }
 
-        public void UpdateView(AbstractVisualisation.PropertyType propertyType)
+        public void updateView(AbstractVisualisation.PropertyType propertyType)
         {
-            theVisualizationObject.CreateVisualisation();
+            theVisualizationObject.CreateVisualisation();// UpdateVisualisation(propertyType);
         }
-                
+        
+        /// <summary>
+        /// Gets the axies.
+        /// </summary>
+        /// <returns>The axies.</returns>
+        /// <param name="axies">Axies.</param>
+        private string getAxis(Dictionary<CreationConfiguration.Axis, string> axies, CreationConfiguration.Axis axis)
+        {
+
+            string axes = null;
+            string retVal = "";
+            if (axies.TryGetValue(axis, out axes))
+                retVal = axes;
+
+            return retVal;
+        }
+        
         public void updateViewProperties(AbstractVisualisation.PropertyType propertyType)
         {
-            if (theVisualizationObject == null)
-                CreateVisualisation(visualisationType);
-                
+            if (theVisualizationObject == null) CreateVisualisation(visualisationType);
             theVisualizationObject.UpdateVisualisation(propertyType);
 
             if(OnUpdateViewAction!=null)
-                OnUpdateViewAction(propertyType);
+            OnUpdateViewAction(propertyType);
 
             if (key != null)
             {
-                key.GetComponent<Key>().UpdateProperties(propertyType, this);
-                UpdateKeyTransform();
+                updateKey();
             }
         }
 
@@ -245,7 +266,6 @@ namespace IATK
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.X);
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.Y);
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.Z);
-            theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.VisualisationSize);
         }
 
         /// <summary>
@@ -271,35 +291,34 @@ namespace IATK
             return indices.ToArray();
         }
 
-        #endregion
-
-        #region Private functions
-
-        private void UpdateKeyTransform()
+        private void updateKey()
         {
-            Vector3 pos = Vector3.zero;
+            key.GetComponent<Key>().UpdateProperties(AbstractVisualisation.PropertyType.None, this);
 
-            pos.x = (xDimension.Attribute != "Undefined") ? 0.2f : 0f;
-            pos.y = (yDimension.Attribute != "Undefined") ? height + 0.165f : 0.165f;
-            pos.z = 0;
-
-            key.transform.localPosition = pos;
+            if (yDimension.Attribute != "Undefined")
+            {
+                key.transform.localPosition = new Vector3(0.2f, height + 0.25f, 0f);
+            }
+            else
+            {
+                key.transform.localPosition = new Vector3(0.2f, 0.2f, 0f);
+            }
         }
 
-        private void OnEnable()
+
+        void OnEnable()
         {
             if (uid == null)
             {
                 uid = Guid.NewGuid().ToString().Substring(0, 8);
             }
 
-            #if UNITY_EDITOR
             if (theVisualizationObject != null)
                 RuntimeEditorLoadAndSaveConfiguration();
-            #endif
+
         }
 
-        private void RuntimeEditorLoadAndSaveConfiguration()
+        void RuntimeEditorLoadAndSaveConfiguration()
         {
             // get the pre existing views in the hierarchy
             View[] views = GetComponentsInChildren<View>();
@@ -311,7 +330,7 @@ namespace IATK
             foreach (var view in views)
             {
                 view.BigMesh = view.GetComponentInChildren<BigMesh>();
-                view.onViewChangeEvent += UpdateView;   // Receive notifications when the view configuration changes
+                view.onViewChangeEvent += updateView;   // Receive notifications when the view configuration changes
                 theVisualizationObject.viewList.Add(view);
             }
             
@@ -358,18 +377,14 @@ namespace IATK
                 switch (visualisationType)
                 {
                     case AbstractVisualisation.VisualisationTypes.SCATTERPLOT:
-                        xDimension.Attribute = theVisualizationObject.creationConfiguration.XDimension;
-                        yDimension.Attribute = theVisualizationObject.creationConfiguration.YDimension;
-                        zDimension.Attribute = theVisualizationObject.creationConfiguration.ZDimension;
-                        
+                        if (theVisualizationObject.creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.X)) xDimension.Attribute = theVisualizationObject.creationConfiguration.Axies[CreationConfiguration.Axis.X];
+                        if (theVisualizationObject.creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.Y)) yDimension.Attribute = theVisualizationObject.creationConfiguration.Axies[CreationConfiguration.Axis.Y];
+                        if (theVisualizationObject.creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.Z)) zDimension.Attribute = theVisualizationObject.creationConfiguration.Axies[CreationConfiguration.Axis.Z];
+
                         linkingDimension = string.IsNullOrEmpty(theVisualizationObject.creationConfiguration.LinkingDimension) ? "Undefined" : theVisualizationObject.creationConfiguration.LinkingDimension;
                         geometry = theVisualizationObject.creationConfiguration.Geometry;
                         minSize = theVisualizationObject.creationConfiguration.MinSize;
                         maxSize = theVisualizationObject.creationConfiguration.MaxSize;
-                        
-                        width = theVisualizationObject.creationConfiguration.VisualisationWidth;
-                        height = theVisualizationObject.creationConfiguration.VisualisationHeight;
-                        depth = theVisualizationObject.creationConfiguration.VisualisationDepth;
 
                         theVisualizationObject.CreateVisualisation();
 
@@ -379,7 +394,6 @@ namespace IATK
                         updateViewProperties(AbstractVisualisation.PropertyType.Z);
                         updateViewProperties(AbstractVisualisation.PropertyType.GeometryType);
                         updateViewProperties(AbstractVisualisation.PropertyType.LinkingDimension);
-                        updateViewProperties(AbstractVisualisation.PropertyType.VisualisationSize);
 
                         colourDimension = string.IsNullOrEmpty(theVisualizationObject.creationConfiguration.ColourDimension) ? "Undefined" : theVisualizationObject.creationConfiguration.ColourDimension;
                         sizeDimension = string.IsNullOrEmpty(theVisualizationObject.creationConfiguration.SizeDimension) ? "Undefined" : theVisualizationObject.creationConfiguration.SizeDimension;
@@ -388,8 +402,15 @@ namespace IATK
 
                         updateViewProperties(AbstractVisualisation.PropertyType.Size);
                         updateViewProperties(AbstractVisualisation.PropertyType.Colour);
+                        
+                        width = theVisualizationObject.creationConfiguration.VisualisationWidth;
+                        height = theVisualizationObject.creationConfiguration.VisualisationHeight;
+                        depth = theVisualizationObject.creationConfiguration.VisualisationDepth;
+                        
+                        updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
 
                         break;
+                        
                     case AbstractVisualisation.VisualisationTypes.SCATTERPLOT_MATRIX:
 
                         linkingDimension = string.IsNullOrEmpty(theVisualizationObject.creationConfiguration.LinkingDimension) ? "Undefined" : theVisualizationObject.creationConfiguration.LinkingDimension;
@@ -414,8 +435,14 @@ namespace IATK
                         updateViewProperties(AbstractVisualisation.PropertyType.Size);
                         updateViewProperties(AbstractVisualisation.PropertyType.Colour);
 
-
+                        width = theVisualizationObject.creationConfiguration.VisualisationWidth;
+                        height = theVisualizationObject.creationConfiguration.VisualisationHeight;
+                        depth = theVisualizationObject.creationConfiguration.VisualisationDepth;
+                        
+                        updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                        
                         break;
+                        
                     case AbstractVisualisation.VisualisationTypes.PARALLEL_COORDINATES:
                         parallelCoordinatesDimensions = theVisualizationObject.creationConfiguration.parallelCoordinatesDimensions;
                         updateViewProperties(AbstractVisualisation.PropertyType.DimensionChange);
@@ -437,9 +464,17 @@ namespace IATK
                         updateViewProperties(AbstractVisualisation.PropertyType.Size);
                         updateViewProperties(AbstractVisualisation.PropertyType.Colour);
 
+                        width = theVisualizationObject.creationConfiguration.VisualisationWidth;
+                        height = theVisualizationObject.creationConfiguration.VisualisationHeight;
+                        depth = theVisualizationObject.creationConfiguration.VisualisationDepth;
+                        
+                        updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                        
                         break;
+                        
                     case AbstractVisualisation.VisualisationTypes.GRAPH_LAYOUT:
                         break;
+                        
                     default:
                         break;
                 }
@@ -459,7 +494,7 @@ namespace IATK
         //<summary>
         //Destroy immediately all the views
         //</summary>
-        private void destroyView()
+        void destroyView()
         {
             string backupname = name;
             List<GameObject> children = new List<GameObject>();
@@ -480,7 +515,7 @@ namespace IATK
 
         }
 
-        private void OnApplicationQuit()
+        void OnApplicationQuit()
         {
             #if UNITY_EDITOR
             if (theVisualizationObject.creationConfiguration != null)
@@ -488,13 +523,14 @@ namespace IATK
             #endif
         }
 
-        private void OnDestroy()
+        void OnDestroy()
         {
             destroyView();
 
         }
 
-        #endregion
+        
+
         
     }
 

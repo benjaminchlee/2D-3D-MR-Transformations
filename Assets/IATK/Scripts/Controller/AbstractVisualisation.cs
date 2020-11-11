@@ -33,6 +33,9 @@ namespace IATK
             Size,
             GeometryType,
             LinkingDimension,
+            OriginDimension,
+            DestinationDimension,
+            GraphDimension,
             DimensionFiltering,
             Scaling,
             BlendSourceMode,
@@ -42,7 +45,9 @@ namespace IATK
             VisualisationType,
             SizeValues,
             DimensionChangeFiltering,
-            VisualisationSize           // The size of the actual visualisation object
+            VisualisationWidth,
+            VisualisationHeight,
+            VisualisationLength
         }
 
         public enum NormalChannel
@@ -124,9 +129,10 @@ namespace IATK
             axis.SetDirection((int)propertyType);
             BindMinMaxAxisValues(axis, dimensionFilter);
 
+
             return AxisHolder;
         }
-        
+
         /// <summary>
         /// Binds metadata to an axis component
         /// </summary>
@@ -148,18 +154,20 @@ namespace IATK
         }
 
         /// <summary>
-        /// Serialize view configuration to disk
+        /// Serialize view configuraiton to disk
         /// </summary>
         /// <param name="configuration"></param>
         /// <returns></returns>
         public void SerializeViewConfiguration(CreationConfiguration creationConfiguration)
         {
+            #if UNITY_EDITOR
             string path = ConfigurationFileName();
             if (!Directory.Exists(Path.GetDirectoryName(path)))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
             }
             creationConfiguration.Serialize(ConfigurationFileName());
+            #endif
         }
 
         private string ConfigurationFileName()
@@ -171,7 +179,7 @@ namespace IATK
         /// <summary>
         /// Destroy immediately all the views
         /// </summary>
-        public void DestroyView()
+        public void destroyView()
         {
             string backupname = name;
             List<GameObject> children = new List<GameObject>();
@@ -214,39 +222,71 @@ namespace IATK
                        apply(gameObject, mt);
 
                 case AbstractVisualisation.GeometryType.Lines:
-                    if (visualisationReference.linkingDimension == "Undefined")
+                    if (visualisationReference.graphDimension != "Undefined")
                     {
-                        throw new UnityException("The linking field 'Linkinfield' is undefined. Please select a linking field");
+                        CSVDataSource csvds = (CSVDataSource)(visualisationReference.dataSource);
+                        builder.createIndicesGraphTopology(csvds.GraphEdges);
+                        mt = new Material(Shader.Find("IATK/LinesShader"));
+                        mt.renderQueue = 3000;
+                        mt.enableInstancing = true;
+                        return builder.updateView().
+                        apply(gameObject, mt);
                     }
-                    builder.createIndicesLinkedTopology(visualisationReference.dataSource[visualisationReference.linkingDimension].Data);
-                    mt = new Material(Shader.Find("IATK/LinesShader"));
-                    mt.renderQueue = 3000;
-                    return builder.updateView().
-                    apply(gameObject, mt);
+                    else
+                    if (visualisationReference.linkingDimension != "Undefined")
+                    {
+                        builder.createIndicesConnectedLineTopology(visualisationReference.dataSource[visualisationReference.linkingDimension].Data);
+                        mt = new Material(Shader.Find("IATK/LinesShader"));
+                        mt.renderQueue = 3000;
+                        mt.enableInstancing = true;
+                        return builder.updateView().
+                        apply(gameObject, mt);
+                    }
+                    else
+                    {
+                        throw new UnityException("'Linkinfield' or 'GraphDimension' is undefined. Please select a linking field or a graph dimension");
+                    }
+                    break;                    
 
                 case AbstractVisualisation.GeometryType.Quads:
                     builder.createIndicesPointTopology();
                     mt = new Material(Shader.Find("IATK/Quads"));
                     mt.renderQueue = 3000;
+                    mt.enableInstancing = true;
                     return builder.updateView().
                        apply(gameObject, mt);
 
                 case AbstractVisualisation.GeometryType.LinesAndDots:
-
-                    if (visualisationReference.linkingDimension == "Undefined")
+                    if (visualisationReference.graphDimension != "Undefined")
                     {
-                        throw new UnityException("The linking field 'Linkinfield' is undefined. Please select a linking field");
+                        CSVDataSource csvds = (CSVDataSource)(visualisationReference.dataSource);
+                        builder.createIndicesGraphTopology(csvds.GraphEdges);
+                        mt = new Material(Shader.Find("IATK/LineAndDotsShader"));
+                        mt.renderQueue = 3000;
+                        mt.enableInstancing = true;
+                        return builder.updateView().
+                        apply(gameObject, mt);
                     }
-                    builder.createIndicesLinkedTopology(visualisationReference.dataSource[visualisationReference.linkingDimension].Data);
-                    mt = new Material(Shader.Find("IATK/LineAndDotsShader"));
-                    mt.renderQueue = 3000;
-                    return builder.updateView().
-                    apply(gameObject, mt);
+                    if (visualisationReference.linkingDimension != "Undefined")
+                    {
+                        builder.createIndicesConnectedLineTopology(visualisationReference.dataSource[visualisationReference.linkingDimension].Data);
+                        mt = new Material(Shader.Find("IATK/LineAndDotsShader"));
+                        mt.renderQueue = 3000;
+                        mt.enableInstancing = true;
+                        return builder.updateView().
+                        apply(gameObject, mt);
+                    }
+                    else
+                    {
+                        throw new UnityException("'Linkinfield' or 'GraphDimension' is undefined. Please select a linking field or a graph dimension");
+                    }
+
 
                 case AbstractVisualisation.GeometryType.Cubes:
                     builder.createIndicesPointTopology(); // createIndicesLinkedTopology(dataSource[linkingDimension].Data);
                     mt = new Material(Shader.Find("IATK/CubeShader"));
                     mt.renderQueue = 3000;
+                    mt.enableInstancing = true;
                     return builder.updateView().
                     apply(gameObject, mt);
 
@@ -254,7 +294,7 @@ namespace IATK
                     builder.createIndicesPointTopology(); // createIndicesLinkedTopology(dataSource[linkingDimension].Data);
                     mt = new Material(Shader.Find("IATK/BarShader"));
                     mt.renderQueue = 3000;
-
+                    mt.enableInstancing = true;
                     return builder.updateView().
                     apply(gameObject, mt);
 
@@ -263,6 +303,7 @@ namespace IATK
                     mt = new Material(Shader.Find("IATK/SphereShader"));
                     mt.mainTexture = Resources.Load("sphere-texture") as Texture2D;
                     mt.renderQueue = 3000;
+                    mt.enableInstancing = true;
                     return builder.updateView().
                     apply(gameObject, mt);
 

@@ -7,8 +7,8 @@ using DG.Tweening;
 
 namespace IATK
 {
-    public class AxisRangeWidget : MonoBehaviour
-    {
+    public class AxisRangeWidget : MonoBehaviour {
+
         [SerializeField]
         float axisOffset = 2.0f;
 

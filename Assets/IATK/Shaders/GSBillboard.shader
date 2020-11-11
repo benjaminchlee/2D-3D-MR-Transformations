@@ -36,14 +36,14 @@ Shader "IATK/OutlineDots"
         Pass
         {
             Name "Onscreen geometry"
-			Tags { "Queue"="Transparent" "RenderType"="Transparent" }
-			Zwrite On
-			ZTest LEqual
 			Blend [_MySrcMode][_MyDstMode]
 			Cull Off 
 			Lighting Off 
-			Offset -1, -1
 			LOD 200
+			Offset -1, -1
+			ZTest LEqual
+			Zwrite On
+			Tags { "Queue"="Transparent" "RenderType"="Transparent" }
 
             CGPROGRAM
                 #pragma target 5.0
@@ -99,7 +99,7 @@ Shader "IATK/OutlineDots"
                 };
 
 				// **************************************************************
-				// Instanced Variables											*
+				// Variables													*
 				// **************************************************************
                
                 UNITY_INSTANCING_BUFFER_START(Props)
@@ -123,8 +123,8 @@ Shader "IATK/OutlineDots"
                     UNITY_DEFINE_INSTANCED_PROP(float, _MinNormZ)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MaxNormZ)
 
-                    UNITY_DEFINE_INSTANCED_PROP(float, _showBrush)
-                    UNITY_DEFINE_INSTANCED_PROP(float4, _brushColor)
+                    UNITY_DEFINE_INSTANCED_PROP(float, _ShowBrush)
+                    UNITY_DEFINE_INSTANCED_PROP(float4, _BrushColor)
 
                     UNITY_DEFINE_INSTANCED_PROP(float, _Tween)
                     UNITY_DEFINE_INSTANCED_PROP(float, _TweenSize)
@@ -136,7 +136,6 @@ Shader "IATK/OutlineDots"
                 sampler2D _MainTex;
                 sampler2D _BrushedTexture;
 
-
 				//*********************************
 				// Helper functions
 				//*********************************
@@ -147,11 +146,11 @@ Shader "IATK/OutlineDots"
                     return (j0 - (L * i0) + (L * value));
 				}
 
-
 				// **************************************************************
 				// Shader Programs												*
 				// **************************************************************
 
+				// Vertex Shader ------------------------------------------------
                 v2g vert(app_data v)
                 {
                     v2g output;
@@ -161,7 +160,6 @@ Shader "IATK/OutlineDots"
 					UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 					UNITY_TRANSFER_INSTANCE_ID(v, output);
 
-					
 					// Access instanced variables
 					float Tween = UNITY_ACCESS_INSTANCED_PROP(Props, _Tween);
 					float TweenSize = UNITY_ACCESS_INSTANCED_PROP(Props, _TweenSize);
@@ -220,6 +218,7 @@ Shader "IATK/OutlineDots"
                     return output;
                 }
 
+				// Geometry Shader -----------------------------------------------------
                 [maxvertexcount(6)]
                 void geom(point v2g input[1], inout TriangleStream<g2f> triStream)
                 {
@@ -276,6 +275,7 @@ Shader "IATK/OutlineDots"
 					triStream.RestartStrip();
                 }
 
+				// Fragment Shader -----------------------------------------------
                 f_output frag(g2f input)
                 {
                     f_output output;
@@ -284,8 +284,8 @@ Shader "IATK/OutlineDots"
 					UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 					
 					// Access instanced variables
-					float BrushColor = UNITY_ACCESS_INSTANCED_PROP(Props, _brushColor);
-					float ShowBrush = UNITY_ACCESS_INSTANCED_PROP(Props, _showBrush);
+					float4 BrushColor = UNITY_ACCESS_INSTANCED_PROP(Props, _BrushColor);
+					float ShowBrush = UNITY_ACCESS_INSTANCED_PROP(Props, _ShowBrush);
 
                     // Sample _MainTex for colour which creates the circular dot, changing colour depending if it is brushed
                     if (input.isBrushed > 0 && ShowBrush > 0.0)

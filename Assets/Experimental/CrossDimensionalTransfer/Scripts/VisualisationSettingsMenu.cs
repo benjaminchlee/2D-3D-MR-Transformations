@@ -1,4 +1,5 @@
-﻿using Microsoft.MixedReality.Toolkit.UI;
+﻿using IATK;
+using Microsoft.MixedReality.Toolkit.UI;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,7 +13,8 @@ namespace Experimental.CrossDimensionalTransfer
         ZDimension,
         SizeByDimension,
         ColorByDimension,
-        Color
+        Color,
+        GeometryType
     }
 
     public class VisualisationSettingsMenu : MonoBehaviour
@@ -90,6 +92,10 @@ namespace Experimental.CrossDimensionalTransfer
                 
                 case VisualisationProperties.ColorByDimension:
                     ParentDataVisualisation.ColourByDimension = (string) value;
+                    break;
+                    
+                case VisualisationProperties.GeometryType:
+                    ParentDataVisualisation.GeometryType = (AbstractVisualisation.GeometryType) value;
                     break;
             }
         }

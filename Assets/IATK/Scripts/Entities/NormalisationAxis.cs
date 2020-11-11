@@ -4,8 +4,7 @@ using UnityEngine;
 
 namespace IATK
 {
-    public class NormalisationAxis : MonoBehaviour
-    {
+    public class NormalisationAxis : MonoBehaviour {
 
         public GameObject end;
         Axis myAxis;

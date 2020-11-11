@@ -16,7 +16,7 @@ namespace IATK {
         public override void CreateVisualisation()
         {
             viewList.Clear();
-            DestroyView();
+            destroyView();
 
             //TODO: not optimal - destroying all the axes when creating the new visualisation again...
             for (int i = 0; i < 64; i++)
@@ -25,8 +25,8 @@ namespace IATK {
                 {
                     for (int k = 0; k < 64; k++)
                     {
-
-                        if(AxisHolder[i,j,k]!=null)
+                    //    if (i != j)//
+                            if (AxisHolder[i,j,k]!=null)
                         {
                             foreach (var item in AxisHolder[i, j, k])
                             {
@@ -61,16 +61,11 @@ namespace IATK {
             }
 
             if (creationConfiguration == null)
-            {
-                creationConfiguration = new CreationConfiguration()
-                {
-                    Geometry = visualisationReference.geometry
-                };
-            }
+                creationConfiguration = new CreationConfiguration(visualisationReference.geometry, new Dictionary<CreationConfiguration.Axis, string>());
             else
             {
                 creationConfiguration.Geometry = visualisationReference.geometry;
-                //creationConfiguration.Axies = new Dictionary<CreationConfiguration.Axis, string>();
+                creationConfiguration.Axies = new Dictionary<CreationConfiguration.Axis, string>();
                 creationConfiguration.VisualisationType = AbstractVisualisation.VisualisationTypes.SCATTERPLOT_MATRIX;
             }
 
@@ -82,9 +77,9 @@ namespace IATK {
                     {
                         for (int k = 0; k < visualisationReference.zScatterplotMatrixDimensions.Length; k++)
                         {
-                          //  if (i != j && i != k && j != k)
+                            if (!(i == j && j == k && i == k))
                             {
-                                if (visualisationReference.xScatterplotMatrixDimensions[i] != null
+                               if (visualisationReference.xScatterplotMatrixDimensions[i] != null
                                && visualisationReference.yScatterplotMatrixDimensions[j] != null
                                && visualisationReference.zScatterplotMatrixDimensions[k] != null)
                                 {
@@ -128,7 +123,7 @@ namespace IATK {
                 {
                     for (int j = 0; j < visualisationReference.yScatterplotMatrixDimensions.Length; j++)
                     {
-                     //   if (i != j)
+                        if (i != j)
                         {
                             if (visualisationReference.xScatterplotMatrixDimensions[i] != null
                                    && visualisationReference.yScatterplotMatrixDimensions[j] != null)
@@ -244,32 +239,23 @@ namespace IATK {
                 switch (propertyType)
                 {
                     case AbstractVisualisation.PropertyType.X:
-                        if (visualisationReference.xDimension.Attribute.Equals("Undefined"))
-                            viewList[0].ZeroPosition(0);
-                        else
-                            viewList[0].UpdateXPositions(visualisationReference.dataSource[visualisationReference.xDimension.Attribute].Data);
-                        
-                        creationConfiguration.XDimension = visualisationReference.xDimension.Attribute;
+                        if (visualisationReference.xDimension.Attribute.Equals("Undefined")) viewList[0].ZeroPosition(0);
+                        else viewList[0].UpdateXPositions(visualisationReference.dataSource[visualisationReference.xDimension.Attribute].Data);
+                        if (creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.X)) creationConfiguration.Axies[CreationConfiguration.Axis.X] = visualisationReference.xDimension.Attribute;
+                        else creationConfiguration.Axies.Add(CreationConfiguration.Axis.X, visualisationReference.xDimension.Attribute);
                         break;
-                        
                     case AbstractVisualisation.PropertyType.Y:
-                        if (visualisationReference.yDimension.Attribute.Equals("Undefined"))
-                            viewList[0].ZeroPosition(1);
-                        else
-                            viewList[0].UpdateYPositions(visualisationReference.dataSource[visualisationReference.yDimension.Attribute].Data);
-                            
-                        creationConfiguration.YDimension = visualisationReference.yDimension.Attribute;
+                        if (visualisationReference.yDimension.Attribute.Equals("Undefined")) viewList[0].ZeroPosition(1);
+                        else viewList[0].UpdateYPositions(visualisationReference.dataSource[visualisationReference.yDimension.Attribute].Data);
+                        if (creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.Y)) creationConfiguration.Axies[CreationConfiguration.Axis.Y] = visualisationReference.yDimension.Attribute;
+                        else creationConfiguration.Axies.Add(CreationConfiguration.Axis.Y, visualisationReference.yDimension.Attribute);
                         break;
-                        
                     case AbstractVisualisation.PropertyType.Z:
-                        if (visualisationReference.zDimension.Attribute.Equals("Undefined"))
-                            viewList[0].ZeroPosition(2);
-                        else
-                            viewList[0].UpdateZPositions(visualisationReference.dataSource[visualisationReference.zDimension.Attribute].Data);
-                            
-                        creationConfiguration.ZDimension = visualisationReference.zDimension.Attribute;
+                        if (visualisationReference.zDimension.Attribute.Equals("Undefined")) viewList[0].ZeroPosition(2);
+                        else viewList[0].UpdateZPositions(visualisationReference.dataSource[visualisationReference.zDimension.Attribute].Data);
+                        if (creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.Z)) creationConfiguration.Axies[CreationConfiguration.Axis.Z] = visualisationReference.zDimension.Attribute;
+                        else creationConfiguration.Axies.Add(CreationConfiguration.Axis.Z, visualisationReference.zDimension.Attribute);
                         break;
-                        
                     case AbstractVisualisation.PropertyType.Colour:
                         if (visualisationReference.colourDimension != "Undefined")
                         {
@@ -312,7 +298,7 @@ namespace IATK {
                                 }
                                 else
                                 {
-                                    viewList[i].SetSizeChannel(Enumerable.Repeat(0f, visualisationReference.dataSource[0].Data.Length).ToArray());
+                                    viewList[i].SetSizeChannel(new float[visualisationReference.dataSource.DataCount]);
                                 }
                             }
                             creationConfiguration.SizeDimension = visualisationReference.sizeDimension;

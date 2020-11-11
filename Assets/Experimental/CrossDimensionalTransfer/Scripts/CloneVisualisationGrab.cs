@@ -24,7 +24,8 @@ namespace Experimental.CrossDimensionalTransfer
         
         private void Awake()
         {
-            if (objectManipulatorScript == null) GetComponent<ObjectManipulator>();
+            if (dataVisualisation == null) dataVisualisation = GetComponent<DataVisualisation>();
+            if (objectManipulatorScript == null) objectManipulatorScript = GetComponent<ObjectManipulator>();
             
             objectManipulatorScript.OnManipulationStarted.AddListener(VisualisationGrabbed);
         }
@@ -36,6 +37,8 @@ namespace Experimental.CrossDimensionalTransfer
             GameObject go = Instantiate(Resources.Load("DataVisualisation") as GameObject);
             DataVisualisation clonedVis = go.GetComponent<DataVisualisation>();
             
+            clonedVis.VisualisationType = dataVisualisation.VisualisationType;
+            clonedVis.GeometryType = dataVisualisation.GeometryType;
             clonedVis.XDimension = dataVisualisation.XDimension;
             clonedVis.YDimension = dataVisualisation.YDimension;
             clonedVis.ZDimension = dataVisualisation.ZDimension;
