@@ -282,6 +282,9 @@ namespace IATK
             Color[] cSource = visualisationSource.theVisualizationObject.viewList[0].GetColors();// bigMesh.getColors();
             Color[] cDest = visualisationTarget.theVisualizationObject.viewList[0].GetColors();// bigMesh.getColors();
 
+            float[] fSource = visualisationSource.theVisualizationObject.viewList[0].GetFilterChannel();
+            float[] fDest = visualisationTarget.theVisualizationObject.viewList[0].GetFilterChannel();
+
             List<Vector3> vertexBuffer = new List<Vector3>();
             List<int> indexBuffer = new List<int>();
 
@@ -302,8 +305,8 @@ namespace IATK
                 colors.Add(cSource[i]);
                 colors.Add(cDest[i]);
 
-                normalsBuffer.Add(new Vector3((float)i, 0, 0));
-                normalsBuffer.Add(new Vector3((float)i, 0, 1));
+                normalsBuffer.Add(new Vector3((float)i, fSource[i], 0));
+                normalsBuffer.Add(new Vector3((float)i, fDest[i], 1));
             }
 
             for (int i = 0; i < positionsLocalX.Count; i += 2)

@@ -4,6 +4,7 @@ using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.Utilities;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Experimental.CrossDimensionalTransfer
@@ -148,6 +149,33 @@ namespace Experimental.CrossDimensionalTransfer
             var cloneGrab = vis.gameObject.AddComponent<CloneVisualisationGrab>();
             
             vis.transform.SetParent(transform.parent);
+            
+            BrushingAndLinking brushingAndLinking = FindObjectOfType<BrushingAndLinking>();
+            
+            if (brushingAndLinking.brushedIndices.Count > 0)
+            {
+                bool pointsBrushed = false;
+                for (int i = 0; i < SlidingVisualisation.DataSource.DataCount; i++)
+                {
+                    if (brushingAndLinking.brushedIndices[i] > 0)
+                    {
+                        pointsBrushed = true;
+                        break;
+                    }
+                }
+                
+                if (pointsBrushed)
+                {
+                    float[] filter = new float[SlidingVisualisation.DataSource.DataCount];
+                    
+                    for (int i = 0; i < SlidingVisualisation.DataSource.DataCount; i++)
+                    {
+                        filter[i] = brushingAndLinking.brushedIndices[i] > 0 ? 0 : 1;                        
+                    }
+                    
+                    vis.Visualisation.theVisualizationObject.viewList[0].SetFilterChannel(filter);
+                }
+            }
         }
         
         private void DeleteVisualisation()

@@ -63,11 +63,11 @@ namespace Experimental.CrossDimensionalTransfer
             
             return (distance < 0.04f);
         }
-
-        public bool IsHandClosed(Handedness handedness)
+        
+        public int GetNumTouchingFingers(Handedness handedness)
         {
             if (!handJointService.IsHandTracked(handedness))
-                return false;
+                return 0;
             
             float closedDistance = 0.035f;
             
@@ -77,13 +77,19 @@ namespace Experimental.CrossDimensionalTransfer
             var ringTip = handJointService.RequestJointTransform(TrackedHandJoint.RingTip, handedness);
             var pinkyTip = handJointService.RequestJointTransform(TrackedHandJoint.PinkyTip, handedness);
             
-            if (Vector3.Distance(thumbTip.position, indexTip.position) < closedDistance  &&
-                Vector3.Distance(indexTip.position, middleTip.position) < closedDistance &&
-                Vector3.Distance(middleTip.position, ringTip.position) < closedDistance &&
-                Vector3.Distance(ringTip.position, pinkyTip.position) < closedDistance)
-                return true;
+            if (Vector3.Distance(thumbTip.position, indexTip.position) > closedDistance)
+                return 0;
             
-            return false; 
+            if (Vector3.Distance(thumbTip.position, middleTip.position) > closedDistance)
+                return 2;
+                
+            if (Vector3.Distance(thumbTip.position, ringTip.position) > closedDistance)
+                return 3;
+                
+            if (Vector3.Distance(thumbTip.position, pinkyTip.position) > closedDistance)
+                return 4;
+            
+            return 5;
         }
 
         public Transform GetJointTransform(Handedness handedness, TrackedHandJoint trackedHandJoint)

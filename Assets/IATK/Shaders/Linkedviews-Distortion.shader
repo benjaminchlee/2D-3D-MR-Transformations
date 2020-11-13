@@ -236,6 +236,9 @@ Shader "IATK/Linked-Views-Material"
 						pos = mul(ScaleMatrix2, pos);
 					}
 
+					if (v.normal.y == 1.0)
+						o.filtered = true;
+
 					o.vertex = mul(UNITY_MATRIX_VP, ObjectToWorldDistort3d(pos, v.normal.z > 0));
 					
 					return o;
