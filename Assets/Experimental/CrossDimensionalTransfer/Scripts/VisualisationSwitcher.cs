@@ -15,21 +15,42 @@ namespace Experimental.CrossDimensionalTransfer
         }
         
         public List<VisualisationSwitcherButton> visualisations;
+        public List<Vector3> positions;
+        public int startIndex;
         
         private void Start()
         {
-            foreach (var vis in visualisations)
+            for (int i = 0; i < visualisations.Count; i++)
             {
-                vis.button.OnClick.AddListener(() => 
+                var vis = visualisations[i];
+                positions.Add(vis.holder.transform.localPosition);
+                
+                if (i != startIndex)
                 {
-                    foreach (var _ in visualisations)
-                    {
-                        if (_.holder == vis.holder)
-                            _.holder.SetActive(true);
-                        else
-                            _.holder.SetActive(false);
-                    }
-                });
+                    vis.holder.SetActive(true);
+                    vis.holder.transform.localPosition = new Vector3(1000, 1000, 1000);
+                }
+                
+                vis.button.OnClick.AddListener(() => SwitcherButtonClicked(vis));
+            }
+            
+            SwitcherButtonClicked(visualisations[startIndex]);
+        }
+        
+        public void SwitcherButtonClicked(VisualisationSwitcherButton visButton)
+        {
+            for (int i = 0; i < visualisations.Count; i++)
+            {
+                var thisVis = visualisations[i];
+                
+                if (visButton.holder == thisVis.holder)
+                {
+                    thisVis.holder.transform.localPosition = positions[i];
+                }
+                else
+                {
+                    thisVis.holder.transform.localPosition = new Vector3(1000, 1000, 1000);
+                }
             }
         }
     }

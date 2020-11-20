@@ -27,6 +27,7 @@ namespace Experimental.CrossDimensionalTransfer
         private Vector3 startRot;
         private bool isSliderOpen = false;
         private bool isSliderClosing = false;
+        private bool isSliding = false;
         private string constantDimension;
         
         private SlidingAxis slidingAxis = SlidingAxis.None;
@@ -68,7 +69,7 @@ namespace Experimental.CrossDimensionalTransfer
 
         private void Update()
         {
-            if ((isSliderOpen && slidingAxis != SlidingAxis.None) || isSliderClosing)
+            if ((isSliderOpen && isSliding && slidingAxis != SlidingAxis.None) || isSliderClosing)
             {
                 ObjectManipulator slider = slidingAxis == SlidingAxis.X ? XSliderHandle : YSliderHandle;
                 
@@ -134,6 +135,7 @@ namespace Experimental.CrossDimensionalTransfer
             vis.Height = SlidingVisualisation.Height;
             vis.Depth = SlidingVisualisation.Depth;
             vis.Size = SlidingVisualisation.Size;
+            vis.Colour = SlidingVisualisation.Colour;
             
             switch (slidingDimension)
             {
@@ -295,6 +297,8 @@ namespace Experimental.CrossDimensionalTransfer
         {
             isCreateLinksCoroutineRunning = true;
             
+            yield return null;
+            
             List<DataVisualisation> visesToLink = new List<DataVisualisation>();
             
             visesToLink.Add(SlidingVisualisation);
@@ -326,8 +330,8 @@ namespace Experimental.CrossDimensionalTransfer
             for (int i = linkingVisualisations.Count - 1; i >= visesToLink.Count - 1; i--)
             {
                 LinkingVisualisations linkVis = linkingVisualisations[i];
-                Destroy(linkVis.gameObject);
                 linkingVisualisations.RemoveAt(i);
+                Destroy(linkVis.gameObject);
             }
             
             yield return null;
@@ -346,6 +350,7 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 slidingAxis = SlidingAxis.X;
                 isSliderOpen = true;
+                isSliding = true;
                 
                 startPos = SlidingVisualisation.transform.localPosition;
                 startRot = SlidingVisualisation.transform.localEulerAngles;
@@ -364,6 +369,7 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 slidingAxis = SlidingAxis.Y;
                 isSliderOpen = true;
+                isSliding = true;
                 
                 startPos = SlidingVisualisation.transform.localPosition;
                 startRot = SlidingVisualisation.transform.localEulerAngles;
@@ -380,6 +386,7 @@ namespace Experimental.CrossDimensionalTransfer
         {
             XSliderHandle.gameObject.SetActive(true);
             YSliderHandle.gameObject.SetActive(true);
+            isSliding = false;
             
             if (visualisations.Count == 0)
                 CloseSlider();
@@ -389,6 +396,7 @@ namespace Experimental.CrossDimensionalTransfer
         {
             XSliderHandle.gameObject.SetActive(true);
             YSliderHandle.gameObject.SetActive(true);
+            isSliding = false;
             
             if (visualisations.Count == 0)
                 CloseSlider();

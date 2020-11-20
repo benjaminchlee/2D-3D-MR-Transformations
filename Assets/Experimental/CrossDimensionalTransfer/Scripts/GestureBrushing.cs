@@ -1,5 +1,6 @@
 ﻿using IATK;
 using Microsoft.MixedReality.Toolkit.Utilities;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace Experimental.CrossDimensionalTransfer
     public class GestureBrushing : MonoBehaviour
     {
         public BrushingAndLinking brushingAndLinkingScript;
-        public float BrushRadius = 0.025f;
+        public float BrushRadius = 0.02f;
         public GameObject BrushMarkerPrefab;
         
         private bool isTracking = false;
@@ -29,9 +30,9 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 UpdateBrushingAndLinkingVisualisations();
             }
-            catch
+            catch (Exception e)
             {
-                
+                Debug.Log(e.Message);
             }
             
             int leftTouch = HandInputManager.Instance.GetNumTouchingFingers(Handedness.Left);
@@ -39,49 +40,51 @@ namespace Experimental.CrossDimensionalTransfer
             if (leftTouch > 2)
             {
                 if (!isTracking)
-                {
-                    Debug.Log("Brushing: Start");
-                    
+                {                    
                     isTracking = true;
                     ConfigureBrushingAndLinking(Handedness.Left);
                     UpdateBrushingAndLinkingVisualisations();
-                    
-                    switch (leftTouch)
-                    {
-                        case 3:
-                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.ADD;
-                            break;
-                        case 4:
-                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.SUBTRACT;
-                            break;
-                        case 5:
-                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
-                            break;
-                    }
+                }
+                
+                switch (leftTouch)
+                {
+                    case 3:
+                        Debug.Log("Brushing: Left Add Start");
+                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.ADD;
+                        break;
+                    case 4:
+                        Debug.Log("Brushing: Left Subtract Start");
+                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.SUBTRACT;
+                        break;
+                    case 5:
+                        Debug.Log("Brushing: Left Free Start");
+                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
+                        break;
                 }
             }
             else if (rightTouch > 2)
             {
                 if (!isTracking)
-                {
-                    Debug.Log("Brushing: Start");
-                    
+                {                    
                     isTracking = true;
                     ConfigureBrushingAndLinking(Handedness.Right);
                     UpdateBrushingAndLinkingVisualisations();
-                    
-                    switch (rightTouch)
-                    {
-                        case 3:
-                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.ADD;
-                            break;
-                        case 4:
-                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.SUBTRACT;
-                            break;
-                        case 5:
-                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
-                            break;
-                    }
+                }
+                
+                switch (rightTouch)
+                {
+                    case 3:
+                        Debug.Log("Brushing: Right Add Start");
+                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.ADD;
+                        break;
+                    case 4:
+                        Debug.Log("Brushing: Right Subtract Start");
+                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.SUBTRACT;
+                        break;
+                    case 5:
+                        Debug.Log("Brushing: Right Free Start");
+                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
+                        break;
                 }
             }
             else
@@ -93,7 +96,9 @@ namespace Experimental.CrossDimensionalTransfer
                     isTracking = false;
                     brushingAndLinkingScript.input1 = null;
                     brushingAndLinkingScript.input2 = null;
-                    brushingAndLinkingScript.enabled = false;
+                    brushingAndLinkingScript.isBrushing = false;
+                    brushingAndLinkingScript.showBrush = false;
+                    brushMarker.SetActive(false);
                 }
             }
         }
@@ -102,14 +107,15 @@ namespace Experimental.CrossDimensionalTransfer
         {
             Transform pointer = HandInputManager.Instance.GetJointTransform(handedness, TrackedHandJoint.IndexTip);
                         
-            brushingAndLinkingScript.enabled = true;
-            brushingAndLinkingScript.input1 = pointer;
-            brushingAndLinkingScript.input2 = pointer;
-            brushingAndLinkingScript.isBrushing = true;
-            brushingAndLinkingScript.brushRadius = BrushRadius;
-            
             brushMarker.transform.SetParent(pointer);
             brushMarker.transform.localPosition = Vector3.zero;
+            brushMarker.SetActive(true);
+            
+            brushingAndLinkingScript.input1 = brushMarker.transform;
+            brushingAndLinkingScript.input2 = brushMarker.transform;
+            brushingAndLinkingScript.isBrushing = true;
+            brushingAndLinkingScript.showBrush = true;
+            brushingAndLinkingScript.brushRadius = BrushRadius;
         }
         
         private void UpdateBrushingAndLinkingVisualisations()
@@ -118,9 +124,12 @@ namespace Experimental.CrossDimensionalTransfer
             
             for (int i = visualisations.Count - 1; i >= 0; i--)
             {
-                if (((CSVDataSource)visualisations[i].dataSource).data.name != "auto-mpg")
+                if (visualisations[i].dataSource != null)
                 {
-                    visualisations.RemoveAt(i);
+                    if (((CSVDataSource)visualisations[i].dataSource).data.name != "auto-mpg")
+                    {
+                        visualisations.RemoveAt(i);
+                    }
                 }
             }
             brushingAndLinkingScript.brushingVisualisations = visualisations.ToList();

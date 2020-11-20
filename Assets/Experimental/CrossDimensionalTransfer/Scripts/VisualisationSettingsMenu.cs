@@ -14,7 +14,8 @@ namespace Experimental.CrossDimensionalTransfer
         SizeByDimension,
         ColorByDimension,
         Color,
-        GeometryType
+        GeometryType,
+        LinkingDimension
     }
 
     public class VisualisationSettingsMenu : MonoBehaviour
@@ -23,15 +24,17 @@ namespace Experimental.CrossDimensionalTransfer
         public List<VisualisationSettingGroup> VisualisationSettingGroups;
         public ButtonConfigHelper ColorButton;
         public GameObject ColorPicker;
+        public DataSource DataSource;
 
         private VisualisationSettingGroup activeSettingGroup;
 
-        private void Start()
+        private void Awake()
         {
             foreach (var group in VisualisationSettingGroups)
             {
                 group.OnSettingGroupClicked.AddListener(() => SettingGroupClicked(group));
                 group.OnSettingChanged.AddListener(() => SettingChanged(group));
+                group.DataSource = DataSource;
             }
             
             ColorButton.OnClick.AddListener(ToggleColorButton);
@@ -96,6 +99,10 @@ namespace Experimental.CrossDimensionalTransfer
                     
                 case VisualisationProperties.GeometryType:
                     ParentDataVisualisation.GeometryType = (AbstractVisualisation.GeometryType) value;
+                    break;
+                
+                case VisualisationProperties.LinkingDimension:
+                    ParentDataVisualisation.LinkingDimension = (string) value;
                     break;
             }
         }

@@ -160,10 +160,22 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 			normaliseValue(dataBuffer[idx].y, _MinNormY, _MaxNormY, 0, height),
 			normaliseValue(dataBuffer[idx].z, _MinNormZ, _MaxNormZ, 0, depth));
 		
+		#if UNITY_EDITOR
 		if (IsBetweenRanges(filteredPosition.x, _MinX, _MaxX * width) &&
 			IsBetweenRanges(filteredPosition.y, _MinY, _MaxY * height) &&
 			IsBetweenRanges(filteredPosition.z, _MinZ, _MaxZ * depth)
 		) 
+		#else
+		// Filter out indices
+		if (
+			(filteredPosition.x >= _MinX &&
+				filteredPosition.x <= _MaxX * width &&
+				filteredPosition.y >= _MinY &&
+				filteredPosition.y <= _MaxY * height &&
+				filteredPosition.z >= _MinZ &&
+				filteredPosition.z <= _MaxZ * depth
+				))
+		#endif
 		{
 			if (Brush(BrushMode, filteredPosition))
 			{

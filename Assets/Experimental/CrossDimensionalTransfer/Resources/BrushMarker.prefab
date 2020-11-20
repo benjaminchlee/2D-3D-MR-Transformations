@@ -11,9 +11,8 @@ GameObject:
   - component: {fileID: 1621322733146315905}
   - component: {fileID: 4327413668143923225}
   - component: {fileID: 2537415182770680537}
-  - component: {fileID: 8360548310205601717}
   m_Layer: 0
-  m_Name: Sphere
+  m_Name: BrushMarker
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80,16 +79,3 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!135 &8360548310205601717
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6101811689521755177}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}

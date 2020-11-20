@@ -1,4 +1,5 @@
 ﻿using IATK;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace Experimental.CrossDimensionalTransfer
         [HideInInspector]
         public string ID;
 
+        [Header("Required Fields")]
         [SerializeField]
         private GameObject visualisationHolder;
         [SerializeField]
@@ -20,36 +22,36 @@ namespace Experimental.CrossDimensionalTransfer
         [SerializeField]
         private DataSource dataSource;
         
+        [Header("Network visualisation")]
+        [SerializeField]
+        private TextAsset edgesData;
+        [SerializeField]
+        private string nodeName;
+        [SerializeField]
+        private string originName;
+        [SerializeField]
+        private string destinationName;
+        [SerializeField]
+        private string linkingName;
+        [SerializeField]
+        private string edgeWeightName;
+        
+        // [Header("Histogram visualisation")]
+        // [SerializeField]
+        // private string 
+        
         // Data extrusion variables
         private string extrusionDataPointKey;
         private float[] extrudedDataPointOffset;
         private bool isExtruding = false;
         private Vector3 startViewScale;
         
-        private void Awake()
-        {
-            if (visualisation == null)
-                visualisation = visualisationHolder.AddComponent<Visualisation>();      
-                
-            // Set blank IATK values
-            if (visualisation.colourDimension == null || visualisation.colourDimension == "")
-                visualisation.colourDimension = "Undefined";
-            if (visualisation.colorPaletteDimension == null ||visualisation.colorPaletteDimension == "")
-                visualisation.colorPaletteDimension = "Undefined";
-            if (visualisation.sizeDimension == null ||visualisation.sizeDimension == "")
-                visualisation.sizeDimension = "Undefined";
-            if (visualisation.linkingDimension == null ||visualisation.linkingDimension == "")
-                visualisation.linkingDimension = "Undefined";
-            if (dataSource != null)
-                DataSource = dataSource;
-            else if (DataSource == null)
-                DataSource = DataVisualisationManager.Instance.DataSource;
-        }
-        
-        private void Start()
-        {
-            //GenerateExtrusionOffset();
-        }
+        // Network variables
+        private Dictionary<string, int> networkNodeStringToIndex;
+        private Dictionary<int, List<int>> networkConnectedNodes;
+        private Dictionary<System.Tuple<int, int>, float> networkEdgeWeights;
+
+        #region Visualisation Properties
 
         public Visualisation Visualisation
         {
@@ -252,7 +254,39 @@ namespace Experimental.CrossDimensionalTransfer
                 return visualisation.theVisualizationObject.Z_AXIS;
             }
         }
+        
+        #endregion
 
+        private void Awake()
+        {
+            if (visualisation == null)
+                visualisation = visualisationHolder.AddComponent<Visualisation>();      
+                
+            // Set blank IATK values
+            if (visualisation.colourDimension == null || visualisation.colourDimension == "")
+                visualisation.colourDimension = "Undefined";
+            if (visualisation.colorPaletteDimension == null ||visualisation.colorPaletteDimension == "")
+                visualisation.colorPaletteDimension = "Undefined";
+            if (visualisation.sizeDimension == null ||visualisation.sizeDimension == "")
+                visualisation.sizeDimension = "Undefined";
+            if (visualisation.linkingDimension == null ||visualisation.linkingDimension == "")
+                visualisation.linkingDimension = "Undefined";
+            if (dataSource != null)
+                DataSource = dataSource;
+            else if (DataSource == null)
+                DataSource = DataVisualisationManager.Instance.DataSource;
+        }
+        
+        private void Start()
+        {
+            if (edgesData != null && dataSource != null && nodeName != "" && originName != "" && destinationName != "")
+            {
+                SetDataSourceEdges();
+                visualisation.graphDimension = "Blah";
+                GeometryType = AbstractVisualisation.GeometryType.LinesAndDots;
+            }
+        }
+        
         private void Update()
         {
             AdjustVisualisationLocalPosition();
@@ -280,10 +314,79 @@ namespace Experimental.CrossDimensionalTransfer
             float zPos = (ZDimension != "Undefined") ? -Depth / 2 : 0;
             boxCollider.center = new Vector3(xPos, yPos, zPos);
         }
+        
+        private void SetDataSourceEdges()
+        {
+            CSVDataSource csvDataSource = (CSVDataSource)dataSource;
+            char[] split = new char[] { ',', '\t', ';'};
+            
+            // Form a dictionary of string names and their indices from the original dataset
+            string[] nodeDataLines = csvDataSource.data.text.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            Dictionary<int, List<int>> dataSourceGraphEdges = new Dictionary<int, List<int>>();
+            networkNodeStringToIndex = new Dictionary<string, int>();
+            int nodeIdx = Array.IndexOf(nodeDataLines[0].Split(split, StringSplitOptions.RemoveEmptyEntries), nodeName);
+            
+            for (int i = 1; i < nodeDataLines.Length; i++)
+            {
+                string[] values = nodeDataLines[i].Split(split, StringSplitOptions.RemoveEmptyEntries);
+                string name = values[nodeIdx];
+                networkNodeStringToIndex[name] = i - 1;
+            }
+            
+            // Generate graph edges list
+            networkEdgeWeights = new Dictionary<System.Tuple<int, int>, float>();
+            networkConnectedNodes = new Dictionary<int, List<int>>();
+            string[] edgeDataLines = edgesData.text.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] headers = edgeDataLines[0].Split(split, StringSplitOptions.RemoveEmptyEntries);
+            int originIdx = Array.IndexOf(headers, originName);
+            int destinationIdx = Array.IndexOf(headers, destinationName);
+            int weightIdx = Array.IndexOf(headers, edgeWeightName);
+            int linkingIdx = Array.IndexOf(headers, linkingName);
+            List<string> visitedGroups = new List<string>();
+            
+            for (int i = 1; i < edgeDataLines.Length; i++)
+            {
+                string[] line = edgeDataLines[i].Split(split, StringSplitOptions.RemoveEmptyEntries);
+                int origin = networkNodeStringToIndex[line[originIdx]];
+                int destination = networkNodeStringToIndex[line[destinationIdx]];
+                float weight = float.Parse(line[weightIdx]);
+                networkEdgeWeights[new System.Tuple<int, int>(origin, destination)] = weight;
+                
+                // Set adjacency list dictionary
+                if (networkConnectedNodes.TryGetValue(origin, out List<int> list))
+                {
+                    list.Add(destination);
+                }
+                else
+                {
+                    list = new List<int>() { destination };
+                    networkConnectedNodes[origin] = list;
+                }
+                
+                // Draw edges between connected points
+                string group = line[linkingIdx];
+                List<int> edgeList;
+                if (visitedGroups.Contains(group))
+                {
+                    edgeList = dataSourceGraphEdges[visitedGroups.IndexOf(group) + 1];
+                }
+                else
+                {
+                    visitedGroups.Add(group);
+                    edgeList = new List<int>();
+                    dataSourceGraphEdges[visitedGroups.Count] = edgeList;
+                }
+                
+                edgeList.Add(origin);
+                edgeList.Add(destination);
+            }
+            
+            // Set graph edges
+            csvDataSource.GraphEdges = dataSourceGraphEdges;
+        }
 
         private void GenerateExtrusionOffset(Vector3 extrusionPoint)
         {
-            
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT)
             {
                 switch (GeometryType)
@@ -293,6 +396,14 @@ namespace Experimental.CrossDimensionalTransfer
                     case AbstractVisualisation.GeometryType.Bars:
                     case AbstractVisualisation.GeometryType.Cubes:
                     case AbstractVisualisation.GeometryType.Quads:
+                        if (gameObject.transform.parent.gameObject.name == "NetworkChart")
+                        {
+                            extrusionDataPointKey = GetExtrusionDimensionKey();
+                            GenerateWeightedPointOffset(extrusionPoint);
+                            break;
+                        }
+                        
+                    
                         // Only run this if 1 or 2 dimensions are set, not all 3 (no 4th dimension to extrude into!)
                         int numSet = (XDimension != "Undefined") ? 1 : 0;
                         numSet += (YDimension != "Undefined") ? 1 : 0;
@@ -307,9 +418,13 @@ namespace Experimental.CrossDimensionalTransfer
                         break;
                     
                     case AbstractVisualisation.GeometryType.Lines:
-                    case AbstractVisualisation.GeometryType.LinesAndDots:
                         extrusionDataPointKey = GetExtrusionDimensionKey();
                         GenerateDistancePointOffset(extrusionPoint);
+                        break;
+                        
+                    case AbstractVisualisation.GeometryType.LinesAndDots:
+                        extrusionDataPointKey = GetExtrusionDimensionKey();
+                        GenerateWeightedPointOffset(extrusionPoint);
                         break;
                 }
             }
@@ -357,7 +472,7 @@ namespace Experimental.CrossDimensionalTransfer
         }
         
         private void GenerateDistancePointOffset(Vector3 extrusionPoint)
-        {
+        {            
             if (LinkingDimension == "Undefined")
                 return;
             
@@ -480,6 +595,105 @@ namespace Experimental.CrossDimensionalTransfer
             // }
         }
         
+        private void GenerateWeightedPointOffset(Vector3 extrusionPoint)
+        {
+            if (networkEdgeWeights == null)
+                return;
+            
+            int dataCount = DataSource.DataCount;
+            
+            float[] xPositions = (XDimension != "Undefined") ? DataSource[XDimension].Data : new float[dataCount];
+            float[] yPositions = (YDimension != "Undefined") ? DataSource[YDimension].Data : new float[dataCount];
+            float[] zPositions = (ZDimension != "Undefined") ? DataSource[ZDimension].Data : new float[dataCount];
+            //extrudedDataPointOffset = new float[dataCount];
+            
+            extrusionPoint.x = NormaliseValue(extrusionPoint.x, 0, Width, 0, 1);
+            extrusionPoint.y = NormaliseValue(extrusionPoint.y, 0, Height, 0, 1);
+            //extrusionPoint.z = NormaliseValue(extrusionPoint.z, 0, Depth, 0, 1);
+            extrusionPoint.z = 0;
+            
+            // Get the index of the point closest to the extrusion point
+            int sourceIdx = -1;
+            float minDistance = Mathf.Infinity;
+            for (int i = 0; i < dataCount; i++)
+            {
+                float distance = Vector3.Distance(new Vector3(xPositions[i], yPositions[i], zPositions[i]), extrusionPoint);
+                if (distance < minDistance)
+                {
+                    sourceIdx = i;
+                    minDistance = distance;
+                }
+            }
+            
+            // Calculate the distance of this point to all other points (Dijkstra's)
+            bool[] visited = new bool[dataCount];
+            float[] distances = new float[dataCount];
+            int count = 1;
+            
+            for (int i = 0; i < dataCount; i++)
+            {
+                visited[i] = false;
+                distances[i] = Mathf.Infinity;
+            }
+            
+            distances[sourceIdx] = 0;
+            
+            while (!visited.All(x => x) && count < dataCount - 1)
+            {
+                // Get minimum index
+                int u = -1;
+                float min = Mathf.Infinity;
+                for (int i = 0; i < dataCount; i++)
+                {
+                    float distance = distances[i];
+                    if (!visited[i] && distance < min)
+                    {
+                        u = i;
+                        min = distance;
+                    }
+                }
+                visited[u] = true;
+                
+                // Iterate through neighbours
+                foreach (int v in networkConnectedNodes[u])
+                {
+                    float alt = distances[u] + networkEdgeWeights[new System.Tuple<int, int>(u, v)];
+                    if (alt < distances[v])
+                    {
+                        distances[v] = alt;
+                    }
+                }
+                
+                count++;
+            }
+            
+            // Get infinites (diconnected points)
+            List<int> infinites = new List<int>();
+            for (int i = 0; i < dataCount; i++)
+            {
+                if (distances[i] == Mathf.Infinity)
+                {
+                    distances[i] = 0;
+                    infinites.Add(i);
+                }
+            }
+            
+            // Normalise values
+            float max = distances.Max();
+            for (int i = 0; i < dataCount; i++)
+            {
+                distances[i] = 1 - NormaliseValue(distances[i], 0, max, 0, 1);
+            }
+            
+            // Set previously infinite points to 0
+            foreach (int i in infinites)
+            {
+                distances[i] = 0;
+            }
+            
+            extrudedDataPointOffset = distances;
+        }
+        
         private string GetExtrusionDimensionKey()
         {
             return string.Format("X:{0}Y:{1}Z:{2}Linking:{3}", XDimension, YDimension, ZDimension, LinkingDimension);
@@ -494,7 +708,10 @@ namespace Experimental.CrossDimensionalTransfer
 
         public void ExtrudeDimension(AbstractVisualisation.PropertyType dimension, Vector3 extrusionPoint, float distance)
         {
-            if (!isExtruding && (GetExtrusionDimensionKey() != extrusionDataPointKey || GeometryType == AbstractVisualisation.GeometryType.LinesAndDots || GeometryType == AbstractVisualisation.GeometryType.Lines))
+            if (!isExtruding && (GetExtrusionDimensionKey() != extrusionDataPointKey ||
+                GeometryType == AbstractVisualisation.GeometryType.LinesAndDots ||
+                GeometryType == AbstractVisualisation.GeometryType.Lines ||
+                gameObject.transform.parent.name == "NetworkChart"))
                 GenerateExtrusionOffset(extrusionPoint);
             
             if (distance == 0)

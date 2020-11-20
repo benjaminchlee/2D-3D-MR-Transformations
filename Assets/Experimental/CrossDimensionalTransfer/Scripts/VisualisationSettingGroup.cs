@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using Microsoft.MixedReality.Toolkit.Utilities;
+using Microsoft.MixedReality.Toolkit.Input;
 
 namespace Experimental.CrossDimensionalTransfer
 {
@@ -22,19 +23,18 @@ namespace Experimental.CrossDimensionalTransfer
         public bool IsSettingGroupOpened { get; private set; }
 
         public ButtonConfigHelper MainButton;
-        public GridObjectCollection GridCollection;
+        public GameObject ButtonHolder;
         public GameObject ButtonPrefab;
 
         public UnityEvent OnSettingGroupClicked;
         public UnityEvent OnSettingChanged;
 
-        private DataSource dataSource;
+        [HideInInspector]
+        public DataSource DataSource;
         private List<ButtonConfigHelper> buttons;
-
+        
         private void Start()
         {
-            dataSource = DataVisualisationManager.Instance.DataSource;
-
             switch (visualisationSetting)
             {
                 case VisualisationProperties.XDimension:
@@ -43,6 +43,7 @@ namespace Experimental.CrossDimensionalTransfer
                 case VisualisationProperties.SizeByDimension:
                 case VisualisationProperties.ColorByDimension:
                 case VisualisationProperties.GeometryType:
+                case VisualisationProperties.LinkingDimension:
                     CreateScrollButtons();
                     break;
             }
@@ -55,9 +56,9 @@ namespace Experimental.CrossDimensionalTransfer
         private List<string> GetAttributesList()
         {
             List<string> dimensions = new List<string>();
-            for (int i = 0; i < dataSource.DimensionCount; ++i)
+            for (int i = 0; i < DataSource.DimensionCount; ++i)
             {
-                dimensions.Add(dataSource[i].Identifier);
+                dimensions.Add(DataSource[i].Identifier);
             }
             return dimensions;
         }
@@ -74,12 +75,13 @@ namespace Experimental.CrossDimensionalTransfer
                 case VisualisationProperties.ZDimension:
                 case VisualisationProperties.SizeByDimension:
                 case VisualisationProperties.ColorByDimension:
+                case VisualisationProperties.LinkingDimension:
                     buttonLabels = GetAttributesList();
                     buttonLabels.Insert(0, "Undefined");
                     break;
                 
                 case VisualisationProperties.GeometryType:
-                    buttonLabels = new List<string>(){ "Points", "Spheres", "Cubes", "Quads", "Bars"};
+                    buttonLabels = new List<string>(){ "Points", "Spheres", "Cubes", "Quads", "Bars", "Lines", "LinesAndDots"};
                     break;
             }
 
@@ -101,12 +103,10 @@ namespace Experimental.CrossDimensionalTransfer
                 button.transform.Find("IconAndText/UIButtonCharIcon").GetComponent<MeshRenderer>().enabled = false;
                 button.transform.Find("IconAndText/UIButtonSpriteIcon").GetComponent<SpriteRenderer>().enabled = false;
                 
-                button.transform.SetParent(GridCollection.transform);
-                button.transform.localPosition = Vector3.zero;
+                button.transform.SetParent(ButtonHolder.transform);
+                button.transform.localPosition = new Vector3(0, (0.032f + 0.004f) * -i, 0);
                 button.transform.localRotation = Quaternion.identity;
             }
-            
-            GridCollection.UpdateCollection();
         }
 
         private void SettingGroupButtonClicked()
@@ -145,7 +145,7 @@ namespace Experimental.CrossDimensionalTransfer
             MainButton.IconStyle = ButtonIconStyle.Quad;
             MainButton.SetQuadIconByName("IconDone");
             
-            GridCollection.gameObject.SetActive(true);
+            ButtonHolder.SetActive(true);
         }
 
         public void CloseSettingGroup()
@@ -154,7 +154,7 @@ namespace Experimental.CrossDimensionalTransfer
 
             MainButton.IconStyle = ButtonIconStyle.None;
 
-            GridCollection.gameObject.SetActive(false);
+            ButtonHolder.SetActive(false);
         }
         
         private AbstractVisualisation.GeometryType GetGeometryType(string name)
@@ -175,6 +175,12 @@ namespace Experimental.CrossDimensionalTransfer
                 
                 case "Bars":
                     return AbstractVisualisation.GeometryType.Bars;
+                    
+                case "Lines":
+                    return AbstractVisualisation.GeometryType.Lines;
+                    
+                case "LinesAndDots":
+                    return AbstractVisualisation.GeometryType.LinesAndDots;
                 
                 default:
                     return AbstractVisualisation.GeometryType.Undefined;

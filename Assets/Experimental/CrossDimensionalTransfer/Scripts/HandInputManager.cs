@@ -69,7 +69,7 @@ namespace Experimental.CrossDimensionalTransfer
             if (!handJointService.IsHandTracked(handedness))
                 return 0;
             
-            float closedDistance = 0.035f;
+            float closedDistance = 0.03f;
             
             var thumbTip = handJointService.RequestJointTransform(TrackedHandJoint.ThumbTip, handedness);
             var indexTip = handJointService.RequestJointTransform(TrackedHandJoint.IndexTip, handedness);

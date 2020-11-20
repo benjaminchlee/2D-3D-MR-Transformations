@@ -366,9 +366,14 @@ namespace IATK
 
                 foreach (var edgeNode in edges)
                 {
-                    Indices.Add(node-1);
+                    // Indices.Add(node-1);
                     Indices.Add(edgeNode);
                 }
+                // for (int i = 0; i < edges.Count - 1; i++)
+                // {
+                //     Indices.Add(edges[i]);
+                //     Indices.Add(edges[i + 1]);
+                // }
 
                 Vector3 n = uvs[node-1];
                 n.x = (float)(node -1);

@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using IATK;
+using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.Utilities;
 using System;
@@ -36,7 +37,11 @@ namespace Experimental.CrossDimensionalTransfer
         {
             isExtruding = true;
             
-            extrusionPoint = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint(arg0.Pointer.Position);
+            var hand = arg0.Pointer.Controller as IMixedRealityHand;
+            if (hand.TryGetJoint(TrackedHandJoint.IndexTip, out MixedRealityPose jointPose))
+            {
+                extrusionPoint = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint(jointPose.Position);
+            }
         }
 
         private void ExtrusionSliderReleased(ManipulationEventData arg0)
