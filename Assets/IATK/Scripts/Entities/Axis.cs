@@ -290,35 +290,48 @@ namespace IATK
         
         private int CalculateNumAxisTickLabels()
         {
-            if (IsAttributeDiscrete())
+            try
             {
-                // If this axis dimension has been rescaled at all, don't show any ticks
-                if (AttributeFilter.minScale > 0.001f || AttributeFilter.maxScale < 0.999f)
-                    return 0;
-                
-                // If this discrete dimension has less unique values than the maximum number of ticks allowed due to spacing,
-                // give an axis tick label for each unique value
-                int numValues = ((CSVDataSource)dataSource).TextualDimensionsListReverse[AttributeName].Count;
-                int maxTicks = Mathf.CeilToInt(Length / AxisTickSpacing);
-                if (numValues < maxTicks)
-                    return numValues;
-                // Otherwise just use 2 labels
+                if (IsAttributeDiscrete())
+                {
+                    // If this axis dimension has been rescaled at all, don't show any ticks
+                    if (AttributeFilter.minScale > 0.001f || AttributeFilter.maxScale < 0.999f)
+                        return 0;
+                    
+                    // If this discrete dimension has less unique values than the maximum number of ticks allowed due to spacing,
+                    // give an axis tick label for each unique value
+                    int numValues = ((CSVDataSource)dataSource).TextualDimensionsListReverse[AttributeName].Count;
+                    int maxTicks = Mathf.CeilToInt(Length / AxisTickSpacing);
+                    if (numValues < maxTicks)
+                        return numValues;
+                    // Otherwise just use 2 labels
+                    else
+                    {
+                        return 2;
+                    }
+                }
                 else
                 {
-                    return 2;
+                    return Mathf.CeilToInt(Length / AxisTickSpacing);
                 }
             }
-            else
+            catch
             {
-                return Mathf.CeilToInt(Length / AxisTickSpacing);
+                return 0;
             }
         }
         
         private bool IsAttributeDiscrete()
         {
-            var type = dataSource[AttributeFilter.Attribute].MetaData.type;
-            
-            return (type == DataType.String || type == DataType.Date);
+            try
+            {
+                var type = dataSource[AttributeFilter.Attribute].MetaData.type;
+                return (type == DataType.String || type == DataType.Date);
+            }
+            catch
+            {
+                return true;
+            }
         }
         
         private float GetAxisTickLabelPosition(int labelIndex, int numLabels)
