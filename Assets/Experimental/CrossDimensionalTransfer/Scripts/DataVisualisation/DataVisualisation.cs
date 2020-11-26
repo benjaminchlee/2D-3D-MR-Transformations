@@ -22,40 +22,8 @@ namespace Experimental.CrossDimensionalTransfer
         [SerializeField]
         private DataSource dataSource;
         
-        [Header("Network visualisation")]
-        [SerializeField]
-        private TextAsset edgesData;
-        [SerializeField]
-        private string nodeName;
-        [SerializeField]
-        private string originName;
-        [SerializeField]
-        private string destinationName;
-        [SerializeField]
-        private string linkingName;
-        [SerializeField]
-        private string edgeWeightName;
+        private VisualisationExtrusion visualisationExtrusion;
         
-        // [Header("Histogram visualisation")]
-        // [SerializeField]
-        // private string 
-        
-        // Data extrusion variables
-        private string extrusionDataPointKey;
-        private float[] extrusionDataPointOffset;
-        private bool isExtruding = false;
-        private Vector3 startViewScale;
-        
-        // Network variables
-        private Dictionary<string, int> networkNodeStringToIndex;
-        private Dictionary<int, List<int>> networkConnectedNodes;
-        private Dictionary<System.Tuple<int, int>, float> networkEdgeWeights;
-
-        // Extrusion histogram variables
-        private const float extrusionBarDistance = 0.05f;
-        private float[] extrusionHistogramYPointOffset;
-        private int currentBins = 0;
-
         #region Visualisation Properties
 
         public Visualisation Visualisation
@@ -260,6 +228,11 @@ namespace Experimental.CrossDimensionalTransfer
             }
         }
         
+        public bool AutoCenterVisualisation
+        {
+            get; set;
+        } = true;
+        
         #endregion
 
         private void Awake()
@@ -280,19 +253,12 @@ namespace Experimental.CrossDimensionalTransfer
                 DataSource = dataSource;
             else if (DataSource == null)
                 DataSource = DataVisualisationManager.Instance.DataSource;
-        }
-        
-        private void Start()
-        {
-            if (edgesData != null && dataSource != null && nodeName != "" && originName != "" && destinationName != "" && linkingName != "")
+            
+            // Set extrusion variables
+            visualisationExtrusion = GetComponent<VisualisationExtrusion>();
+            if (visualisationExtrusion != null)
             {
-                SetDataSourceEdges();
-                visualisation.graphDimension = "Blah";
-                GeometryType = AbstractVisualisation.GeometryType.LinesAndDots;
-            }
-            else
-            {
-                
+                visualisationExtrusion.Initialise(dataSource, this, visualisation);
             }
         }
         
@@ -304,576 +270,36 @@ namespace Experimental.CrossDimensionalTransfer
 
         private void AdjustVisualisationLocalPosition()
         {
-            float xPos = (XDimension != "Undefined") ? -Width / 2 : 0;
-            float yPos = (YDimension != "Undefined") ? -Height / 2 : 0;
-            float zPos = (ZDimension != "Undefined") ? -Depth : 0;
+            if (AutoCenterVisualisation)
+            {
+                float xPos = (XDimension != "Undefined") ? -Width / 2 : 0;
+                float yPos = (YDimension != "Undefined") ? -Height / 2 : 0;
+                float zPos = (ZDimension != "Undefined") ? -Depth : 0;
 
-            visualisation.transform.localPosition = new Vector3(xPos, yPos, zPos);
+                visualisation.transform.localPosition = new Vector3(xPos, yPos, zPos);
+            }
         }
         
         private void AdjustCollider()
         {
-            float xScale = (XDimension != "Undefined") ? Width : 0.075f;
-            float yScale = (YDimension != "Undefined") ? Height : 0.075f;
-            float zScale = (ZDimension != "Undefined") ? Depth : 0.075f;
-            boxCollider.size = new Vector3(xScale, yScale, zScale);
+            if (AutoCenterVisualisation)
+            {
+                float xScale = (XDimension != "Undefined") ? Width : 0.075f;
+                float yScale = (YDimension != "Undefined") ? Height : 0.075f;
+                float zScale = (ZDimension != "Undefined") ? Depth : 0.075f;
+                boxCollider.size = new Vector3(xScale, yScale, zScale);
 
-            float xPos = 0;
-            float yPos = 0;
-            float zPos = (ZDimension != "Undefined") ? -Depth / 2 : 0;
-            boxCollider.center = new Vector3(xPos, yPos, zPos);
-        }
-        
-        private void SetDataSourceEdges()
-        {
-            CSVDataSource csvDataSource = (CSVDataSource)dataSource;
-            char[] split = new char[] { ',', '\t', ';'};
-            
-            // Form a dictionary of string names and their indices from the original dataset
-            string[] nodeDataLines = csvDataSource.data.text.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            Dictionary<int, List<int>> dataSourceGraphEdges = new Dictionary<int, List<int>>();
-            networkNodeStringToIndex = new Dictionary<string, int>();
-            int nodeIdx = Array.IndexOf(nodeDataLines[0].Split(split, StringSplitOptions.RemoveEmptyEntries), nodeName);
-            
-            for (int i = 1; i < nodeDataLines.Length; i++)
-            {
-                string[] values = nodeDataLines[i].Split(split, StringSplitOptions.RemoveEmptyEntries);
-                string name = values[nodeIdx];
-                networkNodeStringToIndex[name] = i - 1;
-            }
-            
-            // Generate graph edges list
-            networkEdgeWeights = new Dictionary<System.Tuple<int, int>, float>();
-            networkConnectedNodes = new Dictionary<int, List<int>>();
-            string[] edgeDataLines = edgesData.text.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            string[] headers = edgeDataLines[0].Split(split, StringSplitOptions.RemoveEmptyEntries);
-            int originIdx = Array.IndexOf(headers, originName);
-            int destinationIdx = Array.IndexOf(headers, destinationName);
-            int weightIdx = Array.IndexOf(headers, edgeWeightName);
-            int linkingIdx = Array.IndexOf(headers, linkingName);
-            List<string> visitedGroups = new List<string>();
-            
-            for (int i = 1; i < edgeDataLines.Length; i++)
-            {
-                string[] line = edgeDataLines[i].Split(split, StringSplitOptions.RemoveEmptyEntries);
-                int origin = networkNodeStringToIndex[line[originIdx]];
-                int destination = networkNodeStringToIndex[line[destinationIdx]];
-                float weight = float.Parse(line[weightIdx]);
-                networkEdgeWeights[new System.Tuple<int, int>(origin, destination)] = weight;
-                
-                // Set adjacency list dictionary
-                if (networkConnectedNodes.TryGetValue(origin, out List<int> list))
-                {
-                    list.Add(destination);
-                }
-                else
-                {
-                    list = new List<int>() { destination };
-                    networkConnectedNodes[origin] = list;
-                }
-                
-                // Draw edges between connected points
-                string group = line[linkingIdx];
-                List<int> edgeList;
-                if (visitedGroups.Contains(group))
-                {
-                    edgeList = dataSourceGraphEdges[visitedGroups.IndexOf(group) + 1];
-                }
-                else
-                {
-                    visitedGroups.Add(group);
-                    edgeList = new List<int>();
-                    dataSourceGraphEdges[visitedGroups.Count] = edgeList;
-                }
-                
-                edgeList.Add(origin);
-                edgeList.Add(destination);
-            }
-            
-            // Set graph edges
-            csvDataSource.GraphEdges = dataSourceGraphEdges;
-        }
-
-
-        private void GenerateOccludedPointOffset(Vector3 extrusionPoint)
-        {
-            int dataCount = DataSource.DataCount;
-            
-            float[] xPositions = (XDimension != "Undefined") ? DataSource[XDimension].Data : new float[dataCount];
-            float[] yPositions = (YDimension != "Undefined") ? DataSource[YDimension].Data : new float[dataCount];
-            float[] zPositions = (ZDimension != "Undefined") ? DataSource[ZDimension].Data : new float[dataCount];
-            float[] numOverlapping = new float[dataCount];
-            
-            Dictionary<Vector3, List<int>> visitedPoints = new Dictionary<Vector3, List<int>>();
-            
-            // Determine number of overlapping points
-            for (int i = 0; i < dataCount; i++)
-            {
-                var pos = new Vector3(xPositions[i], yPositions[i], zPositions[i]);
-                
-                if (visitedPoints.TryGetValue(pos, out List<int> points))
-                {
-                    points.Add(i);
-                }
-                else
-                {
-                    visitedPoints[pos] = new List<int>(i);
-                }
-            }
-            
-            extrusionDataPointOffset = new float[dataCount];
-            
-            foreach (var list in visitedPoints.Values)
-            {
-                if (list.Count > 1)
-                {
-                    for (int i = 1; i < list.Count; i++)
-                    {
-                        int idx = list[i];                        
-                        extrusionDataPointOffset[idx] = NormaliseValue(i, 0, list.Count);
-                    }
-                }
+                float xPos = 0;
+                float yPos = 0;
+                float zPos = (ZDimension != "Undefined") ? -Depth / 2 : 0;
+                boxCollider.center = new Vector3(xPos, yPos, zPos);
             }
         }
         
-        private void GenerateDistancePointOffset(Vector3 extrusionPoint)
-        {            
-            if (LinkingDimension == "Undefined")
-                return;
-            
-            int dataCount = DataSource.DataCount;
-            
-            float[] xPositions = (XDimension != "Undefined") ? DataSource[XDimension].Data : new float[dataCount];
-            float[] yPositions = (YDimension != "Undefined") ? DataSource[YDimension].Data : new float[dataCount];
-            float[] zPositions = (ZDimension != "Undefined") ? DataSource[ZDimension].Data : new float[dataCount];
-            extrusionDataPointOffset = new float[dataCount];
-            
-            extrusionPoint.x = NormaliseValue(extrusionPoint.x, 0, Width, 0, 1);
-            extrusionPoint.y = NormaliseValue(extrusionPoint.y, 0, Height, 0, 1);
-            //extrusionPoint.z = NormaliseValue(extrusionPoint.z, 0, Depth, 0, 1);
-            extrusionPoint.z = 0;
-            
-            // Get all unique paths
-            float[] ids = DataSource[LinkingDimension].Data;
-            float[] paths = ids.Distinct().ToArray();
-            
-            int[] steps = new int[dataCount];
-            
-            // We assume that the dataset is properly formatted for this (i.e., same paths are adjacent in the dataset)
-            foreach (float path in paths)
-            {
-                bool pathFound = false;
-                int pathStartIdx;
-                for (int i = 0; i < dataCount; i++)
-                {
-                    if (ids[i] == path)
-                    {
-                        pathFound = true;
-                        pathStartIdx = i;
-                        int pathEndIdx = dataCount - 1;
-                        int minIdx = -1;
-                        float minDistance = Mathf.Infinity;
-                        
-                        // Find the index closest to the extrusion point
-                        for (int j = pathStartIdx; j < dataCount; j++)
-                        {
-                            if (ids[j] != path)
-                            {
-                                pathEndIdx = j - 1;
-                                break;
-                            }
-                            
-                            float distance = Vector3.Distance(new Vector3(xPositions[j], yPositions[j], zPositions[j]), extrusionPoint);
-                            if (distance < minDistance)
-                            {
-                                minIdx = j;
-                                minDistance = distance;
-                            }
-                        }
-                        
-                        // Fill in the steps array with number of steps to reach the closest point from the edges
-                        bool pointReached = false;
-                        int count = 0;
-                        int leftSteps = 0;
-                        int midSteps = 0;
-                        int rightSteps = 0;
-                        for (int j = pathStartIdx; j < dataCount; j++)
-                        {
-                            if (j == minIdx)
-                            {
-                                pointReached = true;
-                                midSteps = count;
-                            }
-                            
-                            if (ids[j] != path)
-                            {
-                                rightSteps = steps[j - 1];
-                                break;
-                            }
-                            
-                            steps[j] = count;
-                            count += pointReached ? -1 : 1;
-                        }
-                        
-                        // Normalise these steps between 0 and 1, inverting the values
-                        pointReached = false;
-                        for (int j = pathStartIdx; j < dataCount; j++)
-                        {
-                            if (j == minIdx)
-                            {
-                                pointReached = true;
-                                extrusionDataPointOffset[j] = 1;
-                            }
-                            else
-                            {
-                                if (ids[j] != path)
-                                {
-                                    break;
-                                }
-                                
-                                // Left hand side
-                                if (!pointReached)
-                                {
-                                    extrusionDataPointOffset[j] = NormaliseValue(steps[j], leftSteps, midSteps, 0, 1);
-                                }
-                                else
-                                {
-                                    extrusionDataPointOffset[j] = NormaliseValue(steps[j], rightSteps, midSteps, 0, 1);
-                                }
-                            }
-                        }
-                        
-                        i = pathEndIdx + 1;
-                    }
-                    else if (pathFound)
-                    {
-                        break;
-                    }
-                }
-            }
-            
-            // for (int i = 0; i < dataCount; i++)
-            // {
-            //     var pos = new Vector3(xPositions[i], yPositions[i], zPositions[i]);
-            //     float distance = 1 - Vector3.Distance(extrusionPoint, pos);
-            //     extrudedDataPointOffset[i] = distance;
-            // }
-        }
-        
-        private void GenerateWeightedPointOffset(Vector3 extrusionPoint)
+        public void ExtrudeDimension(AbstractVisualisation.PropertyType dimension, float distance, Vector3 extrusionPoint1, Quaternion extrusionRotation1, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
         {
-            if (networkEdgeWeights == null)
-                return;
-            
-            int dataCount = DataSource.DataCount;
-            
-            float[] xPositions = (XDimension != "Undefined") ? DataSource[XDimension].Data : new float[dataCount];
-            float[] yPositions = (YDimension != "Undefined") ? DataSource[YDimension].Data : new float[dataCount];
-            float[] zPositions = (ZDimension != "Undefined") ? DataSource[ZDimension].Data : new float[dataCount];
-            //extrudedDataPointOffset = new float[dataCount];
-            
-            extrusionPoint.x = NormaliseValue(extrusionPoint.x, 0, Width, 0, 1);
-            extrusionPoint.y = NormaliseValue(extrusionPoint.y, 0, Height, 0, 1);
-            //extrusionPoint.z = NormaliseValue(extrusionPoint.z, 0, Depth, 0, 1);
-            extrusionPoint.z = 0;
-            
-            // Get the index of the point closest to the extrusion point
-            int sourceIdx = -1;
-            float minDistance = Mathf.Infinity;
-            for (int i = 0; i < dataCount; i++)
-            {
-                float distance = Vector3.Distance(new Vector3(xPositions[i], yPositions[i], zPositions[i]), extrusionPoint);
-                if (distance < minDistance)
-                {
-                    sourceIdx = i;
-                    minDistance = distance;
-                }
-            }
-            
-            // Calculate the distance of this point to all other points (Dijkstra's)
-            bool[] visited = new bool[dataCount];
-            float[] distances = new float[dataCount];
-            int count = 1;
-            
-            for (int i = 0; i < dataCount; i++)
-            {
-                visited[i] = false;
-                distances[i] = Mathf.Infinity;
-            }
-            
-            distances[sourceIdx] = 0;
-            
-            while (!visited.All(x => x) && count < dataCount - 1)
-            {
-                // Get minimum index
-                int u = -1;
-                float min = Mathf.Infinity;
-                for (int i = 0; i < dataCount; i++)
-                {
-                    float distance = distances[i];
-                    if (!visited[i] && distance < min)
-                    {
-                        u = i;
-                        min = distance;
-                    }
-                }
-                visited[u] = true;
-                
-                // Iterate through neighbours
-                foreach (int v in networkConnectedNodes[u])
-                {
-                    float alt = distances[u] + networkEdgeWeights[new System.Tuple<int, int>(u, v)];
-                    if (alt < distances[v])
-                    {
-                        distances[v] = alt;
-                    }
-                }
-                
-                count++;
-            }
-            
-            // Get infinites (diconnected points)
-            List<int> infinites = new List<int>();
-            for (int i = 0; i < dataCount; i++)
-            {
-                if (distances[i] == Mathf.Infinity)
-                {
-                    distances[i] = 0;
-                    infinites.Add(i);
-                }
-            }
-            
-            // Normalise values
-            float max = distances.Max();
-            for (int i = 0; i < dataCount; i++)
-            {
-                distances[i] = 1 - NormaliseValue(distances[i], 0, max, 0, 1);
-            }
-            
-            // Set previously infinite points to 0
-            foreach (int i in infinites)
-            {
-                distances[i] = 0;
-            }
-            
-            extrusionDataPointOffset = distances;
+            if (visualisationExtrusion != null)
+                visualisationExtrusion.ExtrudeDimension(dimension, distance, extrusionPoint1, extrusionRotation1, extrusionPoint2, extrusionRotation2);
         }
-        
-        // Here we override the points set by the Visualisation by calculating our own bins
-        private void GenerateHistogramPointOffset(Vector3 extrusionPoint, float distance)
-        {
-            // Only run this if the number of bins has changed
-            float size = Size * 0.05f;
-            int numBins = Mathf.FloorToInt(Mathf.Abs(distance) / size);
-            float remainder = Mathf.Abs(distance) % size;
-            numBins = Mathf.Max(1, numBins);
-            
-            if (numBins == currentBins && extrusionHistogramYPointOffset != null)
-                return;
-                
-            currentBins = numBins;
-            int dataCount = DataSource.DataCount;
-            
-            float[] xPositions = (XDimension != "Undefined") ? DataSource[XDimension].Data : new float[dataCount];
-            float[] yPositions = (YDimension != "Undefined") ? DataSource[YDimension].Data : new float[dataCount];
-            float[] zPositions = (ZDimension != "Undefined") ? DataSource[ZDimension].Data : new float[dataCount];
-            
-            // Create bins that we will use for the extruded z axis
-            DiscreteBinner binner = new DiscreteBinner();
-            binner.MakeIntervals(yPositions, numBins);
-            
-            // TODO: Here we blindly assume that the x dimension is the categorical axis, and the y is quantitative
-            // Also here we work mostly with floats, rather than their string representations
-            float[] categories = xPositions.Distinct().ToArray();
-            
-            // Sort each data point into separate categories
-            List<int>[] dataIndices = new List<int>[categories.Length];
-            for (int i = 0; i < categories.Length; i++)
-            {
-                dataIndices[i] = new List<int>();
-            }
-            for (int i = 0; i < dataCount; i++)
-            {
-                int idx = Array.IndexOf(categories, xPositions[i]);
-                dataIndices[idx].Add(i);
-            }
-            
-            // For each category, determine which points are in which bins, then set the position values accordingly based on count
-            extrusionDataPointOffset = new float[dataCount];
-            extrusionHistogramYPointOffset = new float[dataCount];
-            for (int i = 0; i < categories.Length; i++)
-            {
-                // Determine which bin each data point belongs to, and set its z offset position accordingly
-                List<int>[] binnedIndices = new List<int>[numBins];
-                for (int j = 0; j < binnedIndices.Length; j++) { binnedIndices[j] = new List<int>(); }
-                foreach (int idx in dataIndices[i])
-                {
-                    int bin = binner.Bin(yPositions[idx]);
-                    binnedIndices[bin].Add(idx);
-                    extrusionDataPointOffset[idx] = (bin / (float)numBins) * (1 - remainder);
-                }
-                
-                // For each bin, calculate its height
-                for (int j = 0; j < binnedIndices.Length; j++)
-                {
-                    float height = binnedIndices[j].Count / (float)dataCount;
-                    foreach (int idx in binnedIndices[j])
-                    {
-                        extrusionHistogramYPointOffset[idx] = height;
-                    }
-                }
-            }
-        }
-        
-        private string GetExtrusionDimensionKey()
-        {
-            return string.Format("X:{0}Y:{1}Z:{2}Linking:{3}", XDimension, YDimension, ZDimension, LinkingDimension);
-        }
-        
-        private float NormaliseValue(float value, float i0, float i1, float j0 = 0, float j1 = 1)
-        {
-            float L = (j0 - j1) / (i0 - i1);
-            return (j0 - (L * i0) + (L * value));
-        }
-
-        public void ExtrudeDimension(AbstractVisualisation.PropertyType dimension, Vector3 extrusionPoint, float distance)
-        {
-            if (-0.0001f <= distance && distance <= 0.0001f)
-            {
-                if (isExtruding)
-                {
-                    isExtruding = false;
-                    
-                    switch (dimension)
-                    {
-                        case AbstractVisualisation.PropertyType.X:
-                            visualisation.theVisualizationObject.viewList[0].ZeroPosition(0);
-                            break;
-                        case AbstractVisualisation.PropertyType.Y:
-                            visualisation.theVisualizationObject.viewList[0].ZeroPosition(1);
-                            break;
-                        case AbstractVisualisation.PropertyType.Z:
-                            visualisation.theVisualizationObject.viewList[0].ZeroPosition(2);
-                            break;
-                    }
-                    
-                    Scale = startViewScale;
-                    
-                    switch (GeometryType)
-                    {
-                        case AbstractVisualisation.GeometryType.Bars:
-                            XDimension = XDimension;
-                            YDimension = YDimension;
-                            ZDimension = ZDimension;
-                            break;
-                    }
-                }
-                return;
-            }
-            
-            
-            switch (GeometryType)
-            {
-                case AbstractVisualisation.GeometryType.Lines:
-                    if (!isExtruding)
-                        extrusionDataPointKey = GetExtrusionDimensionKey();
-                        GenerateDistancePointOffset(extrusionPoint);
-                    break;
-                        
-                case AbstractVisualisation.GeometryType.LinesAndDots:
-                    if (!isExtruding)
-                        extrusionDataPointKey = GetExtrusionDimensionKey();
-                        GenerateWeightedPointOffset(extrusionPoint);
-                    break;
-                        
-                
-                case AbstractVisualisation.GeometryType.Bars:
-                    GenerateHistogramPointOffset(extrusionPoint, distance);
-                    break;
-                
-                default:
-                    if (isExtruding && (GetExtrusionDimensionKey() != extrusionDataPointKey))
-                    {
-                        // Only run this if 1 or 2 dimensions are set, not all 3 (no 4th dimension to extrude into!)
-                        int numSet = (XDimension != "Undefined") ? 1 : 0;
-                        numSet += (YDimension != "Undefined") ? 1 : 0;
-                        numSet += (ZDimension != "Undefined") ? 1 : 0;
-                        if (numSet == 3)
-                            return;
-                        string thisKey = GetExtrusionDimensionKey();
-                        if (string.Equals(thisKey, extrusionDataPointKey))
-                            return;
-                        extrusionDataPointKey = thisKey;
-                        GenerateOccludedPointOffset(extrusionPoint);
-                    }
-                    break;
-            }
-            
-            if (!isExtruding)
-            {
-                startViewScale = Scale;
-                isExtruding = true;
-            }
-            
-            // if (!isExtruding && (GetExtrusionDimensionKey() != extrusionDataPointKey ||
-            //     GeometryType == AbstractVisualisation.GeometryType.LinesAndDots ||
-            //     GeometryType == AbstractVisualisation.GeometryType.Lines ||
-            //     gameObject.transform.parent.name == "NetworkChart"))
-            //     GenerateExtrusionOffset(extrusionPoint);
-            
-            float[] data = new float[DataSource.DataCount];
-            for (int i = 0; i < DataSource.DataCount; i++)
-            {
-                data[i] = extrusionDataPointOffset[i] * Mathf.Abs(distance);
-            }
-            
-            switch (dimension)
-            {
-                case AbstractVisualisation.PropertyType.X:
-                    visualisation.theVisualizationObject.viewList[0].UpdateXPositions(data);
-                    if (distance < 0)
-                        Scale = new Vector3(-startViewScale.x, startViewScale.y, startViewScale.z);
-                    else
-                        Scale = new Vector3(startViewScale.x, startViewScale.y, startViewScale.z);
-                    break;
-                    
-                case AbstractVisualisation.PropertyType.Y:
-                    if (distance < 0)
-                        Scale = new Vector3(startViewScale.x, -startViewScale.y, startViewScale.z);
-                    else
-                        Scale = new Vector3(startViewScale.x, startViewScale.y, startViewScale.z);
-                    break;
-                    
-                case AbstractVisualisation.PropertyType.Z:
-                    visualisation.theVisualizationObject.viewList[0].UpdateZPositions(data);
-                    if (distance < 0)
-                        Scale = new Vector3(startViewScale.x, startViewScale.y, -startViewScale.z);       
-                    else
-                        Scale = new Vector3(startViewScale.x, startViewScale.y, startViewScale.z);        
-                    break;
-                
-                default:
-                    break;
-            }
-            
-            if (GeometryType == AbstractVisualisation.GeometryType.Bars)
-                visualisation.theVisualizationObject.viewList[0].UpdateYPositions(extrusionHistogramYPointOffset);
-        }
-
-        // private void AdjustBoundingBoxSize()
-        // {
-        //     if (XDimension == "Undefined" && YDimension == "Undefined" && ZDimension == "Undefined")
-        //     {
-        //         BoundingBoxProxy.size = Vector3.zero;
-        //     }
-        //     else
-        //     {
-        //         float xScale = (XDimension != "Undefined") ? Width : 0.1f;
-        //         float yScale = (YDimension != "Undefined") ? Height : 0.1f;
-        //         float zScale = (ZDimension != "Undefined") ? Depth : 0.1f;
-
-        //         BoundingBoxProxy.size = new Vector3(xScale, yScale, zScale);
-        //     }
-        // }
     }
 }

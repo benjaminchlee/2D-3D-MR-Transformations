@@ -14,9 +14,12 @@ namespace Experimental.CrossDimensionalTransfer
     {
         public DataVisualisation ExtrudingVisualisation;
         public ObjectManipulator ExtrusionSliderHandle;
+        public bool SliderPersists = false;
+        public float SliderResetDistance = 0.1f;
         
         private bool isExtruding = false;
         private Vector3 extrusionPoint;
+        private Quaternion extrusionRotation;
         
         private void Start()
         {
@@ -29,7 +32,7 @@ namespace Experimental.CrossDimensionalTransfer
             if (isExtruding)
             {
                 float distance = ExtrusionSliderHandle.transform.localPosition.z * 4;
-                ExtrudingVisualisation.ExtrudeDimension(AbstractVisualisation.PropertyType.Z, extrusionPoint, distance);
+                ExtrudingVisualisation.ExtrudeDimension(AbstractVisualisation.PropertyType.Z, distance, extrusionPoint, extrusionRotation);
             }
         }
 
@@ -41,17 +44,22 @@ namespace Experimental.CrossDimensionalTransfer
             if (hand.TryGetJoint(TrackedHandJoint.IndexTip, out MixedRealityPose jointPose))
             {
                 extrusionPoint = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint(jointPose.Position);
+                extrusionRotation = jointPose.Rotation;
             }
         }
 
         private void ExtrusionSliderReleased(ManipulationEventData arg0)
         {
-            ExtrusionSliderHandle.transform.DOLocalMoveZ(0, 0.1f).OnComplete(() =>
+            float distance = ExtrusionSliderHandle.transform.localPosition.z * 4;
+            if (!SliderPersists || Mathf.Abs(distance) < SliderResetDistance)
             {
-                isExtruding = false;
-                ExtrudingVisualisation.ExtrudeDimension(AbstractVisualisation.PropertyType.Z, extrusionPoint, 0);
+                ExtrusionSliderHandle.transform.DOLocalMoveZ(0, 0.1f).OnComplete(() =>
+                {
+                    isExtruding = false;
+                    ExtrudingVisualisation.ExtrudeDimension(AbstractVisualisation.PropertyType.Z, 0, extrusionPoint, extrusionRotation);
+                }
+                );
             }
-            );
         }
     }
 }

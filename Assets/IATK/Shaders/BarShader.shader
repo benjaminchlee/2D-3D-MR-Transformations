@@ -35,7 +35,8 @@ Shader "IATK/BarShader"
             Cull Off
 			Lighting Off
 			LOD 400
-			ZTest [unity_GUIZTestMode]
+			//ZTest [unity_GUIZTestMode]
+			ZTest LEqual 
 			ZWrite On
 			Tags
 			{
