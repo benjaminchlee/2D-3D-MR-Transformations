@@ -16,11 +16,11 @@ namespace Experimental.CrossDimensionalTransfer
         public ObjectManipulator ExtrusionSliderHandle;
         public bool SliderPersists = false;
         public float SliderResetDistance = 0.1f;
-        
+
         private bool isExtruding = false;
         private Vector3 extrusionPoint;
         private Quaternion extrusionRotation;
-        
+
         private void Start()
         {
             ExtrusionSliderHandle.OnManipulationStarted.AddListener(ExtrusionSliderGrabbed);
@@ -39,7 +39,7 @@ namespace Experimental.CrossDimensionalTransfer
         private void ExtrusionSliderGrabbed(ManipulationEventData arg0)
         {
             isExtruding = true;
-            
+
             var hand = arg0.Pointer.Controller as IMixedRealityHand;
             if (hand.TryGetJoint(TrackedHandJoint.IndexTip, out MixedRealityPose jointPose))
             {
