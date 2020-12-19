@@ -15,7 +15,8 @@ namespace Experimental.CrossDimensionalTransfer
             All,
             ClosestNode,
             Neighbours,
-            ShortestPath
+            ShortestPath,
+            ShortestPathFloydWarshall
         }
 
         public override ExtrusionIdiom Idiom { get { return ExtrusionIdiom.Network; }}
@@ -36,12 +37,19 @@ namespace Experimental.CrossDimensionalTransfer
         private List<int> extrudingNodeIndices = new List<int>();
         private Vector3 previousExtrusionPoint1;
         private Vector3 previousExtrusionPoint2;
+        private int extrudingSourceIdx;
+        private int extrudingDestinationIdx;
+
+        private float[,] shortestPathsMatrix;
 
         private void Start()
         {
             SetDataSourceEdges();
             Visualisation.graphDimension = "Blah";
             Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.GraphDimension);
+
+            if (ExtrusionMode == Mode.ShortestPathFloydWarshall)
+                CreateShortestPathMatrix();
         }
 
         public override void ExtrudeDimension(AbstractVisualisation.PropertyType dimension, float distance, Vector3 extrusionPoint1, Quaternion extrusionRotation1, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
@@ -68,7 +76,11 @@ namespace Experimental.CrossDimensionalTransfer
 
                     DataVisualisation.Scale = startViewScale;
                 }
+                for (int i = 0; i < extrusionDataPointOffset.Length; i++)
+                    extrusionDataPointOffset[i] = 0;
                 extrudingNodeIndices.Clear();
+                // Reset colour
+                DataVisualisation.Colour = DataVisualisation.Colour;
                 return;
             }
 
@@ -113,12 +125,27 @@ namespace Experimental.CrossDimensionalTransfer
                     positions = extrusionDataPointOffset;
                     break;
                 }
+
+                case Mode.ShortestPathFloydWarshall:
+                {
+                    if (extrusionPoint2 == null)
+                        return;
+                    GenerateNodeOffset_ShortestPathFloydWarshall(extrusionPoint1, (Vector3)extrusionPoint2, distance);
+                    previousExtrusionPoint1 = extrusionPoint1;
+                    previousExtrusionPoint2 = (Vector3)extrusionPoint2;
+                    positions = extrusionDataPointOffset;
+                    break;
+                }
             }
 
             if (!isExtruding)
             {
                 startViewScale = DataVisualisation.Scale;
                 isExtruding = true;
+                Color[] colours = new Color[DataSource.DataCount];
+                for (int i = 0; i < DataSource.DataCount; i++)
+                    colours[i] = Color.white;
+                DataVisualisation.Visualisation.theVisualizationObject.viewList[0].SetColors(colours);
             }
 
             // Set position of the points
@@ -537,11 +564,242 @@ namespace Experimental.CrossDimensionalTransfer
                 extrusionDataPointOffset = new float[dataCount];
             }
 
+            // Update the positions of the extruding nodes
             foreach (int idx in extrudingNodeIndices)
             {
-                // Update the positions of the extruding nodes
                 extrusionDataPointOffset[idx] = Mathf.Abs(distance);
             }
+        }
+
+        private void CreateShortestPathMatrix()
+        {
+            int dataCount = DataSource.DataCount;
+
+            // Use Floyd-Warshall algorithm
+            float[,] distances = new float[dataCount, dataCount];
+
+            for (int i = 0; i < dataCount; i++)
+            {
+                for (int j = 0; j < dataCount; j++)
+                {
+                    distances[i, j] = Mathf.Infinity;
+                }
+            }
+
+            foreach (int source in networkConnectedNodes.Keys)
+            {
+                foreach (int dest in networkConnectedNodes[source])
+                {
+                    distances[source, dest] = networkEdgeWeights[new System.Tuple<int, int>(source, dest)];
+                }
+            }
+
+            for (int i = 0; i < dataCount; i++)
+            {
+                distances[i, i] = 0;
+            }
+
+            for (int k = 0; k < dataCount; k++)
+            {
+                for (int i = 0; i < dataCount; i++)
+                {
+                    for (int j = 0; j < dataCount; j++)
+                    {
+                        if (distances[i, j] > distances[i, k] + distances[k, j])
+                            distances[i, j] = distances[i, k] + distances[k, j];
+                    }
+                }
+            }
+
+            shortestPathsMatrix = distances;
+        }
+
+        private void GenerateNodeOffset_ShortestPathFloydWarshall(Vector3 extrusionPoint1, Vector3 extrusionPoint2, float distance)
+        {
+
+            if (networkEdgeWeights == null)
+                SetDataSourceEdges();
+
+            if (networkConnectedNodes == null)
+                SetDataSourceEdges();
+
+            if (shortestPathsMatrix == null)
+                CreateShortestPathMatrix();
+
+            int dataCount = DataSource.DataCount;
+
+            // Find the closest nodes to the two extrusion points if none have already been calculated, then get the nodes which make up the shortest path between the two
+            if (extrudingNodeIndices.Count == 0 || extrusionPoint1 != previousExtrusionPoint1 || extrusionPoint2 != previousExtrusionPoint2)
+            {
+                extrudingNodeIndices.Clear();
+
+                // Create the offset array if it doesn't already exist, otherwise we use the same one and just keep updating it
+                if (extrusionDataPointOffset == null)
+                    extrusionDataPointOffset = new float[dataCount];
+
+                float[] xPositions = (XDimension != "Undefined") ? DataSource[XDimension].Data : extrusionDataPointOffset;
+                float[] yPositions = (YDimension != "Undefined") ? DataSource[YDimension].Data : extrusionDataPointOffset;
+                float[] zPositions = (ZDimension != "Undefined") ? DataSource[ZDimension].Data : extrusionDataPointOffset;
+
+                extrusionPoint1.x = NormaliseValue(extrusionPoint1.x, 0, DataVisualisation.Width, 0, 1);
+                extrusionPoint1.y = NormaliseValue(extrusionPoint1.y, 0, DataVisualisation.Height, 0, 1);
+                extrusionPoint1.z = NormaliseValue(extrusionPoint1.z, 0, DataVisualisation.Depth, 0, 1);
+                extrusionPoint2.x = NormaliseValue(extrusionPoint2.x, 0, DataVisualisation.Width, 0, 1);
+                extrusionPoint2.y = NormaliseValue(extrusionPoint2.y, 0, DataVisualisation.Height, 0, 1);
+                extrusionPoint2.z = NormaliseValue(extrusionPoint2.z, 0, DataVisualisation.Depth, 0, 1);
+
+                // Get the indexes of the points closest to the two extrusion points
+                int closestIdx1 = -1;
+                int closestIdx2 = -1;
+                float minDistance1 = Mathf.Infinity;
+                float minDistance2 = Mathf.Infinity;
+                for (int i = 0; i < dataCount; i++)
+                {
+                    float d1 = Vector3.Distance(new Vector3(xPositions[i], yPositions[i], zPositions[i]), extrusionPoint1);
+                    float d2 = Vector3.Distance(new Vector3(xPositions[i], yPositions[i], zPositions[i]), extrusionPoint2);
+                    if (d1 < minDistance1)
+                    {
+                        closestIdx1 = i;
+                        minDistance1 = d1;
+                    }
+                    if (d2 < minDistance2)
+                    {
+                        closestIdx2 = i;
+                        minDistance2 = d2;
+                    }
+                }
+                extrudingNodeIndices.Add(closestIdx1);
+                extrudingNodeIndices.Add(closestIdx2);
+
+                // Add the points that make up the shortest path (Dijkstra's)
+                bool[] visited = new bool[dataCount];
+                float[] distances = new float[dataCount];
+                int[] previous = new int[dataCount];
+                int count = 1;
+
+                for (int i = 0; i < dataCount; i++)
+                {
+                    visited[i] = false;
+                    distances[i] = Mathf.Infinity;
+                    previous[i] = -1;
+                }
+                distances[closestIdx1] = 0;
+                while (!visited.All(x => x) && count < dataCount - 1)
+                {
+                    // Get minimum index
+                    int u = -1;
+                    float min = Mathf.Infinity;
+                    for (int i = 0; i < dataCount; i++)
+                    {
+                        float dist = distances[i];
+                        if (!visited[i] && dist < min)
+                        {
+                            u = i;
+                            min = dist;
+                        }
+                    }
+                    visited[u] = true;
+
+                    // Stop when we find the second index
+                    if (u == closestIdx2)
+                        break;
+
+                    // Iterate through neighbours
+                    foreach (int v in networkConnectedNodes[u])
+                    {
+                        float alt = distances[u] + networkEdgeWeights[new System.Tuple<int, int>(u, v)];
+                        if (alt < distances[v])
+                        {
+                            distances[v] = alt;
+                            previous[v] = u;
+                        }
+                    }
+                    count++;
+                }
+
+                if (!visited[closestIdx2])
+                {
+                    Debug.LogError("Two selected nodes are disconnected from each other.");
+                    return;
+                }
+
+                List<int> path = new List<int>();
+                path.Add(closestIdx1);
+                int w = closestIdx2;
+                if (previous[w] != -1 || closestIdx1 == closestIdx2)
+                {
+                    while (previous[w] != -1)
+                    {
+                        path.Add(w);
+                        w = previous[w];
+                    }
+                }
+
+                extrudingNodeIndices = path;
+
+                extrusionDataPointOffset = new float[dataCount];
+                extrudingSourceIdx = closestIdx1;
+                extrudingDestinationIdx = closestIdx2;
+            }
+
+            // Update the positions of the extruding nodes
+            foreach (int idx in extrudingNodeIndices)
+            {
+                extrusionDataPointOffset[idx] = Mathf.Abs(distance);
+            }
+
+            // Determine the longest "shortest path" between either the source or destination nodes.
+            // For a given target node, we pick the shorter path between either the source or destination
+            float max = 0;
+            for (int i = 0; i < dataCount; i++)
+            {
+                if (!extrudingNodeIndices.Contains(i))
+                {
+                    float value = Mathf.Min(shortestPathsMatrix[extrudingSourceIdx, i], shortestPathsMatrix[extrudingDestinationIdx, i]);
+                    if (value != Mathf.Infinity && max < value)
+                    {
+                        max = value;
+                    }
+                }
+            }
+
+            // Set the heights of all of the other nodes based off the shortest path matrix
+            // Set the colours of the nodes relative to their heights as well
+            Color[] colours = new Color[DataSource.DataCount];
+            for (int i = 0; i < DataSource.DataCount; i++)
+                colours[i] = Color.white;
+
+            for (int i = 0; i < dataCount; i++)
+            {
+                //if (!extrudingNodeIndices.Contains(i))
+                if (i != extrudingSourceIdx || i != extrudingDestinationIdx)
+                {
+                    // Use the smaller of shortest paths between the source and destination
+                    float weight = Mathf.Min(shortestPathsMatrix[extrudingSourceIdx, i], shortestPathsMatrix[extrudingDestinationIdx, i]);
+                    if (weight == Mathf.Infinity)
+                    {
+                        extrusionDataPointOffset[i] = 0;
+                    }
+                    else
+                    {
+                        extrusionDataPointOffset[i] = NormaliseValue(weight, 0, max, Mathf.Abs(distance), 0);
+
+                        // Give all nodes along the shortest path a different colour
+                        if (extrudingNodeIndices.Contains(i))
+                        {
+                            if (i == extrudingSourceIdx || i == extrudingDestinationIdx)
+                                colours[i] = new Color(0.5f, 0, 0.5f);
+                            else
+                                colours[i] = Color.white;
+                        }
+                        else
+                        {
+                            colours[i] = Color.HSVToRGB(0, NormaliseValue(weight, 0, max, 0, 1), 1);
+                        }
+                    }
+                }
+            }
+            DataVisualisation.Visualisation.theVisualizationObject.viewList[0].SetColors(colours);
         }
     }
 }

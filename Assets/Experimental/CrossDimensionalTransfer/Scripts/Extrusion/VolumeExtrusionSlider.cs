@@ -18,6 +18,7 @@ namespace Experimental.CrossDimensionalTransfer
         private Quaternion extrusionRotationLeft;
         private Vector3 extrusionPointRight;
         private Quaternion extrusionRotationRight;
+        private float distance;
 
         public void OnPointerDown(MixedRealityPointerEventData eventData)
         {
@@ -60,7 +61,13 @@ namespace Experimental.CrossDimensionalTransfer
                 extrudingRightHand = null;
 
             if (extrudingLeftHand == null && extrudingRightHand == null)
+            {
                 isExtruding = false;
+                if (Mathf.Abs(distance) < 0.075f)
+                {
+                    ExtrudingVisualisation.ExtrudeDimension(AbstractVisualisation.PropertyType.Z, 0, extrusionPointLeft, extrusionRotationLeft);
+                }
+            }
         }
 
         public void OnPointerClicked(MixedRealityPointerEventData eventData) { }
@@ -73,7 +80,7 @@ namespace Experimental.CrossDimensionalTransfer
                 {
                     if (extrudingLeftHand.TryGetJoint(TrackedHandJoint.IndexTip, out MixedRealityPose jointPose))
                     {
-                        float distance = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint(jointPose.Position).z * 4;
+                        distance = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint(jointPose.Position).z * 4;
                         ExtrudingVisualisation.ExtrudeDimension(AbstractVisualisation.PropertyType.Z, distance, extrusionPointLeft, extrusionRotationLeft);
                     }
                 }
@@ -81,7 +88,7 @@ namespace Experimental.CrossDimensionalTransfer
                 {
                     if (extrudingRightHand.TryGetJoint(TrackedHandJoint.IndexTip, out MixedRealityPose jointPose))
                     {
-                        float distance = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint(jointPose.Position).z * 4;
+                        distance = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint(jointPose.Position).z * 4;
                         ExtrudingVisualisation.ExtrudeDimension(AbstractVisualisation.PropertyType.Z, distance, extrusionPointRight, extrusionRotationRight);
                     }
                 }
@@ -94,7 +101,8 @@ namespace Experimental.CrossDimensionalTransfer
                         if (extrudingRightHand.TryGetJoint(TrackedHandJoint.IndexTip, out MixedRealityPose jointPoseRight))
                         {
                             float distanceRight = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint(jointPoseRight.Position).z * 4;
-                            ExtrudingVisualisation.ExtrudeDimension(AbstractVisualisation.PropertyType.Z, Mathf.Max(distanceLeft, distanceRight), extrusionPointLeft, extrusionRotationLeft, extrusionPointRight, extrusionRotationRight);
+                            distance = Mathf.Max(distanceLeft, distanceRight);
+                            ExtrudingVisualisation.ExtrudeDimension(AbstractVisualisation.PropertyType.Z, distance, extrusionPointLeft, extrusionRotationLeft, extrusionPointRight, extrusionRotationRight);
                         }
                     }
                 }

@@ -21,9 +21,9 @@ namespace Experimental.CrossDimensionalTransfer
         private BoxCollider boxCollider;
         [SerializeField]
         private DataSource dataSource;
-        
+
         private VisualisationExtrusion visualisationExtrusion;
-        
+
         #region Visualisation Properties
 
         public Visualisation Visualisation
@@ -36,7 +36,7 @@ namespace Experimental.CrossDimensionalTransfer
             get { return visualisation.dataSource; }
             set { visualisation.dataSource = value; }
         }
-        
+
         public AbstractVisualisation.VisualisationTypes VisualisationType
         {
             get { return visualisation.visualisationType; }
@@ -46,7 +46,7 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.VisualisationType);
             }
         }
-        
+
         public AbstractVisualisation.GeometryType GeometryType
         {
             get { return visualisation.geometry; }
@@ -56,7 +56,7 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.GeometryType);
             }
         }
-        
+
         public string XDimension
         {
             get { return visualisation.xDimension.Attribute; }
@@ -64,7 +64,7 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 visualisation.xDimension = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.X);
-                
+
                 AdjustVisualisationLocalPosition();
                 AdjustCollider();
                 //GenerateExtrusionOffset();
@@ -78,7 +78,7 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 visualisation.yDimension = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Y);
-                
+
                 AdjustVisualisationLocalPosition();
                 AdjustCollider();
                 //GenerateExtrusionOffset();
@@ -92,7 +92,7 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 visualisation.zDimension = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Z);
-                
+
                 AdjustVisualisationLocalPosition();
                 AdjustCollider();
                 //GenerateExtrusionOffset();
@@ -118,7 +118,7 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Size);
             }
         }
-        
+
         public string ColourByDimension
         {
             get { return visualisation.colourDimension; }
@@ -128,17 +128,17 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Colour);
             }
         }
-        
+
         public Gradient ColourByGradient
         {
             get { return visualisation.dimensionColour; }
-            set 
+            set
             {
                 visualisation.dimensionColour = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Colour);
             }
         }
-        
+
         public string LinkingDimension
         {
             get { return visualisation.linkingDimension; }
@@ -146,7 +146,7 @@ namespace Experimental.CrossDimensionalTransfer
             {
                 visualisation.linkingDimension = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.LinkingDimension);
-                
+
                 //GenerateExtrusionOffset();
             }
         }
@@ -180,7 +180,7 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
             }
         }
-        
+
         public float Size
         {
             get { return visualisation.size; }
@@ -227,19 +227,19 @@ namespace Experimental.CrossDimensionalTransfer
                 return visualisation.theVisualizationObject.Z_AXIS;
             }
         }
-        
+
         public bool AutoCenterVisualisation
         {
             get; set;
         } = true;
-        
+
         #endregion
 
         private void Awake()
         {
             if (visualisation == null)
-                visualisation = visualisationHolder.AddComponent<Visualisation>();      
-                
+                visualisation = visualisationHolder.AddComponent<Visualisation>();
+
             // Set blank IATK values
             if (visualisation.colourDimension == null || visualisation.colourDimension == "")
                 visualisation.colourDimension = "Undefined";
@@ -253,7 +253,7 @@ namespace Experimental.CrossDimensionalTransfer
                 DataSource = dataSource;
             else if (DataSource == null)
                 DataSource = DataVisualisationManager.Instance.DataSource;
-            
+
             // Set extrusion variables
             visualisationExtrusion = GetComponent<VisualisationExtrusion>();
             if (visualisationExtrusion != null)
@@ -261,7 +261,7 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisationExtrusion.Initialise(dataSource, this, visualisation);
             }
         }
-        
+
         private void Update()
         {
             AdjustVisualisationLocalPosition();
@@ -279,7 +279,7 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisation.transform.localPosition = new Vector3(xPos, yPos, zPos);
             }
         }
-        
+
         private void AdjustCollider()
         {
             if (AutoCenterVisualisation)
@@ -295,7 +295,7 @@ namespace Experimental.CrossDimensionalTransfer
                 boxCollider.center = new Vector3(xPos, yPos, zPos);
             }
         }
-        
+
         public void ExtrudeDimension(AbstractVisualisation.PropertyType dimension, float distance, Vector3 extrusionPoint1, Quaternion extrusionRotation1, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
         {
             if (visualisationExtrusion != null)

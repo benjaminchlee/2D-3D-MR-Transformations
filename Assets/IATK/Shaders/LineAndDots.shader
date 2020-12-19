@@ -11,7 +11,7 @@
 		_MinY("_MinY",Range(0, 1)) = 0
 		_MaxY("_MaxY",Range(0, 1)) = 1.0
 		_MinZ("_MinZ",Range(0, 1)) = 0
-		_MaxZ("_MaxZ",Range(0, 1)) = 1.0		
+		_MaxZ("_MaxZ",Range(0, 1)) = 1.0
 		_MinNormX("_MinNormX",Range(0, 1)) = 0.0
 		_MaxNormX("_MaxNormX",Range(0, 1)) = 1.0
 		_MinNormY("_MinNormY",Range(0, 1)) = 0.0
@@ -24,7 +24,7 @@
 		_Tween("_Tween", Range(0, 1)) = 1
 		_TweenSize("_TweenSize", Range(0, 1)) = 1
 	}
-	
+
 	SubShader
 	{
 		Pass
@@ -50,7 +50,7 @@
 					float4 color : COLOR;
 					float3 normal : NORMAL;
 					float4 uv_MainTex : TEXCOORD0; // index, vertex size, filtered
-					
+
                     UNITY_VERTEX_INPUT_INSTANCE_ID
 				};
 
@@ -60,8 +60,8 @@
 					float4 color : COLOR;
 					float3 normal : NORMAL;
 					float  isBrushed : FLOAT;
-					
-					UNITY_VERTEX_INPUT_INSTANCE_ID 
+
+					UNITY_VERTEX_INPUT_INSTANCE_ID
 					UNITY_VERTEX_OUTPUT_STEREO
 				};
 
@@ -72,7 +72,7 @@
 					float2 tex0	: TEXCOORD0;
 					float  isBrushed : FLOAT;
 					bool isLine : BOOL;
-					
+
                     UNITY_VERTEX_OUTPUT_STEREO
 				};
 
@@ -81,7 +81,7 @@
 					float4 color : COLOR;
 					float depth : SV_Depth;
 				};
-				
+
 				// **************************************************************
 				// Variables													*
 				// **************************************************************
@@ -90,28 +90,28 @@
 					UNITY_DEFINE_INSTANCED_PROP(float, _Size)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MinSize)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MaxSize)
-				
+
                     UNITY_DEFINE_INSTANCED_PROP(float, _MinX)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MaxX)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MinY)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MaxY)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MinZ)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MaxZ)
-				
+
                     UNITY_DEFINE_INSTANCED_PROP(float, _MinNormX)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MaxNormX)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MinNormY)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MaxNormY)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MinNormZ)
                     UNITY_DEFINE_INSTANCED_PROP(float, _MaxNormZ)
-					
+
                     UNITY_DEFINE_INSTANCED_PROP(float, _ShowBrush)
                     UNITY_DEFINE_INSTANCED_PROP(float4, _BrushColor)
-					
+
                     UNITY_DEFINE_INSTANCED_PROP(float, _Tween)
                     UNITY_DEFINE_INSTANCED_PROP(float, _TweenSize)
 				UNITY_INSTANCING_BUFFER_END(Props)
-				
+
 				float _DataWidth;
 				float _DataHeight;
 				sampler2D _BrushedTexture;
@@ -128,7 +128,7 @@
 				// **************************************************************
 				// Shader Programs												*
 				// **************************************************************
-				
+
 				// Vertex Shader ------------------------------------------------
 				v2g vert (appdata v)
 				{
@@ -138,7 +138,7 @@
                     UNITY_INITIALIZE_OUTPUT(v2g, o);
 					UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 					UNITY_TRANSFER_INSTANCE_ID(v, o);
-					
+
 					// Access instanced variables
 					float Tween = UNITY_ACCESS_INSTANCED_PROP(Props, _Tween);
 					float TweenSize = UNITY_ACCESS_INSTANCED_PROP(Props, _TweenSize);
@@ -154,7 +154,7 @@
                     float MaxY = UNITY_ACCESS_INSTANCED_PROP(Props, _MaxY);
                     float MinZ = UNITY_ACCESS_INSTANCED_PROP(Props, _MinZ);
                     float MaxZ = UNITY_ACCESS_INSTANCED_PROP(Props, _MaxZ);
-					
+
 					float idx = v.uv_MainTex.x;
 					float isFiltered = v.uv_MainTex.z;
 
@@ -180,10 +180,10 @@
 
                     // Filtering min and max ranges
 					if (normalisedPosition.x < MinX ||
-						normalisedPosition.x > MaxX || 
-						normalisedPosition.y < MinY || 
-						normalisedPosition.y > MaxY || 
-						normalisedPosition.z < MinZ || 
+						normalisedPosition.x > MaxX ||
+						normalisedPosition.y < MinY ||
+						normalisedPosition.y > MaxY ||
+						normalisedPosition.z < MinZ ||
 						normalisedPosition.z > MaxZ ||
 						isFiltered)
 					{
@@ -199,7 +199,7 @@
 					float Size = UNITY_ACCESS_INSTANCED_PROP(Props, _Size);
 					float MinSize = UNITY_ACCESS_INSTANCED_PROP(Props, _MinSize);
 					float MaxSize = UNITY_ACCESS_INSTANCED_PROP(Props, _MaxSize);
-				
+
 					float4x4 MV = UNITY_MATRIX_MV;
 					float4x4 vp = UNITY_MATRIX_VP;
 					float3 up = UNITY_MATRIX_IT_MV[1].xyz;
@@ -208,19 +208,19 @@
 					float sizeFactor = normaliseValue(_point.normal.y, 0.0, 1.0, MinSize, MaxSize);
 					float dist = 1;
 					float halfS = 0.01f * (Size + (dist * sizeFactor));
-							
-					float4 v[4];				
+
+					float4 v[4];
 
 					v[0] = float4(_point.vertex + halfS * right - halfS * up, 1.0f);
 					v[1] = float4(_point.vertex + halfS * right + halfS * up, 1.0f);
 					v[2] = float4(_point.vertex - halfS * right - halfS * up, 1.0f);
 					v[3] = float4(_point.vertex - halfS * right + halfS * up, 1.0f);
-		
+
 					o.isBrushed = _point.isBrushed;
 					o.color = _point.color;
 					o.isLine = false;
 
-					o.vertex = UnityObjectToClipPos(v[0]);					
+					o.vertex = UnityObjectToClipPos(v[0]);
 					o.tex0 = float2(1.0f, 0.0f);
 					o.isBrushed = _point.isBrushed;
 					UNITY_TRANSFER_VERTEX_OUTPUT_STEREO(_point, o);
@@ -243,20 +243,20 @@
 					o.tex0 = float2(0.0f, 1.0f);
 					UNITY_TRANSFER_VERTEX_OUTPUT_STEREO(_point, o);
 					triStream.Append(o);
-					
+
 					triStream.RestartStrip();
 				}
-				
+
 				// Geometry Shader -----------------------------------------------------
 				[maxvertexcount(32)]
 				void geom(line v2g points[2], inout TriangleStream<g2f> triStream)
 				{
 					g2f o;
-					
+
 					UNITY_INITIALIZE_OUTPUT(g2f, o);
 					UNITY_SETUP_INSTANCE_ID(points[0]);
 					UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(points[0]);
-					
+
 					// Access instanced variables
                     float Size = UNITY_ACCESS_INSTANCED_PROP(Props, _Size);
                     float MinSize = UNITY_ACCESS_INSTANCED_PROP(Props, _MinSize);
@@ -345,14 +345,15 @@
 				f_output frag (g2f i)
 				{
 					f_output o;
-					
+
 					UNITY_INITIALIZE_OUTPUT(f_output, o);
 					UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-					
+
 					// Access instanced variables
 					float4 BrushColor = UNITY_ACCESS_INSTANCED_PROP(Props, _BrushColor);
 					float ShowBrush = UNITY_ACCESS_INSTANCED_PROP(Props, _ShowBrush);
-					
+					o.depth = i.vertex.z;
+
 					if (i.color.w == 0)
 					{
 						discard;
@@ -360,11 +361,11 @@
 						o.depth = 0;
 						return o;
 					}
-					
+
 					if (i.isLine)
 					{
 						fixed4 col = i.color;
-						
+
 						if (i.isBrushed && ShowBrush > 0.0)
 							o.color = BrushColor;
 						else
@@ -375,7 +376,7 @@
 						float dx = i.tex0.x - 0.5f;
 						float dy = i.tex0.y - 0.5f;
 						float dt = dx * dx + dy * dy;
-						
+
 						if (dt <= 0.2f)
 						{
 							if (i.isBrushed && ShowBrush > 0.0)
@@ -391,11 +392,11 @@
 							return o;
 						}
 					}
-					
+
 					o.depth = i.vertex.z;
 					return o;
 				}
-				
+
 			ENDCG
 		}
 	}
