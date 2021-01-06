@@ -46,7 +46,7 @@ namespace IATK
         [SerializeField]
         [Tooltip("The maximum amount of spacing that each axis tick label should have between each other.")]
         private float AxisTickSpacing = 0.075f;
-        
+
         [HideInInspector]
         public string AttributeName = "";
         [HideInInspector]
@@ -63,7 +63,7 @@ namespace IATK
         public int SourceIndex = -1;
         [HideInInspector]
         public int AxisDirection = 0;
-        
+
         private bool isPositiveLength = false;
 
         #endregion
@@ -85,15 +85,15 @@ namespace IATK
         {
             AttributeFilter = attributeFilter;
             dataSource = srcData;
-            
+
             int idx = Array.IndexOf(srcData.Select(m => m.Identifier).ToArray(), attributeFilter.Attribute);
             SourceIndex = idx;
             name = "Axis " + srcData[idx].Identifier;
-            
+
             attributeLabel.text = srcData[idx].Identifier;
             visualisationReference = visualisation;
             axisTickLabelPrefab.SetActive(false);
-            
+
             UpdateAxisAttribute(attributeFilter.Attribute);
         }
 
@@ -106,7 +106,7 @@ namespace IATK
             AttributeName = newAttribute;
             attributeLabel.text = AttributeName;
             SetYLocalPosition(attributeLabel.transform, Length * 0.5f);
-            
+
             UpdateAxisTickLabels();
         }
 
@@ -138,17 +138,17 @@ namespace IATK
                             SetXLocalPosition(child, -child.localPosition.x);
                         }
                     }
-                    
-                    
+
+
                     transform.localEulerAngles = new Vector3(0, 0, -90);
                     SetXLocalPosition(axisTickLabelHolder.transform, 0);
-                    attributeLabel.alignment = TextAlignmentOptions.Top;  
+                    attributeLabel.alignment = TextAlignmentOptions.Top;
                     attributeLabel.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
                     attributeLabel.GetComponent<TextContainer>().anchorPosition = TextContainerAnchors.Custom;
                     attributeLabel.GetComponent<TextContainer>().pivot = new Vector2(0.5f, 0.5f);
                     UpdateLength(visualisationReference.width);
                     break;
-                    
+
                 case 2:
                     transform.localEulerAngles = new Vector3(0, 0, 0);
                     SetXLocalPosition(minNormaliserObject, -minNormaliserObject.transform.localPosition.x);
@@ -157,7 +157,7 @@ namespace IATK
                     maxNormaliserObject.localEulerAngles = new Vector3(90, 90, 0);
                     UpdateLength(visualisationReference.height);
                     break;
-                    
+
                 case 3:
                     transform.localEulerAngles = new Vector3(90, 0, 0);
                     SetXLocalPosition(minNormaliserObject, -minNormaliserObject.transform.localPosition.x);
@@ -168,7 +168,7 @@ namespace IATK
                     break;
             }
         }
-              
+
         /// <summary>
         /// Updates the length of this axis.
         /// </summary>
@@ -176,7 +176,7 @@ namespace IATK
         public void UpdateLength(float length)
         {
             Length = length;
-            
+
             axisRod.localScale = new Vector3(axisRod.localScale.x, Length, axisRod.localScale.z);
             axisTip.localPosition = new Vector3(axisTip.localPosition.x, Length, axisTip.localPosition.z);
             axisTip.localEulerAngles = new Vector3(length >= 0 ? 0 : 180, -45, 0);
@@ -187,9 +187,9 @@ namespace IATK
             SetMinNormalizer(AttributeFilter.minScale);
             SetMaxNormalizer(AttributeFilter.maxScale);
 
-            UpdateAxisAttribute(AttributeName);        
+            UpdateAxisAttribute(AttributeName);
         }
-        
+
         /// <summary>
         /// Updates all of the tick labels on this axis.
         /// </summary>
@@ -198,18 +198,18 @@ namespace IATK
             List<GameObject> axisTickLabels = GetAxisTickLabels();
             int currentNumberOfLabels = axisTickLabels.Count;
             int targetNumberOfLabels = CalculateNumAxisTickLabels();
-            
+
             if (currentNumberOfLabels != targetNumberOfLabels)
             {
                 DestroyAxisTickLabels();
-                
+
                 // Create new labels
                 for (int i = 0; i < targetNumberOfLabels; i++)
                 {
                     Instantiate(axisTickLabelPrefab, axisTickLabelHolder.transform);
                 }
             }
-            
+
             // Update label positions and text
             axisTickLabels = GetAxisTickLabels();
             for (int i = 0; i < targetNumberOfLabels; i++)
@@ -218,14 +218,14 @@ namespace IATK
                 label.SetActive(true);
                 float y = GetAxisTickLabelPosition(i, targetNumberOfLabels);
                 SetYLocalPosition(label.transform, y * Length);
-                
+
                 TextMeshPro labelText = label.GetComponentInChildren<TextMeshPro>();
                 labelText.gameObject.SetActive(y >= 0.0f && y <= 1.0f);
                 labelText.text = GetAxisTickLabelText(i, targetNumberOfLabels);
                 labelText.color = new Color(1, 1, 1, GetAxisTickLabelFiltered(i, targetNumberOfLabels) ? 0.4f : 1.0f);
             }
         }
-        
+
         /// <summary>
         /// Destroys all of the axis tick labels on this axis, excluding the referenced base label.
         /// </summary>
@@ -240,7 +240,7 @@ namespace IATK
                 #endif
             }
         }
-        
+
         public void SetMinFilter(float val)
         {
             UpdateAxisTickLabels();
@@ -258,7 +258,7 @@ namespace IATK
             Vector3 p = minNormaliserObject.transform.localPosition;
             p.y = MinNormaliser * Length;
             minNormaliserObject.transform.localPosition = p;
-            
+
             UpdateAxisTickLabels();
         }
 
@@ -272,9 +272,9 @@ namespace IATK
 
             UpdateAxisTickLabels();
         }
-        
+
         #region Private helper functions
-        
+
         private List<GameObject> GetAxisTickLabels()
         {
             List<GameObject> labels = new List<GameObject>();
@@ -287,7 +287,7 @@ namespace IATK
             }
             return labels;
         }
-        
+
         private int CalculateNumAxisTickLabels()
         {
             try
@@ -297,7 +297,7 @@ namespace IATK
                     // If this axis dimension has been rescaled at all, don't show any ticks
                     if (AttributeFilter.minScale > 0.001f || AttributeFilter.maxScale < 0.999f)
                         return 0;
-                    
+
                     // If this discrete dimension has less unique values than the maximum number of ticks allowed due to spacing,
                     // give an axis tick label for each unique value
                     int numValues = ((CSVDataSource)dataSource).TextualDimensionsListReverse[AttributeName].Count;
@@ -320,7 +320,7 @@ namespace IATK
                 return 0;
             }
         }
-        
+
         private bool IsAttributeDiscrete()
         {
             try
@@ -333,15 +333,15 @@ namespace IATK
                 return true;
             }
         }
-        
+
         private float GetAxisTickLabelPosition(int labelIndex, int numLabels)
         {
             if (numLabels == 1)
                 return 0;
-                
+
             return (labelIndex / (float) (numLabels - 1));
         }
-        
+
         private string GetAxisTickLabelText(int labelIndex, int numLabels)
         {
             object v = dataSource.getOriginalValue(Mathf.Lerp(AttributeFilter.minScale, AttributeFilter.maxScale, labelIndex / (numLabels - 1f)), AttributeFilter.Attribute);
@@ -355,15 +355,15 @@ namespace IATK
                 return v.ToString();
             }
         }
-        
+
         private bool GetAxisTickLabelFiltered(int labelIndex, int numLabels)
         {
             float n = labelIndex / (float)(numLabels - 1);
             float delta = Mathf.Lerp(AttributeFilter.minScale, AttributeFilter.maxScale, n);
-            return delta < AttributeFilter.minFilter || delta > AttributeFilter.maxFilter;        
+            return delta < AttributeFilter.minFilter || delta > AttributeFilter.maxFilter;
         }
-        
-            
+
+
         private void SetXLocalPosition(Transform t, float value)
         {
             var p = t.localPosition;

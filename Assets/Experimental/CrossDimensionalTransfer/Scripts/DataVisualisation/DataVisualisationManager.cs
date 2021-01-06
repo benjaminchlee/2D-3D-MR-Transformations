@@ -11,10 +11,11 @@ namespace Experimental.CrossDimensionalTransfer
         public static DataVisualisationManager Instance { get; private set; }
 
         public DataSource DataSource;
-        public Dictionary<string, DataVisualisation> visualisations = new Dictionary<string, DataVisualisation>();
-        public bool CreateVisualisationAtStart = true;
-        public bool SetRandomProperties = true;
-        public Vector3 VisualisationSize = Vector3.one;
+
+        [Header("Default Visualisation Properties")]
+        public Color VisualisationColour = Color.white;
+        public float VisualisationSize = 0.1f;
+        public Vector3 VisualisationScale = new Vector3(0.25f, 0.25f, 0.25f);
 
         private void Awake()
         {
@@ -29,13 +30,7 @@ namespace Experimental.CrossDimensionalTransfer
             }
 
             if (DataSource == null)
-                Debug.LogError("You must assign a datasource to ChartManager!");
-        }
-
-        private void Start()
-        {
-            if (CreateVisualisationAtStart)
-                CreateDataVisualisation();
+                Debug.LogError("You must assign a datasource to DataVisualisationManager!");
         }
 
         public void CreateDataVisualisation()
@@ -43,26 +38,31 @@ namespace Experimental.CrossDimensionalTransfer
             DataVisualisation vis = Instantiate(Resources.Load("DataVisualisation") as GameObject).GetComponent<DataVisualisation>();
 
             vis.ID = Guid.NewGuid().ToString();
+            vis.DataSource = DataSource;
+            vis.VisualisationType = AbstractVisualisation.VisualisationTypes.SCATTERPLOT;
             vis.GeometryType = AbstractVisualisation.GeometryType.Points;
-            
-            if (SetRandomProperties)
-            {
-                UnityEngine.Random r = new UnityEngine.Random();
-                
-                //todo
-            }
 
-            visualisations.Add(vis.ID, vis);
+            // Set random dimensions
+            System.Random random = new System.Random(System.DateTime.Now.Millisecond);
+            int numDimensions = DataSource.DimensionCount;
+            vis.XDimension = DataSource[random.Next(0, numDimensions)].Identifier;
+            vis.YDimension = DataSource[random.Next(0, numDimensions)].Identifier;
+            vis.ZDimension = DataSource[random.Next(0, numDimensions)].Identifier;
+
+            vis.Size = VisualisationSize;
+            vis.Scale = VisualisationScale;
+
+            vis.transform.position = Camera.main.transform.forward * 0.1f;
+            vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
         }
 
-        public void DestroyAllCharts()
+        public void DestroyAllDataVisualisations()
         {
-            foreach (var vis in visualisations.Values)
+            var visualisations = FindObjectsOfType<DataVisualisation>();
+            foreach (var vis in visualisations)
             {
                 Destroy(vis.gameObject);
             }
-
-            visualisations.Clear();
         }
     }
 }

@@ -82,8 +82,8 @@ namespace Experimental.CrossDimensionalTransfer
                 }
             }
 
-            labelBasePosition = MainTextLabel.transform.localPosition;
             originalFontSize = MainTextLabel.fontSize;
+            labelBasePosition = MainTextLabel.transform.localPosition;
 
             selectedDimensionIdx = dimensions.IndexOf(GetCurrentDimension());
             SetLabelNames(selectedDimensionIdx);
@@ -94,6 +94,7 @@ namespace Experimental.CrossDimensionalTransfer
         public void OnPointerDown(MixedRealityPointerEventData eventData)
         {
             isSliding = true;
+            labelBasePosition = MainTextLabel.transform.localPosition;
             slidingStartPosition = transform.parent.InverseTransformPoint(eventData.Pointer.Position);
             slideStartDimensionIdx = selectedDimensionIdx;
 

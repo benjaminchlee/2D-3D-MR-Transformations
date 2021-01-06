@@ -20,7 +20,7 @@ namespace Experimental.CrossDimensionalTransfer
         public ButtonConfigHelper Toggle1D2DButton;
         public float VisualisationInterval = 0.2f;
         public DataSource DataSource;
-        
+
         private List<DataVisualisation> visualisations = new List<DataVisualisation>();
         private List<LinkingVisualisations> linkingVisualisations = new List<LinkingVisualisations>();
         private Vector3 startPos;
@@ -29,41 +29,41 @@ namespace Experimental.CrossDimensionalTransfer
         private bool isSliderClosing = false;
         private bool isSliding = false;
         private string constantDimension;
-        
+
         private SlidingAxis slidingAxis = SlidingAxis.None;
         private SlidingDimension slidingDimension = SlidingDimension.TwoD;
-        
+
         private float[,] correlationMatrix;
         private string[] pcpOrdering;
         private int numCols;
         private bool isCreateLinksCoroutineRunning = false;
-        
+
         private Vector3 originalLabelPos;
         private Quaternion originalLabelRot;
-        
+
         private enum SlidingAxis
         {
             None,
             X,
             Y
         }
-        
+
         private enum SlidingDimension
         {
             OneD,
             TwoD
         }
-        
+
         private void Start()
         {
             XSliderHandle.OnManipulationStarted.AddListener(XSliderGrabbed);
             YSliderHandle.OnManipulationStarted.AddListener(YSliderGrabbed);
             XSliderHandle.OnManipulationEnded.AddListener(XSliderReleased);
             YSliderHandle.OnManipulationEnded.AddListener(YSliderReleased);
-            
+
             Toggle1D2DButton.OnClick.AddListener(Toggle1D2D);
             Toggle1D2DButton.gameObject.SetActive(false);
-            
+
             CalculateCorrelationMatrix();
         }
 
@@ -72,16 +72,16 @@ namespace Experimental.CrossDimensionalTransfer
             if ((isSliderOpen && isSliding && slidingAxis != SlidingAxis.None) || isSliderClosing)
             {
                 ObjectManipulator slider = slidingAxis == SlidingAxis.X ? XSliderHandle : YSliderHandle;
-                
+
                 // Position main Data Visualisation
                 float xPos = SlidingVisualisation.transform.localPosition.x;
                 float yPos = SlidingVisualisation.transform.localPosition.y;
                 SlidingVisualisation.transform.localPosition = new Vector3(xPos, yPos, slider.transform.localPosition.z);
-                
+
                 float distance = -SlidingVisualisation.transform.localPosition.z;
                 int numVisualisations = visualisations.Count;
                 int targetVisualisations = Mathf.FloorToInt(distance / VisualisationInterval);
-                
+
                 // Add visualisations
                 if (numVisualisations < targetVisualisations)
                 {
@@ -98,62 +98,63 @@ namespace Experimental.CrossDimensionalTransfer
                         DeleteVisualisation();
                     }
                 }
-                
+
                 for (int i = 0; i < visualisations.Count; i++)
                 {
                     visualisations[i].transform.localPosition = Vector3.Lerp(SlidingVisualisation.transform.localPosition, startPos, (i + 1) / (float)(targetVisualisations));
                     visualisations[i].transform.localEulerAngles = startRot;
                 }
-                
+
                 if (!isCreateLinksCoroutineRunning)
                     StartCoroutine(CreateLinks());
-            }            
+            }
         }
-        
+
         private void CreateVisualisation()
         {
-            GameObject go = Instantiate(Resources.Load("DataVisualisation") as GameObject);
+            GameObject go = Instantiate(Resources.Load("DataVisualisation")) as GameObject;
             DataVisualisation vis = go.GetComponent<DataVisualisation>();
             visualisations.Add(vis);
+            vis.DataSource = DataSource;
             vis.VisualisationType = SlidingVisualisation.VisualisationType;
             vis.GeometryType = SlidingVisualisation.GeometryType;
-            
+
             switch (slidingAxis)
             {
                 case SlidingAxis.X:
                     vis.XDimension = SlidingVisualisation.XDimension;
                     vis.YDimension = pcpOrdering[visualisations.Count];
                     break;
-                    
+
                 case SlidingAxis.Y:
                     vis.YDimension = SlidingVisualisation.YDimension;
                     vis.XDimension = pcpOrdering[visualisations.Count];
                     break;
             }
-            
+
             vis.Width = SlidingVisualisation.Width;
             vis.Height = SlidingVisualisation.Height;
             vis.Depth = SlidingVisualisation.Depth;
             vis.Size = SlidingVisualisation.Size;
             vis.Colour = SlidingVisualisation.Colour;
-            
+
             switch (slidingDimension)
             {
                 case SlidingDimension.OneD:
                     SetVisualisation1D(vis);
                     break;
-                    
+
                 case SlidingDimension.TwoD:
                     SetVisualisation2D(vis);
                     break;
             }
-            
+
             var cloneGrab = vis.gameObject.AddComponent<CloneVisualisationGrab>();
-            
+
             vis.transform.SetParent(transform.parent);
-            
+
             BrushingAndLinking brushingAndLinking = FindObjectOfType<BrushingAndLinking>();
-            
+
             if (brushingAndLinking.brushedIndices.Count > 0)
             {
                 bool pointsBrushed = false;
@@ -165,21 +166,21 @@ namespace Experimental.CrossDimensionalTransfer
                         break;
                     }
                 }
-                
+
                 if (pointsBrushed)
                 {
                     float[] filter = new float[SlidingVisualisation.DataSource.DataCount];
-                    
+
                     for (int i = 0; i < SlidingVisualisation.DataSource.DataCount; i++)
                     {
-                        filter[i] = brushingAndLinking.brushedIndices[i] > 0 ? 0 : 1;                        
+                        filter[i] = brushingAndLinking.brushedIndices[i] > 0 ? 0 : 1;
                     }
-                    
+
                     vis.Visualisation.theVisualizationObject.viewList[0].SetFilterChannel(filter);
                 }
             }
         }
-        
+
         private void DeleteVisualisation()
         {
             if (visualisations.Count > 0)
@@ -189,26 +190,26 @@ namespace Experimental.CrossDimensionalTransfer
                 Destroy(vis.gameObject);
             }
         }
-                
+
         private void CloseSlider()
         {
             isSliderClosing = true;
-            
+
             XSliderHandle.transform.DOLocalMoveZ(-0.0055f, 0.1f).OnComplete(() => {
                  slidingAxis = SlidingAxis.None;
                  isSliderOpen = false;
                  isSliderClosing = false;
             });
-            
+
             YSliderHandle.transform.DOLocalMoveZ(-0.0055f, 0.1f);
-            
+
             XSliderHandle.gameObject.SetActive(true);
             YSliderHandle.gameObject.SetActive(true);
             Toggle1D2DButton.gameObject.SetActive(false);
-            
+
             Set1D2D(SlidingDimension.TwoD);
         }
-        
+
         private void Toggle1D2D()
         {
             if (slidingDimension == SlidingDimension.OneD)
@@ -216,15 +217,15 @@ namespace Experimental.CrossDimensionalTransfer
             else
                 Set1D2D(SlidingDimension.OneD);
         }
-        
+
         private void Set1D2D(SlidingDimension mode)
         {
             slidingDimension = mode;
-            
+
             List<DataVisualisation> visualisationsToUpdate = new List<DataVisualisation>();
             visualisationsToUpdate.Add(SlidingVisualisation);
             visualisationsToUpdate.AddRange(visualisations);
-            
+
             switch (slidingDimension)
             {
                 case SlidingDimension.OneD:
@@ -236,7 +237,7 @@ namespace Experimental.CrossDimensionalTransfer
                         SetVisualisation1D(vis);
                     }
                     break;
-                
+
                 case SlidingDimension.TwoD:
                     foreach (var vis in visualisationsToUpdate)
                     {
@@ -245,11 +246,11 @@ namespace Experimental.CrossDimensionalTransfer
                     break;
             }
         }
-        
+
         private void SetVisualisation1D(DataVisualisation visualisation)
         {
             Transform attributeLabel;
-            
+
             switch (slidingAxis)
             {
                 case SlidingAxis.X:
@@ -258,7 +259,7 @@ namespace Experimental.CrossDimensionalTransfer
                     attributeLabel.localPosition = new Vector3(0, -0.04f, 0);
                     attributeLabel.localEulerAngles = new Vector3(0, 90, 0);
                     break;
-                
+
                 case SlidingAxis.Y:
                     visualisation.YDimension = "Undefined";
                     attributeLabel = visualisation.XAxisObject.transform.Find("AttributeLabel");
@@ -267,50 +268,50 @@ namespace Experimental.CrossDimensionalTransfer
                     break;
             }
         }
-        
+
         private void SetVisualisation2D(DataVisualisation visualisation)
         {
             Transform attributeLabel = null;
-            
+
             switch (slidingAxis)
             {
                 case SlidingAxis.X:
                     visualisation.XDimension = constantDimension;
                     attributeLabel = visualisation.YAxisObject.transform.Find("AttributeLabel");
                     break;
-                
+
                 case SlidingAxis.Y:
                     visualisation.YDimension = constantDimension;
                     attributeLabel = visualisation.XAxisObject.transform.Find("AttributeLabel");
                     break;
             }
-            
+
             if (originalLabelPos != Vector3.zero)
             {
                 attributeLabel.localPosition = originalLabelPos;
                 attributeLabel.localRotation = originalLabelRot;
             }
         }
-        
+
         // Coroutine as bandaid fix for HoloLens 2
         private IEnumerator CreateLinks()
         {
             isCreateLinksCoroutineRunning = true;
-            
+
             yield return null;
-            
+
             List<DataVisualisation> visesToLink = new List<DataVisualisation>();
-            
+
             visesToLink.Add(SlidingVisualisation);
             visesToLink.AddRange(visualisations);
-            
+
             for (int i = 0; i < visesToLink.Count - 1; i++)
             {
                 DataVisualisation vis1 = visesToLink[i];
                 DataVisualisation vis2 = visesToLink[i + 1];
-                
+
                 LinkingVisualisations linkVis;
-                
+
                 if (i + 1 > linkingVisualisations.Count)
                 {
                     GameObject go = new GameObject();
@@ -321,29 +322,29 @@ namespace Experimental.CrossDimensionalTransfer
                 {
                     linkVis = linkingVisualisations[i];
                 }
-                
+
                 linkVis.visualisationSource = vis1.Visualisation;
                 linkVis.visualisationTarget = vis2.Visualisation;
                 linkVis.linkTransparency = 1;
             }
-            
+
             for (int i = linkingVisualisations.Count - 1; i >= visesToLink.Count - 1; i--)
             {
                 LinkingVisualisations linkVis = linkingVisualisations[i];
                 linkingVisualisations.RemoveAt(i);
                 Destroy(linkVis.gameObject);
             }
-            
+
             yield return null;
-            
+
             foreach (var linkVis in linkingVisualisations)
             {
                 linkVis.showLinks = true;
             }
-            
+
             isCreateLinksCoroutineRunning = false;
         }
-        
+
         private void XSliderGrabbed(ManipulationEventData arg0)
         {
             if (slidingAxis == SlidingAxis.None)
@@ -351,14 +352,14 @@ namespace Experimental.CrossDimensionalTransfer
                 slidingAxis = SlidingAxis.X;
                 isSliderOpen = true;
                 isSliding = true;
-                
+
                 startPos = SlidingVisualisation.transform.localPosition;
                 startRot = SlidingVisualisation.transform.localEulerAngles;
                 YSliderHandle.gameObject.SetActive(false);
                 Toggle1D2DButton.gameObject.SetActive(true);
-                
+
                 constantDimension = SlidingVisualisation.XDimension;
-                
+
                 CalculatePCPOrdering();
             }
         }
@@ -370,14 +371,14 @@ namespace Experimental.CrossDimensionalTransfer
                 slidingAxis = SlidingAxis.Y;
                 isSliderOpen = true;
                 isSliding = true;
-                
+
                 startPos = SlidingVisualisation.transform.localPosition;
                 startRot = SlidingVisualisation.transform.localEulerAngles;
                 XSliderHandle.gameObject.SetActive(false);
                 Toggle1D2DButton.gameObject.SetActive(true);
-                
+
                 constantDimension = SlidingVisualisation.YDimension;
-                
+
                 CalculatePCPOrdering();
             }
         }
@@ -387,7 +388,7 @@ namespace Experimental.CrossDimensionalTransfer
             XSliderHandle.gameObject.SetActive(true);
             YSliderHandle.gameObject.SetActive(true);
             isSliding = false;
-            
+
             if (visualisations.Count == 0)
                 CloseSlider();
         }
@@ -397,27 +398,26 @@ namespace Experimental.CrossDimensionalTransfer
             XSliderHandle.gameObject.SetActive(true);
             YSliderHandle.gameObject.SetActive(true);
             isSliding = false;
-            
+
             if (visualisations.Count == 0)
                 CloseSlider();
         }
-        
+
         private void CalculateCorrelationMatrix()
         {
-            DataSource dataSource = DataVisualisationManager.Instance.DataSource;
-            numCols = dataSource.DimensionCount;
+            numCols = DataSource.DimensionCount;
             correlationMatrix = new float[numCols, numCols];
-            
+
             for (int i = 0; i < numCols; i++)
             {
                 for (int j = 0; j < numCols; j++)
                 {
-                    var corr = Correlation(dataSource[i].Data, dataSource[j].Data);
+                    var corr = Correlation(DataSource[i].Data, DataSource[j].Data);
                     correlationMatrix[i,j] = Mathf.Abs(corr);
                 }
             }
         }
-        
+
         public float Correlation(float[] array1, float[] array2)
         {
             double[] array_xy = new double[array1.Length];
@@ -450,16 +450,14 @@ namespace Experimental.CrossDimensionalTransfer
             return (float)((array1.Length * sum_xy - sum_x * sum_y) /
                 System.Math.Sqrt((array1.Length * sum_xpow2 - Ex2) * (array1.Length * sum_ypow2 - Ey2)));
         }
-        
+
         public void CalculatePCPOrdering()
         {
-            DataSource dataSource = DataVisualisationManager.Instance.DataSource;
-            
             pcpOrdering = new string[numCols];
             List<int> validIndices = new List<int>();
             for (int i = 0; i < numCols; i++)
                 validIndices.Add(i);
-            
+
             string start = "";
             switch (slidingAxis)
             {
@@ -470,17 +468,17 @@ namespace Experimental.CrossDimensionalTransfer
                     start = SlidingVisualisation.XDimension;
                     break;
             }
-            int row = dataSource[start].Index;
+            int row = DataSource[start].Index;
             pcpOrdering[0] = start;
             validIndices.Remove(row);
-            
+
             for (int i = 1; i < numCols; i++)
             {
-                pcpOrdering[i] = dataSource[row].Identifier;
-                
+                pcpOrdering[i] = DataSource[row].Identifier;
+
                 float max = 0;
                 int idx = -1;
-                
+
                 foreach (int col in validIndices)
                 {
                     if (correlationMatrix[row, col] > max)
@@ -489,8 +487,8 @@ namespace Experimental.CrossDimensionalTransfer
                         max = correlationMatrix[row, col];
                     }
                 }
-                
-                pcpOrdering[i] = dataSource[idx].Identifier;
+
+                pcpOrdering[i] = DataSource[idx].Identifier;
                 validIndices.Remove(idx);
             }
         }
