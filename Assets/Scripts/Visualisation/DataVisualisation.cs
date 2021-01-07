@@ -55,7 +55,7 @@ namespace SSVis
         private List<GameObject> collidingSurfaces = new List<GameObject>();
         private GameObject nearestSurface;
         private AxisDirection protrudingDimension = AxisDirection.None;
-        private bool splatLineInitialised = false;
+        private bool preventExtrusionForThisPlacement = false;      // Flag for when a splat script needs to prevent any extrusions from being added
 
         private bool isManipulating = false;
         private byte nearestSurfaceCheckCounter = 0;
@@ -105,7 +105,11 @@ namespace SSVis
                 AdjustCollider();
 
                 if (value == "Undefined")
+                {
                     visualisation.width = 1f;
+                    if (XAxisManipulator != null)
+                        XAxisManipulator.transform.localPosition = new Vector3(0.05f, 0, 0);
+                }
             }
         }
 
@@ -121,7 +125,11 @@ namespace SSVis
                 AdjustCollider();
 
                 if (value == "Undefined")
+                {
                     visualisation.height = 1f;
+                    if (YAxisManipulator != null)
+                        YAxisManipulator.transform.localPosition = new Vector3(0, 0.05f, 0);
+                }
             }
         }
 
@@ -137,7 +145,11 @@ namespace SSVis
                 AdjustCollider();
 
                 if (value == "Undefined")
+                {
                     visualisation.depth = 1f;
+                    if (ZAxisManipulator != null)
+                        ZAxisManipulator.transform.localPosition = new Vector3(0, 0, 0.05f);
+                }
             }
         }
 
@@ -200,6 +212,9 @@ namespace SSVis
             {
                 visualisation.width = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+
+                if (XAxisManipulator != null)
+                    XAxisManipulator.transform.localPosition = new Vector3(value, 0, 0);
             }
         }
 
@@ -210,6 +225,9 @@ namespace SSVis
             {
                 visualisation.height = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+
+                if (YAxisManipulator != null)
+                    YAxisManipulator.transform.localPosition = new Vector3(0, value, 0);
             }
         }
 
@@ -220,6 +238,9 @@ namespace SSVis
             {
                 visualisation.depth = value;
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+
+                if (ZAxisManipulator != null)
+                    ZAxisManipulator.transform.localPosition = new Vector3(0, 0, value);
             }
         }
 
@@ -447,6 +468,8 @@ namespace SSVis
         public void PlaceOnSurface(GameObject targetSurface)
         {
             System.Tuple<Vector3, Vector3> values = CalculatePositionAndRotationOnSurface(targetSurface);
+            // We pass the values tuple to the splatting method just in case the specific splatting script has a specific position/rotation to set
+            values = UpdateVisualisationSplatting(values);
             transform.DOMove(values.Item1, 0.1f);
             transform.DORotate(values.Item2, 0.1f)
                 .OnComplete(()=>
@@ -454,6 +477,7 @@ namespace SSVis
                     isAttachedToSurface = true;
                     UpdateVisualisationExtrusion();
                 });
+
         }
 
         public void LiftFromSurface(GameObject pointer = null)
@@ -495,10 +519,42 @@ namespace SSVis
         }
 
         /// <summary>
-        /// Contains logic for adding extrusion types when attached onto a surface.
+        /// Contains logic to add splatting scripts *directly before* this Data Visualisation is placed on a surface.
+        /// Expects a return tuple in case the splatting requires the placement of the visualisation to be modified in some fashion.
+        /// </summary>
+        private System.Tuple<Vector3, Vector3> UpdateVisualisationSplatting(System.Tuple<Vector3, Vector3> placementValues)
+        {
+            // Condition 1: Projection flattening for 3D visualisations
+            if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && (new string[] { XDimension, YDimension, ZDimension}).Where(x => x != "Undefined").Count() == 3)
+            {
+                var projFlat = gameObject.AddComponent<ProjectionFlatteningSplatting>();
+                projFlat.Initialise(dataSource, this, visualisation);
+                projFlat.ApplySplat();
+                Destroy(projFlat);
+                preventExtrusionForThisPlacement = true;
+
+                // Override the rotation used to place on the surface
+                Vector3 localPosOnSurface = nearestSurface.transform.InverseTransformPoint(gameObject.transform.position);
+                localPosOnSurface.z = 0;
+                Vector3 pos = nearestSurface.transform.TransformPoint(localPosOnSurface);
+                pos = pos - nearestSurface.transform.forward * ((boxCollider.size.z + 0.01f) / 2);
+                return new System.Tuple<Vector3, Vector3>(pos, nearestSurface.transform.eulerAngles);
+            }
+
+            return placementValues;
+        }
+
+        /// <summary>
+        /// Contains logic to add extrusion scripts *after* this Data Visualisation is placed on a surface
         /// </summary>
         private void UpdateVisualisationExtrusion()
         {
+            if (preventExtrusionForThisPlacement)
+            {
+                preventExtrusionForThisPlacement = false;
+                return;
+            }
+
             // Condition 1: Overplotting extrusion for scatterplots with only 2 dimensions, and if the undefined dimension is also the protruding direction
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && (new string[] { XDimension, YDimension, ZDimension}).Where(x => x != "Undefined").Count() == 2)
             {
