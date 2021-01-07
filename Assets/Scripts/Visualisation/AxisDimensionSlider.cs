@@ -18,7 +18,7 @@ namespace SSVis
         private DataSource dataSource;
         private List<string> dimensions;
         private Axis axisScript;
-        private AbstractVisualisation.PropertyType axisDimension;
+        private AxisDirection axisDimension;
         private TextMeshPro[] textLabels;
         private int selectedDimensionIdx;
 
@@ -46,11 +46,20 @@ namespace SSVis
             // Determine the direction this axis represents
             axisScript = GetComponentInParent<Axis>();
             if (axisScript.AxisDirection == 1)
-                axisDimension = AbstractVisualisation.PropertyType.X;
+            {
+                axisDimension = AxisDirection.X;
+                // Special case for the x direction, where the position of the box collider needs to be flipped
+                var b = GetComponent<BoxCollider>();
+                b.center = new Vector3(b.center.x, -b.center.y, b.center.z);
+            }
             else if (axisScript.AxisDirection == 2)
-                axisDimension = AbstractVisualisation.PropertyType.Y;
+            {
+                axisDimension = AxisDirection.Y;
+            }
             else
-                axisDimension = AbstractVisualisation.PropertyType.Z;
+            {
+                axisDimension = AxisDirection.Z;
+            }
 
             // Create the labels that will be used, including the actual main label (this is placed in the middle)
             textLabels = new TextMeshPro[NumDimensionsOnSide * 2 + 1];
@@ -167,13 +176,13 @@ namespace SSVis
             {
                 switch (axisDimension)
                 {
-                    case AbstractVisualisation.PropertyType.X:
+                    case AxisDirection.X:
                         parentDataVisualisation.XDimension = dimensions[newMainIdx];
                         break;
-                    case AbstractVisualisation.PropertyType.Y:
+                    case AxisDirection.Y:
                         parentDataVisualisation.YDimension = dimensions[newMainIdx];
                         break;
-                    case AbstractVisualisation.PropertyType.Z:
+                    case AxisDirection.Z:
                         parentDataVisualisation.ZDimension = dimensions[newMainIdx];
                         break;
                 }
@@ -226,11 +235,11 @@ namespace SSVis
         {
             switch (axisDimension)
             {
-                case AbstractVisualisation.PropertyType.X:
+                case AxisDirection.X:
                     return parentDataVisualisation.XDimension;
-                case AbstractVisualisation.PropertyType.Y:
+                case AxisDirection.Y:
                     return parentDataVisualisation.YDimension;
-                case AbstractVisualisation.PropertyType.Z:
+                case AxisDirection.Z:
                     return parentDataVisualisation.ZDimension;
             }
             return "";
