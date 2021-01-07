@@ -4338,7 +4338,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 509898015}
-        m_MethodName: DestroyAllDataVisualisations
+        m_MethodName: Create3DDataVisualisation
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
