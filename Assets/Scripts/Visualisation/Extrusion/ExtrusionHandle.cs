@@ -202,11 +202,17 @@ namespace SSVis
                 if (Mathf.Abs(extrusionData.distance) >= ExtrusionCloneDistance)
                 {
                     isExtruding = false;
-                    // Pass the hand which is the furthest away
+                    // Pass the index pointer which is the furthest away
                     if (Mathf.Abs(dist1) > Mathf.Abs(dist2))
-                        OnExtrusionCloneDistanceReached.Invoke((extrudingLeftHand.InputSource.Pointers[0] as MonoBehaviour).gameObject);
+                    {
+                        GameObject idxTip = Microsoft.MixedReality.Toolkit.CoreServices.GetInputSystemDataProvider<IMixedRealityHandJointService>().RequestJointTransform(TrackedHandJoint.IndexTip, Handedness.Left).gameObject;
+                        OnExtrusionCloneDistanceReached.Invoke(idxTip);
+                    }
                     else
-                        OnExtrusionCloneDistanceReached.Invoke((extrudingRightHand.InputSource.Pointers[0] as MonoBehaviour).gameObject);
+                    {
+                        GameObject idxTip = Microsoft.MixedReality.Toolkit.CoreServices.GetInputSystemDataProvider<IMixedRealityHandJointService>().RequestJointTransform(TrackedHandJoint.IndexTip, Handedness.Right).gameObject;
+                        OnExtrusionCloneDistanceReached.Invoke(idxTip);
+                    }
                 }
                 // Otherwise, we emit the data
                 else

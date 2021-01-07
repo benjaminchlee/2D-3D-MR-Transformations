@@ -50,7 +50,7 @@ namespace SSVis
         // Variables for visualisation extrusion and splatting
         private GameObject ghostVisualisation;
 
-        private BaseVisualisationExtrusion visualisationExtrusion;
+        private List<BaseVisualisationExtrusion> visualisationExtrusions = new List<BaseVisualisationExtrusion>();
         private bool isAttachedToSurface;
         private List<GameObject> collidingSurfaces = new List<GameObject>();
         private GameObject nearestSurface;
@@ -452,7 +452,6 @@ namespace SSVis
                 .OnComplete(()=>
                 {
                     isAttachedToSurface = true;
-                    boxCollider.enabled = false;
                     UpdateVisualisationExtrusion();
                 });
         }
@@ -465,12 +464,16 @@ namespace SSVis
             collidingSurfaces.Clear();  // Clear all surfaces as a failsafe if the OnTriggerExit event does not fire in time
 
             // Regain control of the Data Visualisation when the extrusion script is removed
-            if (pointer != null && visualisationExtrusion != null)
+            if (pointer != null && visualisationExtrusions.Count > 0)
             {
-                visualisationExtrusion.DestroyThisExtrusion();
+                foreach (var ex in visualisationExtrusions)
+                    ex.DestroyThisExtrusion();
+                visualisationExtrusions.Clear();
+
                 // Move this Data Visualisation such that it follows the hand
                 transform.SetParent(pointer.transform);
                 transform.DOLocalMove(Vector3.zero, 0.1f);
+
                 // Add events to release this Data Visualisation when the grab gesture is released
                 // Note that we have to use a PointerHandler instead of hooking into the existing ObjectManipulator script as I don't know how to
                 // make it think that the manipulation has even begun (there's ForceManipulationEnd but not for start)
@@ -491,16 +494,31 @@ namespace SSVis
             }
         }
 
+        /// <summary>
+        /// Contains logic for adding extrusion types when attached onto a surface.
+        /// </summary>
         private void UpdateVisualisationExtrusion()
         {
-            if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT)
+            // Condition 1: Overplotting extrusion for scatterplots with only 2 dimensions, and if the undefined dimension is also the protruding direction
+            if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && (new string[] { XDimension, YDimension, ZDimension}).Where(x => x != "Undefined").Count() == 2)
             {
-                visualisationExtrusion = gameObject.AddComponent<OverplottingExtrusion>();
+                if (XDimension == "Undefined" && protrudingDimension == AxisDirection.X ||
+                    YDimension == "Undefined" && protrudingDimension == AxisDirection.Y ||
+                    ZDimension == "Undefined" && protrudingDimension == AxisDirection.Z
+                )
+                {
+                    var overplottingExtrusion = gameObject.AddComponent<OverplottingExtrusion>();
+                    overplottingExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
+                    visualisationExtrusions.Add(overplottingExtrusion);
+                }
             }
 
-            visualisationExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
-            // This Data Visualisation relinquishes control of all manipulation events until the extrusion script tells it to
-            objectManipulator.enabled = false;
+            // If an extrusion was added, this Data Visualisation relinquishes control of all manipulation events until a extrusion script tells it to
+            if (visualisationExtrusions.Count > 0)
+            {
+                boxCollider.enabled = false;
+                objectManipulator.enabled = false;
+            }
         }
 
         private void AdjustVisualisationLocalPosition()
@@ -523,8 +541,8 @@ namespace SSVis
             // float zPos = (ZDimension != "Undefined") ? -Depth / 2 : 0;
             // boxCollider.center = new Vector3(xPos, yPos, zPos);
 
-            if (visualisationExtrusion != null)
-                visualisationExtrusion.UpdateExtrusionHandles();
+            foreach (var ex in visualisationExtrusions)
+                ex.UpdateExtrusionHandles();
         }
 
         private System.Tuple<Vector3, Vector3> CalculatePositionAndRotationOnSurface(GameObject surface)
