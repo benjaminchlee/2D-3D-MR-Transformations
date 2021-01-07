@@ -205,6 +205,7 @@ namespace Microsoft.MixedReality.SceneUnderstanding.Samples.Unity
                 {
                     Debug.LogError("SceneUnderstandingManager.Start: Running in editor while quering scene from a device is not supported.\n" +
                                    "To run on editor disable the 'QuerySceneFromDevice' Flag in the SceneUnderstandingManager Component");
+                    this.enabled = false;
                     return;
                 }
 
