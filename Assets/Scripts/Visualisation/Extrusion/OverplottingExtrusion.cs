@@ -46,6 +46,11 @@ namespace SSVis
 
         public override void DestroyThisExtrusion()
         {
+            // Reset all overplotting done
+            DataVisualisation.XDimension = DataVisualisation.XDimension;
+            DataVisualisation.YDimension = DataVisualisation.YDimension;
+            DataVisualisation.ZDimension = DataVisualisation.ZDimension;
+
             Destroy(extrusionHandle.gameObject);
             Destroy(this);
         }

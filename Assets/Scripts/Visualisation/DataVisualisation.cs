@@ -48,8 +48,7 @@ namespace SSVis
         private bool isZAxisScaling = false;
 
         // Variables for visualisation extrusion and splatting
-        [Header("Visualisation Splatting and Extrusion")]
-        public LineRenderer lineRenderer;
+        private GameObject ghostVisualisation;
 
         private BaseVisualisationExtrusion visualisationExtrusion;
         private bool isAttachedToSurface;
@@ -299,25 +298,6 @@ namespace SSVis
                 DataSource = DataVisualisationManager.Instance.DataSource;
                 dataSource = DataSource;
             }
-
-            /*
-            // Set extrusion variables
-            visualisationExtrusion = GetComponent<BaseVisualisationExtrusion>();
-            if (visualisationExtrusion != null)
-            {
-                visualisationExtrusion.Initialise(dataSource, this, visualisation);
-            }
-            */
-
-            // Set line renderer for visualisation splatting
-            if (lineRenderer != null)
-            {
-                splatLineInitialised = true;
-                lineRenderer.enabled = false;
-                lineRenderer.startWidth = 0.005f;
-                lineRenderer.endWidth = 0.005f;
-                lineRenderer.positionCount = 2;
-            }
         }
 
         private void Start()
@@ -400,14 +380,18 @@ namespace SSVis
 
                     if (nearestSurface != null)
                     {
-                        lineRenderer.enabled = true;
-                        lineRenderer.SetPosition(0, transform.position);
-                        lineRenderer.SetPosition(1, nearestSurface.GetComponent<Collider>().ClosestPoint(transform.position));
+                        if (ghostVisualisation == null)
+                            ghostVisualisation = (Instantiate(Resources.Load("GhostVisualisation") as GameObject));
+                        System.Tuple<Vector3, Vector3> values = CalculatePositionAndRotationOnSurface(nearestSurface);
+                        ghostVisualisation.transform.position = values.Item1;
+                        ghostVisualisation.transform.eulerAngles = values.Item2;
+                        ghostVisualisation.transform.localScale = boxCollider.size;
                     }
                 }
                 else
                 {
-                    lineRenderer.enabled = false;
+                    if (ghostVisualisation != null)
+                        Destroy(ghostVisualisation);
                 }
             }
         }
@@ -434,9 +418,8 @@ namespace SSVis
                 }
             }
 
-            lineRenderer.enabled = false;
-            nearestSurface = null;
-            isManipulating = false;
+            if (ghostVisualisation != null)
+                Destroy(ghostVisualisation);
         }
 
         private void OnTriggerEnter(Collider other)
@@ -453,6 +436,12 @@ namespace SSVis
             {
                 collidingSurfaces.Remove(other.gameObject);
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (ghostVisualisation != null)
+                Destroy(ghostVisualisation);
         }
 
         public void PlaceOnSurface(GameObject targetSurface)
@@ -473,23 +462,31 @@ namespace SSVis
             isAttachedToSurface = false;
             boxCollider.enabled = true;
             objectManipulator.enabled = true;
+            collidingSurfaces.Clear();  // Clear all surfaces as a failsafe if the OnTriggerExit event does not fire in time
 
             // Regain control of the Data Visualisation when the extrusion script is removed
             if (pointer != null && visualisationExtrusion != null)
             {
-                // Remove the extrusion modifications
-                visualisationExtrusion.ExtrudeDimension(0);
-
+                visualisationExtrusion.DestroyThisExtrusion();
+                // Move this Data Visualisation such that it follows the hand
                 transform.SetParent(pointer.transform);
-
+                transform.DOLocalMove(Vector3.zero, 0.1f);
+                // Add events to release this Data Visualisation when the grab gesture is released
+                // Note that we have to use a PointerHandler instead of hooking into the existing ObjectManipulator script as I don't know how to
+                // make it think that the manipulation has even begun (there's ForceManipulationEnd but not for start)
                 var pointerHandler = gameObject.AddComponent<PointerHandler>();
                 CoreServices.InputSystem.RegisterHandler<IMixedRealityPointerHandler>(pointerHandler);
                 pointerHandler.OnPointerUp.AddListener((e) =>
                 {
                     transform.parent = null;
                     CoreServices.InputSystem.UnregisterHandler<IMixedRealityPointerHandler>(pointerHandler);
+                    pointerHandler.OnPointerUp.RemoveAllListeners();
                     Destroy(pointerHandler);
-                    visualisationExtrusion.DestroyThisExtrusion();
+                });
+                // Hook into the existing VisualisationReleased event handler when this visualisation is lifted and immediately placed back on a surface
+                pointerHandler.OnPointerUp.AddListener((e) =>
+                {
+                    VisualisationReleased(new ManipulationEventData());
                 });
             }
         }
