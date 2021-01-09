@@ -42,6 +42,7 @@ namespace SSVis
         public float ExtrusionCloneDistance = 0.25f;
         public bool ExtrusionPersists = true;
         public float ExtrusionResetDistance = 0.05f;
+        public bool FlipExtrusionCollider = false;
 
         private bool isInitalised = false;
 
@@ -52,13 +53,18 @@ namespace SSVis
 
         private ExtrusionEventData extrusionData;
 
+        private Transform leftHandStartPoint;
+        private Transform rightHandStartPoint;
+        private float leftHandStartDistance;
+        private float rightHandStartDistance;
+
         private void Awake()
         {
             boxCollider = GetComponent<BoxCollider>();
             extrusionData = new ExtrusionEventData();
         }
 
-        public void Initialise(DataVisualisation extrudingVisualisation, AxisDirection extrusionDirection, Vector3 position, Vector3 scale, float initialHandleThickness = 0.1f, bool cloneOnMaxDistance = true, float extrusionCloneDistance = 0.25f, bool extrusionPersists = true, float extrusionResetDistance = 0.05f)
+        public void Initialise(DataVisualisation extrudingVisualisation, AxisDirection extrusionDirection, Vector3 position, Vector3 scale, float initialHandleThickness = 0.1f, bool cloneOnMaxDistance = true, float extrusionCloneDistance = 0.25f, bool extrusionPersists = true, float extrusionResetDistance = 0.05f, bool flipExtrusionCollider = false)
         {
             transform.SetParent(extrudingVisualisation.transform);
             transform.localRotation = Quaternion.identity;
@@ -69,6 +75,7 @@ namespace SSVis
             this.ExtrusionCloneDistance = extrusionCloneDistance;
             this.ExtrusionPersists = extrusionPersists;
             this.ExtrusionResetDistance = extrusionResetDistance;
+            this.FlipExtrusionCollider = flipExtrusionCollider;
             isInitalised = true;
 
             UpdateHandlePositionAndScale(position, scale);
@@ -95,12 +102,26 @@ namespace SSVis
                     extrudingLeftHand = hand;
                     extrusionData.extrusionPointLeft = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint(jointPose.Position);
                     extrusionData.extrusionRotationLeft = jointPose.Rotation;
+
+                    if (leftHandStartPoint == null)
+                        leftHandStartPoint = new GameObject("Left Extrusion Start Point").transform;
+                    leftHandStartPoint.position = jointPose.Position;
+                    leftHandStartPoint.rotation = ExtrudingVisualisation.Visualisation.transform.rotation;
+                    leftHandStartPoint.localScale = ExtrudingVisualisation.Visualisation.transform.localScale;
+                    leftHandStartDistance = extrusionData.distance;
                 }
                 else
                 {
                     extrudingRightHand = hand;
                     extrusionData.extrusionPointRight = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint(jointPose.Position);
                     extrusionData.extrusionRotationRight = jointPose.Rotation;
+
+                    if (rightHandStartPoint == null)
+                        rightHandStartPoint = new GameObject("Right Extrusion Start Point").transform;
+                    rightHandStartPoint.position = jointPose.Position;
+                    rightHandStartPoint.rotation = ExtrudingVisualisation.Visualisation.transform.rotation;
+                    rightHandStartPoint.localScale = ExtrudingVisualisation.Visualisation.transform.localScale;
+                    rightHandStartDistance = extrusionData.distance;
                 }
             }
 
@@ -126,12 +147,18 @@ namespace SSVis
                 extrudingLeftHand = null;
                 extrusionData.extrusionPointLeft = null;
                 extrusionData.extrusionRotationLeft = null;
+
+                if (leftHandStartPoint != null)
+                    Destroy(leftHandStartPoint.gameObject);
             }
             else
             {
                 extrudingRightHand = null;
                 extrusionData.extrusionPointRight = null;
                 extrusionData.extrusionRotationRight = null;
+
+                if (rightHandStartPoint != null)
+                    Destroy(rightHandStartPoint.gameObject);
             }
 
             if (extrudingLeftHand == null && extrudingRightHand == null)
@@ -174,21 +201,21 @@ namespace SSVis
                 {
                     case AxisDirection.X:
                         if (point1 != null)
-                            dist1 = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint((Vector3)point1).x;
+                            dist1 = leftHandStartPoint.InverseTransformPoint((Vector3)point1).x - leftHandStartDistance;
                         if (point2 != null)
-                            dist2 = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint((Vector3)point2).x;
+                            dist2 = rightHandStartPoint.InverseTransformPoint((Vector3)point2).x - rightHandStartDistance;
                         break;
                     case AxisDirection.Y:
                         if (point1 != null)
-                            dist1 = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint((Vector3)point1).y;
+                            dist1 = leftHandStartPoint.InverseTransformPoint((Vector3)point1).y - leftHandStartDistance;
                         if (point2 != null)
-                            dist2 = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint((Vector3)point2).y;
+                            dist2 = rightHandStartPoint.InverseTransformPoint((Vector3)point2).y - rightHandStartDistance;
                         break;
                     case AxisDirection.Z:
                         if (point1 != null)
-                            dist1 = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint((Vector3)point1).z;
+                            dist1 = leftHandStartPoint.InverseTransformPoint((Vector3)point1).z - leftHandStartDistance;
                         if (point2 != null)
-                            dist2 = ExtrudingVisualisation.Visualisation.transform.InverseTransformPoint((Vector3)point2).z;
+                            dist2 = rightHandStartDistance + rightHandStartPoint.InverseTransformPoint((Vector3)point2).z;
                         break;
                 }
 
@@ -199,7 +226,7 @@ namespace SSVis
                     extrusionData.distance = dist2;
 
                 // Second, we check if this distance exceeds the extrusion clone distance threshold. If it does, we clone it (which consequently halts all other extrusions)
-                if (Mathf.Abs(extrusionData.distance) >= ExtrusionCloneDistance)
+                if (CloneOnMaxDistance && Mathf.Abs(extrusionData.distance) >= ExtrusionCloneDistance)
                 {
                     isExtruding = false;
                     // Pass the index pointer which is the furthest away
@@ -218,6 +245,7 @@ namespace SSVis
                 else
                 {
                     OnExtrusionDistanceChanged.Invoke(extrusionData);
+
                     // Update the thickness and position of the collider as well
                     UpdateColliderThickness();
                 }
@@ -226,9 +254,11 @@ namespace SSVis
 
         private void UpdateColliderThickness()
         {
-            float distance = extrusionData.distance / 2;
-            float thickness = InitialHandleThickness + Mathf.Abs(distance);
-            float offset = distance / 2;
+            float thickness = InitialHandleThickness + Mathf.Abs(extrusionData.distance);
+            float offset = extrusionData.distance / 2;
+
+            if (FlipExtrusionCollider)
+                offset = -offset;
 
             // Apply changes to the collider itself based on the extrusion direction
             Vector3 size = boxCollider.size;
@@ -250,6 +280,15 @@ namespace SSVis
             }
             boxCollider.size = size;
             boxCollider.center = centre;
+        }
+
+        private void OnDestroy()
+        {
+            if (leftHandStartPoint != null)
+                Destroy(leftHandStartPoint.gameObject);
+
+            if (rightHandStartPoint != null)
+                Destroy(rightHandStartPoint.gameObject);
         }
     }
 }

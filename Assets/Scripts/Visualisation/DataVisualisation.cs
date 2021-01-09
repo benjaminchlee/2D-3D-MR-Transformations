@@ -568,6 +568,17 @@ namespace SSVis
                     visualisationExtrusions.Add(overplottingExtrusion);
                 }
             }
+            // Condition 2: PCPs for scatterplots with only 2 dimensions along the X and Y axes
+            if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined")
+            {;
+                var xPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
+                xPCPExtrusion.Initialise(dataSource, this, visualisation, AxisDirection.X);
+                visualisationExtrusions.Add(xPCPExtrusion);
+
+                var yPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
+                yPCPExtrusion.Initialise(dataSource, this, visualisation, AxisDirection.Y);
+                visualisationExtrusions.Add(yPCPExtrusion);
+            }
 
             // If an extrusion was added, this Data Visualisation relinquishes control of all manipulation events until a extrusion script tells it to
             if (visualisationExtrusions.Count > 0)

@@ -19,7 +19,7 @@ namespace SSVis
         }
 
         public override ExtrusionIdiom Idiom { get { return ExtrusionIdiom.Overplotting; }}
-        public Mode ExtrusionMode;
+        public Mode ExtrusionMode = Mode.ColourGradient;
 
         private ExtrusionHandle extrusionHandle;
         private string extrusionDimensionKey;
@@ -146,7 +146,7 @@ namespace SSVis
             {
                 positions[i] = extrusionDataPointOffset[i] * Mathf.Abs(distance);
             }
-
+            Debug.Log(positions.Max() + "    " + distance);
             // Set position of the points
             switch (ExtrusionDirection)
             {
