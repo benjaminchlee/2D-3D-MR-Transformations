@@ -76,6 +76,7 @@ namespace SSVis
             this.ExtrusionPersists = extrusionPersists;
             this.ExtrusionResetDistance = extrusionResetDistance;
             this.FlipExtrusionCollider = flipExtrusionCollider;
+            gameObject.layer = LayerMask.NameToLayer("UI");
             isInitalised = true;
 
             UpdateHandlePositionAndScale(position, scale);

@@ -92,12 +92,76 @@ namespace SSVis
             return 5;
         }
 
+        public bool IsPalmOpen(Handedness handedness)
+        {
+            if (!handJointService.IsHandTracked(handedness))
+                return false;
+
+            // ! Based on the HandConstraintPalmUp.cs script !
+
+            // Check if the triangle's normal formed from the palm, to index, to ring finger tip roughly matches the palm normal
+            IMixedRealityHand jointedHand = (IMixedRealityHand)GetController(handedness);
+            if (jointedHand.TryGetJoint(TrackedHandJoint.Palm, out MixedRealityPose palmPose))
+            {
+                if (jointedHand.TryGetJoint(TrackedHandJoint.IndexTip, out MixedRealityPose indexTipPose) &&
+                    jointedHand.TryGetJoint(TrackedHandJoint.RingTip, out MixedRealityPose ringTipPose))
+                {
+                    var handNormal = Vector3.Cross(indexTipPose.Position - palmPose.Position,
+                                                    ringTipPose.Position - indexTipPose.Position).normalized;
+                    handNormal *= (jointedHand.ControllerHandedness == Handedness.Right) ? 1.0f : -1.0f;
+
+                    if (Vector3.Angle(palmPose.Up, handNormal) > 45)
+                    {
+                        return false;
+                    }
+                };
+            }
+
+            return false;
+        }
+
+        public bool IsPalmOpen(IMixedRealityHand jointedHand)
+        {
+            // ! Based on the HandConstraintPalmUp.cs script !
+
+            // Check if the triangle's normal formed from the palm, to index, to ring finger tip roughly matches the palm normal
+            if (jointedHand.TryGetJoint(TrackedHandJoint.Palm, out MixedRealityPose palmPose))
+            {
+                if (jointedHand.TryGetJoint(TrackedHandJoint.IndexTip, out MixedRealityPose indexTipPose) &&
+                    jointedHand.TryGetJoint(TrackedHandJoint.RingTip, out MixedRealityPose ringTipPose))
+                {
+                    var handNormal = Vector3.Cross(indexTipPose.Position - palmPose.Position,
+                                                    ringTipPose.Position - indexTipPose.Position).normalized;
+                    handNormal *= (jointedHand.ControllerHandedness == Handedness.Right) ? 1.0f : -1.0f;
+
+                    if (Vector3.Angle(palmPose.Up, handNormal) > 45)
+                    {
+                        return false;
+                    }
+                };
+            }
+
+            return true;
+        }
+
         public Transform GetJointTransform(Handedness handedness, TrackedHandJoint trackedHandJoint)
         {
             if (!handJointService.IsHandTracked(handedness))
                 return null;
 
             return handJointService.RequestJointTransform(TrackedHandJoint.IndexTip, handedness);
+        }
+
+        public static IMixedRealityController GetController(Handedness handedness)
+        {
+            foreach (IMixedRealityController c in CoreServices.InputSystem.DetectedControllers)
+            {
+                if (c.ControllerHandedness.IsMatch(handedness))
+                {
+                    return c;
+                }
+            }
+            return null;
         }
 
         public void OnSourceDetected(SourceStateEventData eventData)

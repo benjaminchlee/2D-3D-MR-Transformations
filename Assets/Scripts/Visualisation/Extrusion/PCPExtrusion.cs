@@ -106,6 +106,16 @@ namespace SSVis
             Destroy(this);
         }
 
+        public override void EnableExtrusionHandles()
+        {
+            extrusionHandle.enabled = true;
+        }
+
+        public override void DisableExtrusionHandles()
+        {
+            extrusionHandle.enabled = false;
+        }
+
         public override void ExtrudeDimension(float distance, Vector3? extrusionPoint1 = null, Quaternion? extrusionRotation1 = null, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
         {
             // Position main Data Visualisation

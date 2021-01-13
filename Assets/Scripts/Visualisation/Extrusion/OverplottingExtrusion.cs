@@ -55,6 +55,16 @@ namespace SSVis
             Destroy(this);
         }
 
+        public override void EnableExtrusionHandles()
+        {
+            extrusionHandle.enabled = true;
+        }
+
+        public override void DisableExtrusionHandles()
+        {
+            extrusionHandle.enabled = false;
+        }
+
         private void Start()
         {
             if (ExtrusionMode == Mode.ColourFrequency)
@@ -146,7 +156,7 @@ namespace SSVis
             {
                 positions[i] = extrusionDataPointOffset[i] * Mathf.Abs(distance);
             }
-            Debug.Log(positions.Max() + "    " + distance);
+
             // Set position of the points
             switch (ExtrusionDirection)
             {

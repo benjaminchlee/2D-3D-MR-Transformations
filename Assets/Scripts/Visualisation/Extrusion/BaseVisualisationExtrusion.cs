@@ -62,6 +62,10 @@ namespace SSVis
 
         public abstract void UpdateExtrusionHandles();
 
+        public abstract void EnableExtrusionHandles();
+
+        public abstract void DisableExtrusionHandles();
+
         public abstract void ExtrudeDimension(float distance, Vector3? extrusionPoint1 = null, Quaternion? extrusionRotation1 = null, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null);
 
         public abstract void DestroyThisExtrusion();

@@ -60,6 +60,9 @@ namespace SSVis
         private bool isManipulating = false;
         private byte nearestSurfaceCheckCounter = 0;
 
+        private List<IMixedRealityPointer> touchingPointers = new List<IMixedRealityPointer>();
+        private bool isPalmTouchingAndOpen = false;
+
         #region Visualisation Properties
 
         public Visualisation Visualisation
@@ -326,6 +329,8 @@ namespace SSVis
             objectManipulator = GetComponent<ObjectManipulator>();
             objectManipulator.OnManipulationStarted.AddListener(VisualisationGrabbed);
             objectManipulator.OnManipulationEnded.AddListener(VisualisationReleased);
+            objectManipulator.OnHoverEntered.AddListener(VisualisationTouched);
+            objectManipulator.OnHoverExited.AddListener(VisualisationUntouched);
 
             if (XAxisManipulator != null && YAxisManipulator != null && ZAxisManipulator != null)
             {
@@ -415,6 +420,42 @@ namespace SSVis
                         Destroy(ghostVisualisation);
                 }
             }
+
+            if (isAttachedToSurface)
+            {
+                // Disables/enables all visualisation extrusions depending on whether there is a palm that is open touching it
+                if (touchingPointers.Count > 0)
+                {
+                    bool openPalmFound = false;
+
+                    foreach (var pointer in touchingPointers)
+                    {
+                        if (!openPalmFound && HandInputManager.Instance.IsPalmOpen((IMixedRealityHand)pointer.Controller))
+                        {
+                            openPalmFound = true;
+                            if (!isPalmTouchingAndOpen)
+                            {
+                                isPalmTouchingAndOpen = true;
+                                foreach (var extrusion in visualisationExtrusions)
+                                {
+                                    extrusion.DisableExtrusionHandles();
+                                }
+                            }
+                        }
+                    }
+
+                    if (!openPalmFound)
+                    {
+                        if (isPalmTouchingAndOpen)
+                        {
+                            foreach (var extrusion in visualisationExtrusions)
+                            {
+                                extrusion.EnableExtrusionHandles();
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         #region Surface placement
@@ -441,6 +482,32 @@ namespace SSVis
 
             if (ghostVisualisation != null)
                 Destroy(ghostVisualisation);
+        }
+
+        public void VisualisationTouched(ManipulationEventData eventData)
+        {
+            if (!touchingPointers.Contains(eventData.Pointer) && eventData.Pointer.Controller.ControllerHandedness != Microsoft.MixedReality.Toolkit.Utilities.Handedness.None)
+            {
+                touchingPointers.Add(eventData.Pointer);
+            }
+        }
+
+        public void VisualisationUntouched(ManipulationEventData eventData)
+        {
+            if (touchingPointers.Contains(eventData.Pointer))
+            {
+                touchingPointers.Remove(eventData.Pointer);
+            }
+
+            if (touchingPointers.Count == 0)
+            {
+                isPalmTouchingAndOpen = false;
+
+                foreach (var extrusion in visualisationExtrusions)
+                {
+                    extrusion.EnableExtrusionHandles();
+                }
+            }
         }
 
         private void OnTriggerEnter(Collider other)
@@ -477,44 +544,45 @@ namespace SSVis
                     isAttachedToSurface = true;
                     UpdateVisualisationExtrusion();
                 });
-
         }
 
         public void LiftFromSurface(GameObject pointer = null)
         {
             isAttachedToSurface = false;
-            boxCollider.enabled = true;
-            objectManipulator.enabled = true;
             collidingSurfaces.Clear();  // Clear all surfaces as a failsafe if the OnTriggerExit event does not fire in time
 
-            // Regain control of the Data Visualisation when the extrusion script is removed
-            if (pointer != null && visualisationExtrusions.Count > 0)
+            // Handle visualisation extrusion scripts
+            if (visualisationExtrusions.Count > 0)
             {
                 foreach (var ex in visualisationExtrusions)
                     ex.DestroyThisExtrusion();
                 visualisationExtrusions.Clear();
 
-                // Move this Data Visualisation such that it follows the hand
-                transform.SetParent(pointer.transform);
-                transform.DOLocalMove(Vector3.zero, 0.1f);
+                // If a pointer was provided, snap this Data Visualisation to that pointer
+                if (pointer != null)
+                {
+                    // Move this Data Visualisation such that it follows the hand
+                    transform.SetParent(pointer.transform);
+                    transform.DOLocalMove(Vector3.zero, 0.1f);
 
-                // Add events to release this Data Visualisation when the grab gesture is released
-                // Note that we have to use a PointerHandler instead of hooking into the existing ObjectManipulator script as I don't know how to
-                // make it think that the manipulation has even begun (there's ForceManipulationEnd but not for start)
-                var pointerHandler = gameObject.AddComponent<PointerHandler>();
-                CoreServices.InputSystem.RegisterHandler<IMixedRealityPointerHandler>(pointerHandler);
-                pointerHandler.OnPointerUp.AddListener((e) =>
-                {
-                    transform.parent = null;
-                    CoreServices.InputSystem.UnregisterHandler<IMixedRealityPointerHandler>(pointerHandler);
-                    pointerHandler.OnPointerUp.RemoveAllListeners();
-                    Destroy(pointerHandler);
-                });
-                // Hook into the existing VisualisationReleased event handler when this visualisation is lifted and immediately placed back on a surface
-                pointerHandler.OnPointerUp.AddListener((e) =>
-                {
-                    VisualisationReleased(new ManipulationEventData());
-                });
+                    // Add events to release this Data Visualisation when the grab gesture is released
+                    // Note that we have to use a PointerHandler instead of hooking into the existing ObjectManipulator script as I don't know how to
+                    // make it think that the manipulation has even begun (there's ForceManipulationEnd but not for start)
+                    var pointerHandler = gameObject.AddComponent<PointerHandler>();
+                    CoreServices.InputSystem.RegisterHandler<IMixedRealityPointerHandler>(pointerHandler);
+                    pointerHandler.OnPointerUp.AddListener((e) =>
+                    {
+                        transform.parent = null;
+                        CoreServices.InputSystem.UnregisterHandler<IMixedRealityPointerHandler>(pointerHandler);
+                        pointerHandler.OnPointerUp.RemoveAllListeners();
+                        Destroy(pointerHandler);
+                    });
+                    // Hook into the existing VisualisationReleased event handler when this visualisation is lifted and immediately placed back on a surface
+                    pointerHandler.OnPointerUp.AddListener((e) =>
+                    {
+                        VisualisationReleased(new ManipulationEventData());
+                    });
+                }
             }
         }
 
@@ -581,13 +649,6 @@ namespace SSVis
                     yPCPExtrusion.Initialise(dataSource, this, visualisation, AxisDirection.Y);
                     visualisationExtrusions.Add(yPCPExtrusion);
                 }
-            }
-
-            // If an extrusion was added, this Data Visualisation relinquishes control of all manipulation events until a extrusion script tells it to
-            if (visualisationExtrusions.Count > 0)
-            {
-                boxCollider.enabled = false;
-                objectManipulator.enabled = false;
             }
         }
 

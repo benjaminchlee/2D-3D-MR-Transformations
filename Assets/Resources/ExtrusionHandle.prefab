@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8327345341968188225}
   - component: {fileID: 7987207811293720071}
   - component: {fileID: 5036958458834473598}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: ExtrusionHandle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -72,10 +72,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db7dbe4a2f6e7f14f9f6c626909c36f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ExtrusionDistanceChanged:
+  OnExtrusionDistanceChanged:
     m_PersistentCalls:
       m_Calls: []
-  ExtrusionCloneDistanceReached:
+  OnExtrusionCloneDistanceReached:
     m_PersistentCalls:
       m_Calls: []
   ExtrudingVisualisation: {fileID: 0}
@@ -85,3 +85,4 @@ MonoBehaviour:
   ExtrusionCloneDistance: 0.25
   ExtrusionPersists: 1
   ExtrusionResetDistance: 0.05
+  FlipExtrusionCollider: 0
