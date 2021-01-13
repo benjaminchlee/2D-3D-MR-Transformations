@@ -126,7 +126,8 @@ namespace SSVis
             {
                 if (visualisations[i].dataSource != null)
                 {
-                    if (((CSVDataSource)visualisations[i].dataSource).data.name != "auto-mpg")
+                    //if (((CSVDataSource)visualisations[i].dataSource).data.name != "auto-mpg")
+                    if (((CSVDataSource)visualisations[i].dataSource).data.name != ((CSVDataSource)DataVisualisationManager.Instance.DataSource).data.name)
                     {
                         visualisations.RemoveAt(i);
                     }
