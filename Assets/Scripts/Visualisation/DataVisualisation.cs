@@ -486,7 +486,7 @@ namespace SSVis
 
         public void VisualisationTouched(ManipulationEventData eventData)
         {
-            if (!touchingPointers.Contains(eventData.Pointer) && eventData.Pointer.Controller.ControllerHandedness != Microsoft.MixedReality.Toolkit.Utilities.Handedness.None)
+            if (!touchingPointers.Contains(eventData.Pointer) && eventData.Pointer.Controller != null && eventData.Pointer.Controller.ControllerHandedness != Microsoft.MixedReality.Toolkit.Utilities.Handedness.None)
             {
                 touchingPointers.Add(eventData.Pointer);
             }

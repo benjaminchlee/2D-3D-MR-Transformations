@@ -144,12 +144,47 @@ namespace SSVis
             return true;
         }
 
+        public bool IsHandFingerGun(Handedness handedness)
+        {
+            if (!handJointService.IsHandTracked(handedness))
+                return false;
+
+            var thumbTip = handJointService.RequestJointTransform(TrackedHandJoint.ThumbTip, handedness);
+            var indexTip = handJointService.RequestJointTransform(TrackedHandJoint.IndexTip, handedness);
+            var indexKnuckle = handJointService.RequestJointTransform(TrackedHandJoint.IndexKnuckle, handedness);
+            var middleTip = handJointService.RequestJointTransform(TrackedHandJoint.MiddleTip, handedness);
+            var ringTip = handJointService.RequestJointTransform(TrackedHandJoint.RingTip, handedness);
+            var pinkyTip = handJointService.RequestJointTransform(TrackedHandJoint.PinkyTip, handedness);
+            var palm = handJointService.RequestJointTransform(TrackedHandJoint.Palm, handedness);
+
+            // Check if thumb tip and index tip form a right angle with the index knuckle
+            float angle = Vector3.Angle((thumbTip.position - indexKnuckle.position), (indexTip.position - indexKnuckle.position));
+            string hand = handedness == Handedness.Left ? "left: " : "right: ";
+            if (75 < angle && angle < 105)
+            {
+                // Check if the index tip is not curled up next to the index middle
+                if (Vector3.Distance(indexTip.position, indexKnuckle.position) > 0.035f)
+                {
+                    // Make sure the middle, ring, and pinky fingers are close to the palm
+                    if (Vector3.Distance(middleTip.position, palm.position) < 0.055f &&
+                        Vector3.Distance(ringTip.position, palm.position) < 0.04f &&
+                        Vector3.Distance(pinkyTip.position, palm.position) < 0.04f
+                    )
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public Transform GetJointTransform(Handedness handedness, TrackedHandJoint trackedHandJoint)
         {
             if (!handJointService.IsHandTracked(handedness))
                 return null;
 
-            return handJointService.RequestJointTransform(TrackedHandJoint.IndexTip, handedness);
+            return handJointService.RequestJointTransform(trackedHandJoint, handedness);
         }
 
         public static IMixedRealityController GetController(Handedness handedness)

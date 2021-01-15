@@ -45,22 +45,23 @@ float RadiusSphere;
 int BrushMode;
 int SelectionMode;
 
+float4x4 LocalToWorldMatrix;
+float4x4 WorldToClipMatrix;
+
 bool HasFreeBrushReset;
 
 RWStructuredBuffer<float3> dataBuffer;
 StructuredBuffer<float> filteredIndicesBuffer;
 RWStructuredBuffer<int> brushedIndicesBuffer;
 
-// Brush Circle
-bool brush2DInCircle(float3 center, float radius, float4 testPoint)
+bool Brush2DInCircle(float3 center, float radius, float4 testPoint)
 {
 	float4 projectedCenter = mul(W_Matrix, float4(center, 1.0));
 
 	return sqrt(pow(testPoint.x - projectedCenter.x, 2) + pow(testPoint.y - projectedCenter.y, 2)) < radius;
 }
 
-// Brush Sphere
-bool brushSphere(float3 center, float radius, float3 testPoint)
+bool BrushSphere(float3 center, float radius, float3 testPoint)
 {
 	float3 displacementToCenter = testPoint - center;
 	float radiusSqr = radius * radius;
@@ -69,14 +70,7 @@ bool brushSphere(float3 center, float radius, float3 testPoint)
 	return intersects;
 }
 
-bool brushCube(float3 TFL, float3 BBR, float3 testPoint)
-{
-	return (testPoint.x >= TFL.x && testPoint.x <= BBR.x
-		&&  testPoint.y <= TFL.y && testPoint.y >= BBR.y
-		&&  testPoint.z >= TFL.z && testPoint.z <= BBR.z);
-}
-
-bool brushSquare(float3 tl, float3 tr, float3 bl, float3 br, float4 testPoint)
+bool BrushSquare(float3 tl, float3 tr, float3 bl, float3 br, float4 testPoint)
 {
 	float4 tlp = mul(W_Matrix, float4(tl, 1.0));
 	float4 trp = mul(W_Matrix, float4(tr, 1.0));
@@ -87,31 +81,86 @@ bool brushSquare(float3 tl, float3 tr, float3 bl, float3 br, float4 testPoint)
 		&&  testPoint.y <= tlp.y && testPoint.x >= blp.y);
 }
 
-// Selects the correct brush type. 1 : cube, 2 : square
+bool BrushCube(float3 TFL, float3 BBR, float3 testPoint)
+{
+	return (testPoint.x >= TFL.x && testPoint.x <= BBR.x
+		&&  testPoint.y <= TFL.y && testPoint.y >= BBR.y
+		&&  testPoint.z >= TFL.z && testPoint.z <= BBR.z);
+}
+
+bool BrushSquare(float2 TL, float2 BR, float2 testPoint)
+{
+	return (testPoint.x >= TL.x && testPoint.x <= BR.x
+		&&  testPoint.y <= TL.y && testPoint.y >= BR.y);
+}
+
+float3 MultiplyPoint(float4x4 m, float3 v)
+{
+	float3 vector3;
+	vector3.x =  ( m[0][0] *  v.x +  m[0][1] *  v.y +  m[0][2] *  v.z) + m[0][3];
+	vector3.y =  ( m[1][0] *  v.x +  m[1][1] *  v.y +  m[1][2] *  v.z) + m[1][3];
+	vector3.z =  ( m[2][0] *  v.x +  m[2][1] *  v.y +  m[2][2] *  v.z) + m[2][3];
+	float num = 1.0 / ( ( m[3][0] *  v.x +  m[3][1] *  v.y +  m[3][2] *  v.z) + m[3][3]);
+	vector3.x *= num;
+	vector3.y *= num;
+	vector3.z *= num;
+	return vector3;
+}
+
+// Selects the correct brush type based on the set brush mode
 bool Brush(int brushType, float3 filteredPosition)
 {
 	switch (brushType)
 	{
-		// Brush sphere
+		// Sphere brushing
 		case 0:
-			return brushSphere(float3(pointer1.x, pointer1.y, pointer1.z), RadiusSphere, filteredPosition);
-		
-		// Brush cube
-		case 1:
-			float3 TL = float3(pointer1.x, pointer1.y, pointer1.z);
-			float3 BR = float3(pointer2.x, pointer2.y, pointer2.z);
-			if (TL.x > BR.x || TL.y < BR.y || TL.z > BR.z)
-			{
-				TL = BR;
-				BR = float3(pointer1.x, pointer1.y, pointer1.z);
-			}
+			return BrushSphere(float3(pointer1.x, pointer1.y, pointer1.z), RadiusSphere, filteredPosition);
 
-			return brushCube(TL, BR, filteredPosition);
-			
-		// Brush square
-		// case 2:
-			// retun brushSquare(pointer1x, pointer1y,pointer2x,pointer2y,filteredPosition);
-		
+		// Cube brushing
+		case 1:
+		{
+			float3 TFL;
+			float3 BBR;
+
+			TFL.x = min(pointer1.x, pointer2.x);
+			BBR.x = max(pointer1.x, pointer2.x);
+			TFL.y = max(pointer1.y, pointer2.y);
+			BBR.y = min(pointer1.y, pointer2.y);
+			TFL.z = min(pointer1.z, pointer2.z);
+			BBR.z = max(pointer1.z, pointer2.z);
+
+			return BrushCube(TFL, BBR, filteredPosition);
+		}
+
+		// Square brushing based on screen space
+		case 2:
+		{
+			float3 TFL = float3(pointer1.x, pointer1.y, pointer1.z);
+			float3 BBR = float3(pointer2.x, pointer2.y, pointer2.z);
+			float3 pos = float3(filteredPosition.x, filteredPosition.y, filteredPosition.z);
+
+			// Convert points from local to world space
+			// We have to use this MultiplyPoint function instead of mul() because mul doesn't want to work with translations...
+			TFL = MultiplyPoint(LocalToWorldMatrix, TFL);
+			BBR = MultiplyPoint(LocalToWorldMatrix, BBR);
+			pos = MultiplyPoint(LocalToWorldMatrix, pos);
+
+			// Convert from world to screen space based on camera's matrix
+			TFL = MultiplyPoint(WorldToClipMatrix, TFL);
+			BBR = MultiplyPoint(WorldToClipMatrix, BBR);
+			pos = MultiplyPoint(WorldToClipMatrix, pos);
+
+			// Determine the top left and bottom right corners
+			float2 TL;
+			float2 BR;
+			TL.x = min(TFL.x, BBR.x);
+			BR.x = max(TFL.x, BBR.x);
+			TL.y = max(TFL.y, BBR.y);
+			BR.y = min(TFL.y, BBR.y);
+
+			return BrushSquare(TL, BR, float2(pos.x, pos.y));
+		}
+
 		default:
 			return false;
 	}
@@ -141,7 +190,7 @@ bool IsBetweenRanges(float value, float lower, float upper)
 	}
 }
 
-float normaliseValue(float value, float i0, float i1, float j0, float j1)
+float NormaliseValue(float value, float i0, float i1, float j0, float j1)
 {
 	float L = (j0 - j1) / (i0 - i1);
 	return (j0 - (L * i0) + (L * value));
@@ -151,20 +200,20 @@ float normaliseValue(float value, float i0, float i1, float j0, float j1)
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
 	int idx = id.x + id.y * _size;
-	
+
 	// Ignore indices that are filtered
 	if (!filteredIndicesBuffer[idx])
 	{
 		float3 filteredPosition = float3(
-			normaliseValue(dataBuffer[idx].x, _MinNormX, _MaxNormX, 0, width),
-			normaliseValue(dataBuffer[idx].y, _MinNormY, _MaxNormY, 0, height),
-			normaliseValue(dataBuffer[idx].z, _MinNormZ, _MaxNormZ, 0, depth));
-		
+			NormaliseValue(dataBuffer[idx].x, _MinNormX, _MaxNormX, 0, width),
+			NormaliseValue(dataBuffer[idx].y, _MinNormY, _MaxNormY, 0, height),
+			NormaliseValue(dataBuffer[idx].z, _MinNormZ, _MaxNormZ, 0, depth));
+
 		#if UNITY_EDITOR
 		if (IsBetweenRanges(filteredPosition.x, _MinX, _MaxX * width) &&
 			IsBetweenRanges(filteredPosition.y, _MinY, _MaxY * height) &&
 			IsBetweenRanges(filteredPosition.z, _MinZ, _MaxZ * depth)
-		) 
+		)
 		#else
 		// Filter out indices
 		if (
@@ -180,7 +229,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 			if (Brush(BrushMode, filteredPosition))
 			{
 				switch (SelectionMode) {
-					// Free selection	
+					// Free selection
 					case 0:
 					// Additive selection
 					case 1:

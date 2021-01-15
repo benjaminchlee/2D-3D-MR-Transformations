@@ -35,87 +35,120 @@ namespace SSVis
                 Debug.Log(e.Message);
             }
 
-            int leftTouch = HandInputManager.Instance.GetNumTouchingFingers(Handedness.Left);
-            int rightTouch = HandInputManager.Instance.GetNumTouchingFingers(Handedness.Right);
-            if (leftTouch > 2)
+            // First, check if a box selection is being done using the two finger guns
+            if (HandInputManager.Instance.IsHandFingerGun(Handedness.Left) && HandInputManager.Instance.IsHandFingerGun(Handedness.Right))
             {
                 if (!isTracking)
                 {
+                    Debug.Log("Brushing: Box Selection Started");
                     isTracking = true;
-                    ConfigureBrushingAndLinking(Handedness.Left);
+                    ConfigureBrushingAndLinking(Handedness.Both);
                     UpdateBrushingAndLinkingVisualisations();
                 }
-
-                switch (leftTouch)
-                {
-                    case 3:
-                        Debug.Log("Brushing: Left Add Start");
-                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.ADD;
-                        break;
-                    case 4:
-                        Debug.Log("Brushing: Left Subtract Start");
-                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.SUBTRACT;
-                        break;
-                    case 5:
-                        Debug.Log("Brushing: Left Free Start");
-                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
-                        break;
-                }
             }
-            else if (rightTouch > 2)
-            {
-                if (!isTracking)
-                {
-                    isTracking = true;
-                    ConfigureBrushingAndLinking(Handedness.Right);
-                    UpdateBrushingAndLinkingVisualisations();
-                }
-
-                switch (rightTouch)
-                {
-                    case 3:
-                        Debug.Log("Brushing: Right Add Start");
-                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.ADD;
-                        break;
-                    case 4:
-                        Debug.Log("Brushing: Right Subtract Start");
-                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.SUBTRACT;
-                        break;
-                    case 5:
-                        Debug.Log("Brushing: Right Free Start");
-                        brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
-                        break;
-                }
-            }
+            // Second, check if a spherical selection is being done by holding the fingers together
             else
             {
-                if (isTracking)
+                int leftTouch = HandInputManager.Instance.GetNumTouchingFingers(Handedness.Left);
+                int rightTouch = HandInputManager.Instance.GetNumTouchingFingers(Handedness.Right);
+                if (leftTouch > 2)
                 {
-                    Debug.Log("Brushing: End");
+                    if (!isTracking)
+                    {
+                        isTracking = true;
+                        ConfigureBrushingAndLinking(Handedness.Left);
+                        UpdateBrushingAndLinkingVisualisations();
+                    }
 
-                    isTracking = false;
-                    brushingAndLinkingScript.input1 = null;
-                    brushingAndLinkingScript.input2 = null;
-                    brushingAndLinkingScript.isBrushing = false;
-                    brushingAndLinkingScript.showBrush = false;
-                    brushMarker.SetActive(false);
+                    switch (leftTouch)
+                    {
+                        case 3:
+                            Debug.Log("Brushing: Left Add Start");
+                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.ADD;
+                            break;
+                        case 4:
+                            Debug.Log("Brushing: Left Subtract Start");
+                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.SUBTRACT;
+                            break;
+                        case 5:
+                            Debug.Log("Brushing: Left Free Start");
+                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
+                            break;
+                    }
+                }
+                else if (rightTouch > 2)
+                {
+                    if (!isTracking)
+                    {
+                        isTracking = true;
+                        ConfigureBrushingAndLinking(Handedness.Right);
+                        UpdateBrushingAndLinkingVisualisations();
+                    }
+
+                    switch (rightTouch)
+                    {
+                        case 3:
+                            Debug.Log("Brushing: Right Add Start");
+                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.ADD;
+                            break;
+                        case 4:
+                            Debug.Log("Brushing: Right Subtract Start");
+                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.SUBTRACT;
+                            break;
+                        case 5:
+                            Debug.Log("Brushing: Right Free Start");
+                            brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
+                            break;
+                    }
+                }
+                // If no conditions are met, disable the brushing
+                else
+                {
+                    if (isTracking)
+                    {
+                        Debug.Log("Brushing: End");
+
+                        isTracking = false;
+                        brushingAndLinkingScript.input1 = null;
+                        brushingAndLinkingScript.input2 = null;
+                        brushingAndLinkingScript.isBrushing = false;
+                        brushingAndLinkingScript.showBrush = false;
+                        brushMarker.SetActive(false);
+                    }
                 }
             }
         }
 
         private void ConfigureBrushingAndLinking(Handedness handedness)
         {
-            Transform pointer = HandInputManager.Instance.GetJointTransform(handedness, TrackedHandJoint.IndexTip);
+            if (handedness == Handedness.Both)
+            {
+                Transform leftPointer = HandInputManager.Instance.GetJointTransform(Handedness.Left, TrackedHandJoint.IndexKnuckle);
+                Transform rightPointer = HandInputManager.Instance.GetJointTransform(Handedness.Right, TrackedHandJoint.IndexKnuckle);
 
-            brushMarker.transform.SetParent(pointer);
-            brushMarker.transform.localPosition = Vector3.zero;
-            brushMarker.SetActive(true);
+                brushingAndLinkingScript.BRUSH_TYPE = BrushingAndLinking.BrushType.BOXSCREEN;
+                brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
+                brushingAndLinkingScript.input1 = leftPointer;
+                brushingAndLinkingScript.input2 = rightPointer;
+                brushingAndLinkingScript.isBrushing = true;
+                brushingAndLinkingScript.showBrush = true;
+            }
+            else
+            {
+                Transform pointer = HandInputManager.Instance.GetJointTransform(handedness, TrackedHandJoint.IndexTip);
 
-            brushingAndLinkingScript.input1 = brushMarker.transform;
-            brushingAndLinkingScript.input2 = brushMarker.transform;
-            brushingAndLinkingScript.isBrushing = true;
-            brushingAndLinkingScript.showBrush = true;
-            brushingAndLinkingScript.brushRadius = BrushRadius;
+                brushMarker.transform.SetParent(pointer);
+                brushMarker.transform.localPosition = Vector3.zero;
+                brushMarker.SetActive(true);
+
+                brushingAndLinkingScript.BRUSH_TYPE = BrushingAndLinking.BrushType.SPHERE;
+                brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
+                brushingAndLinkingScript.input1 = brushMarker.transform;
+                brushingAndLinkingScript.input2 = brushMarker.transform;
+                brushingAndLinkingScript.isBrushing = true;
+                brushingAndLinkingScript.showBrush = true;
+                brushingAndLinkingScript.brushRadius = BrushRadius;
+            }
         }
 
         private void UpdateBrushingAndLinkingVisualisations()

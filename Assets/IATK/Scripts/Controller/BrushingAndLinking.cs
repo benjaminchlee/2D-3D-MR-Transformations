@@ -41,7 +41,8 @@ public class BrushingAndLinking : MonoBehaviour {
     public enum BrushType
     {
         SPHERE = 0,
-        BOX
+        BOX = 1,
+        BOXSCREEN = 2
     };
 
     [SerializeField]
@@ -86,7 +87,7 @@ public class BrushingAndLinking : MonoBehaviour {
         kernelComputeBrushTexture = computeShader.FindKernel("CSMain");
         kernelComputeBrushedIndices = computeShader.FindKernel("ComputeBrushedIndicesArray");
     }
-    
+
     /// <summary>
     /// Initialises the buffers and textures necessary for the brushing and linking to work.
     /// </summary>
@@ -116,7 +117,7 @@ public class BrushingAndLinking : MonoBehaviour {
         computeShader.SetFloat("_size", texSize);
         computeShader.SetTexture(kernelComputeBrushTexture, "Result", brushedIndicesTexture);
         computeShader.SetTexture(kernelComputeBrushedIndices, "Result", brushedIndicesTexture);
-        
+
         hasInitialised = true;
     }
 
@@ -169,7 +170,7 @@ public class BrushingAndLinking : MonoBehaviour {
                 InitialiseBuffersAndTextures(brushingVisualisations[0].dataSource.DataCount);
             }
         }
-        
+
     }
 
     /// <summary>
@@ -230,10 +231,21 @@ public class BrushingAndLinking : MonoBehaviour {
                 case BrushType.BOX:
                     projectedPointer1 = vis.transform.InverseTransformPoint(input1.transform.position);
                     projectedPointer2 = vis.transform.InverseTransformPoint(input2.transform.position);
-                    
+
                     computeShader.SetFloats("pointer1", projectedPointer1.x, projectedPointer1.y, projectedPointer1.z);
                     computeShader.SetFloats("pointer2", projectedPointer2.x, projectedPointer2.y, projectedPointer2.z);
                     break;
+
+                case BrushType.BOXSCREEN:
+                    projectedPointer1 = vis.transform.InverseTransformPoint(input1.transform.position);
+                    projectedPointer2 = vis.transform.InverseTransformPoint(input2.transform.position);
+
+                    computeShader.SetFloats("pointer1", projectedPointer1.x, projectedPointer1.y, projectedPointer1.z);
+                    computeShader.SetFloats("pointer2", projectedPointer2.x, projectedPointer2.y, projectedPointer2.z);
+                    computeShader.SetMatrix("LocalToWorldMatrix", vis.transform.localToWorldMatrix);
+                    computeShader.SetMatrix("WorldToClipMatrix", (Camera.main.projectionMatrix * Camera.main.worldToCameraMatrix));
+                    break;
+
                 default:
                     break;
             }
@@ -275,10 +287,10 @@ public class BrushingAndLinking : MonoBehaviour {
                 view.BigMesh.SharedMaterial.SetFloat("_ShowBrush", Convert.ToSingle(showBrush));
                 view.BigMesh.SharedMaterial.SetColor("_BrushColor", brushColor);
             }
-           
+
             hasFreeBrushReset = true;
         }
-        
+
         foreach (var linkingVis in brushedLinkingVisualisations)
         {
             linkingVis.View.BigMesh.SharedMaterial.SetTexture("_BrushedTexture", brushedIndicesTexture);
