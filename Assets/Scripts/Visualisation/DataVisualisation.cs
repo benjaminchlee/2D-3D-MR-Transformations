@@ -267,6 +267,12 @@ namespace SSVis
                 visualisation.depth = value.z;
 
                 visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+
+                if (AutoCenterVisualisation)
+                {
+                    AdjustVisualisationLocalPosition();
+                    AdjustCollider();
+                }
             }
         }
 

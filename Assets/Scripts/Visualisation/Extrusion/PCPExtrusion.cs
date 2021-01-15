@@ -154,35 +154,32 @@ namespace SSVis
 
         private void CreateVisualisation()
         {
-            GameObject go = Instantiate(Resources.Load("DataVisualisation")) as GameObject;
-            DataVisualisation vis = go.GetComponent<DataVisualisation>();
-            visualisations.Add(vis);
-            vis.transform.rotation = DataVisualisation.transform.rotation;
-            vis.DataSource = DataSource;
-            vis.VisualisationType = DataVisualisation.VisualisationType;
-            vis.GeometryType = DataVisualisation.GeometryType;
-
+            string xDimension = "";
+            string yDimension = "";
             // TODO: Make this work with non x,y scatterplots in different rotations
             switch (ExtrusionDirection)
             {
                 case AxisDirection.X:
-                    vis.XDimension = DataVisualisation.XDimension;
-                    vis.YDimension = pcpOrdering[visualisations.Count];
+                    xDimension = DataVisualisation.XDimension;
+                    yDimension = pcpOrdering[visualisations.Count];
                     break;
 
                 case AxisDirection.Y:
-                    vis.YDimension = DataVisualisation.YDimension;
-                    vis.XDimension = pcpOrdering[visualisations.Count];
+                    yDimension = DataVisualisation.YDimension;
+                    xDimension = pcpOrdering[visualisations.Count];
                     break;
             }
 
-            vis.Width = DataVisualisation.Width;
-            vis.Height = DataVisualisation.Height;
-            vis.Depth = DataVisualisation.Depth;
-            vis.Size = DataVisualisation.Size;
-            vis.Colour = DataVisualisation.Colour;
-
-            //vis.transform.SetParent(transform.parent);
+            DataVisualisation vis = DataVisualisationManager.Instance.CreateDataVisualisation(DataSource,
+                                                                        DataVisualisation.VisualisationType,
+                                                                        DataVisualisation.GeometryType,
+                                                                        xDimension: xDimension,
+                                                                        yDimension: yDimension,
+                                                                        size: DataVisualisation.Size,
+                                                                        color: DataVisualisation.Colour,
+                                                                        scale: DataVisualisation.Scale
+                                                                        );
+            visualisations.Add(vis);
 
             BrushingAndLinking brushingAndLinking = FindObjectOfType<BrushingAndLinking>();
 
