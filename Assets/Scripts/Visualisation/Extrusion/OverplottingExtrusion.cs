@@ -25,6 +25,8 @@ namespace SSVis
         private string extrusionDimensionKey;
         private float[] extrusionDataPointOffset;
 
+        private Color[] colours;
+
         public override void InitialiseExtrusionHandles()
         {
             extrusionHandle = (GameObject.Instantiate(Resources.Load("ExtrusionHandle")) as GameObject).GetComponent<ExtrusionHandle>();
@@ -50,6 +52,7 @@ namespace SSVis
             DataVisualisation.XDimension = DataVisualisation.XDimension;
             DataVisualisation.YDimension = DataVisualisation.YDimension;
             DataVisualisation.ZDimension = DataVisualisation.ZDimension;
+            DataVisualisation.Colour = DataVisualisation.Colour;
 
             Destroy(extrusionHandle.gameObject);
             Destroy(this);
@@ -105,6 +108,7 @@ namespace SSVis
                             break;
                     }
 
+                    DataVisualisation.Colour = DataVisualisation.Colour;
                     DataVisualisation.Scale = startViewScale;
                 }
 
@@ -148,6 +152,14 @@ namespace SSVis
             {
                 startViewScale = DataVisualisation.Scale;
                 isExtruding = true;
+
+                switch (ExtrusionMode)
+                {
+                    case Mode.ColourFrequency:
+                    case Mode.ColourGradient:
+                        DataVisualisation.Visualisation.theVisualizationObject.viewList[0].SetColors(colours);
+                        break;
+                }
             }
 
             // Creates a new position array based on the pre-calculated offset
@@ -302,7 +314,7 @@ namespace SSVis
 
             // Get the group of points with the most highest count, and use that as the max normalise range
             int max = visitedPoints.Values.Max(x => x.Count);
-            Color[] colours = new Color[dataCount];
+            colours = new Color[dataCount];
             for (int i = 0; i < dataCount; i++)
                 colours[i] = Color.white;
 
@@ -350,7 +362,7 @@ namespace SSVis
 
             // Get the group of points with the most highest count, and use that as the max normalise range
             int max = visitedPoints.Values.Max(x => x.Count);
-            Color[] colours = new Color[dataCount];
+            colours = new Color[dataCount];
             for (int i = 0; i < dataCount; i++)
                 colours[i] = Color.white;
 
