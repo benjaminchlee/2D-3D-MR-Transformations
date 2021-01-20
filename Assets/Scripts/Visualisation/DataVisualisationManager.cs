@@ -87,7 +87,7 @@ namespace SSVis
 
         public void DestroyAllDataVisualisations()
         {
-            var visualisations = FindObjectsOfType<DataVisualisation>();
+            var visualisations = GameObject.FindGameObjectsWithTag("DataVisualisation");
             foreach (var vis in visualisations)
             {
                 Destroy(vis.gameObject);

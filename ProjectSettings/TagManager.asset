@@ -8,6 +8,7 @@ TagManager:
   - PlaceableSurface
   - UI
   - SceneWall
+  - DataVisualisation
   layers:
   - Default
   - TransparentFX
