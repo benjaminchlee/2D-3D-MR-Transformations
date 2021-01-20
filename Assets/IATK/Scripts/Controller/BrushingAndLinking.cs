@@ -277,7 +277,7 @@ public class BrushingAndLinking : MonoBehaviour {
                 computeShader.SetBool("HasFreeBrushReset", hasFreeBrushReset);
 
             // Run the compute shader
-            computeShader.Dispatch(kernelComputeBrushTexture, Mathf.CeilToInt(texSize / 64f), Mathf.CeilToInt(texSize / 64f), 1);
+            computeShader.Dispatch(kernelComputeBrushTexture, Mathf.CeilToInt(texSize / 32f), Mathf.CeilToInt(texSize / 32f), 1);
 
             foreach (var view in vis.theVisualizationObject.viewList)
             {
