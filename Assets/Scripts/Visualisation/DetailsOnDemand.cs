@@ -194,7 +194,8 @@ namespace SSVis
             detailsOnDemandLine.startColor = Color.red;
             detailsOnDemandLine.endColor = Color.red;
             detailsOnDemandLine.useWorldSpace = true;
-            detailsOnDemandLine.material = (Material) Resources.Load("StandardMaterial");
+            detailsOnDemandLine.generateLightingData = true;
+            detailsOnDemandLine.material = (Material) Resources.Load("LineMaterial");
 
             detailsOnDemandLine.enabled = false;
         }
