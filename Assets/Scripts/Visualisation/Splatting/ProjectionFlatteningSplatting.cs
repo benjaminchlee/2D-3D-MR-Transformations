@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 namespace SSVis
 {
@@ -11,6 +12,15 @@ namespace SSVis
         private DataSource DataSource;
         private DataVisualisation DataVisualisation;
         private Visualisation Visualisation;
+
+        private List<GameObject> axisLabels = new List<GameObject>();
+        float xAxisThetaX;
+        float xAxisThetaY;
+        float xAxisThetaZ;
+        float yAxisThetaX;
+        float yAxisThetaY;
+        float yAxisThetaZ;
+
 
         public void Initialise(DataSource dataSource, DataVisualisation dataVisualisation, Visualisation visualisation)
         {
@@ -62,6 +72,9 @@ namespace SSVis
                 yPositions[i] = NormaliseValue(pos.y, minY, maxY);
             }
 
+            // Before we do any modifications to the Data Visualisation, we calculate the angles of rotation between what it is now, to what it will be when fully splatted
+            CalculateAngles();
+
             // Update the points on the Data Visualisation to these positions
             DataVisualisation.ZDimension = "Undefined";
             Visualisation.theVisualizationObject.viewList[0].UpdateXPositions(xPositions);
@@ -75,6 +88,92 @@ namespace SSVis
             Vector3 tr = camera.ViewportToWorldPoint(new Vector3(maxX, maxY, avgZ));
             DataVisualisation.Width = Vector3.Distance(tl, tr);
             DataVisualisation.Height = Vector3.Distance(tl, bl);
+
+            // Set labels based on the angles we calculated before
+            SetAxisLabels();
+        }
+
+        private void CalculateAngles()
+        {
+            // Calculate the angles for each axis based on how much they contribute to the x or y dimension (i.e. the more an axis is parallel to the camera's plane)
+            xAxisThetaX = Vector3.SignedAngle(Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.right, Camera.main.transform.up), Camera.main.transform.up);
+            xAxisThetaY = Vector3.SignedAngle(Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.up, Camera.main.transform.up), Camera.main.transform.up);
+            xAxisThetaZ = Vector3.SignedAngle(Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.forward, Camera.main.transform.up), Camera.main.transform.up);
+
+            yAxisThetaX = Vector3.SignedAngle(-Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.right, Camera.main.transform.right), Camera.main.transform.right);
+            yAxisThetaY = Vector3.SignedAngle(-Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.up, Camera.main.transform.right), Camera.main.transform.right);
+            yAxisThetaZ = Vector3.SignedAngle(-Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.forward, Camera.main.transform.right), Camera.main.transform.right);
+
+            // Convert to radians
+            xAxisThetaX *= Mathf.Deg2Rad;
+            xAxisThetaY *= Mathf.Deg2Rad;
+            xAxisThetaZ *= Mathf.Deg2Rad;
+            yAxisThetaX *= Mathf.Deg2Rad;
+            yAxisThetaY *= Mathf.Deg2Rad;
+            yAxisThetaZ *= Mathf.Deg2Rad;
+        }
+
+        private void SetAxisLabels()
+        {
+            // Find the original axis labels which we can use to position our new labels
+            var xAxisLabel = DataVisualisation.Visualisation.theVisualizationObject.X_AXIS.transform.Find("AttributeLabel").GetComponent<TextMeshPro>();
+            var yAxisLabel = DataVisualisation.Visualisation.theVisualizationObject.Y_AXIS.transform.Find("AttributeLabel").GetComponent<TextMeshPro>();
+            xAxisLabel.text = "";
+            yAxisLabel.text = "";
+
+            // Create the first label which will act as the "prefab" for the others
+            GameObject x1 = new GameObject();
+            TextMeshPro x1tm = x1.AddComponent<TextMeshPro>();
+            x1tm.GetComponent<RectTransform>().sizeDelta = new Vector2(0.05f, 0.05f);
+            x1tm.autoSizeTextContainer = false;
+            x1tm.fontSize = 0.15f;
+            x1tm.alignment = TextAlignmentOptions.Midline;
+            LineRenderer x1lr = x1.AddComponent<LineRenderer>();
+            x1lr.startWidth = 0.0025f;
+            x1lr.endWidth = 0.0025f;
+            x1lr.startColor = Color.red;
+            x1lr.endColor = Color.red;
+            x1lr.useWorldSpace = false;
+            x1lr.generateLightingData = true;
+            x1lr.material = (Material) Resources.Load("LineMaterial");
+            x1lr.SetPositions(new Vector3[] { new Vector3(0, -0.01f, 0), Vector3.zero });
+
+            // Set the x axis labels
+            GameObject x2 = Instantiate(x1);
+            GameObject x3 = Instantiate(x1);
+            x1.transform.SetParent(xAxisLabel.transform);
+            x2.transform.SetParent(xAxisLabel.transform);
+            x3.transform.SetParent(xAxisLabel.transform);
+            x1.transform.localPosition = new Vector3(0, -0.075f + -0.02f, 0);
+            x2.transform.localPosition = new Vector3(0, -0.075f + -0.05f, 0);
+            x3.transform.localPosition = new Vector3(0, -0.075f + -0.08f, 0);
+            x1.transform.localRotation = Quaternion.identity;
+            x2.transform.localRotation = Quaternion.identity;
+            x3.transform.localRotation = Quaternion.identity;
+            x1tm.text = "X'";
+            x2.GetComponent<TextMeshPro>().text = "Y'";
+            x3.GetComponent<TextMeshPro>().text = "Z'";
+            x1lr.SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaX) * 0.025f, -0.01f, 0));
+            x2.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaY) * 0.025f, -0.01f, 0));
+            x3.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaZ) * 0.025f, -0.01f, 0));
+
+            // Set the y axis labels
+            GameObject y1 = Instantiate(x1);
+            GameObject y2 = Instantiate(x1);
+            GameObject y3 = Instantiate(x1);
+            y1.transform.SetParent(yAxisLabel.transform);
+            y2.transform.SetParent(yAxisLabel.transform);
+            y3.transform.SetParent(yAxisLabel.transform);
+            y1.transform.localPosition = new Vector3(0.03f, 0.075f, 0);
+            y2.transform.localPosition = new Vector3(0f, 0.075f, 0);
+            y3.transform.localPosition = new Vector3(-0.03f, 0.075f, 0);
+            y1.GetComponent<TextMeshPro>().text = "X'";
+            y2.GetComponent<TextMeshPro>().text = "Y'";
+            y3.GetComponent<TextMeshPro>().text = "Z'";
+            y1.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaX) * 0.025f, -0.01f, 0));
+            y2.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaY) * 0.025f, -0.01f, 0));
+            y3.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaZ) * 0.025f, -0.01f, 0));
+
         }
 
         private Vector3[] GetColliderVertexPositions (BoxCollider b)
@@ -97,6 +196,14 @@ namespace SSVis
         {
             float L = (j0 - j1) / (i0 - i1);
             return (j0 - (L * i0) + (L * value));
+        }
+
+        private void OnDestroy()
+        {
+            foreach (var go in axisLabels)
+            {
+                Destroy(go);
+            }
         }
     }
 }
