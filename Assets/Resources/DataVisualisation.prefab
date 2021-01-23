@@ -622,7 +622,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DataVisualisation: {fileID: 2293167914765802978}
-  RadialProperties: 01000000020000000300000004000000050000000600000007000000
+  RadialProperties: 010000000200000003000000040000000600000007000000
   PropertySelectionDistanceThreshold: 0.04
 --- !u!1 &5406650190426103410
 GameObject:

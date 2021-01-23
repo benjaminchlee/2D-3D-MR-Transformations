@@ -11,13 +11,13 @@ namespace SSVis
     public enum RadialSegmentProperty
     {
         None,
-        XDimension,
-        YDimension,
-        ZDimension,
+        X,
+        Y,
+        Z,
         Colour,
-        ColourDimension,
+        ColourBy,
         Size,
-        SizeDimension
+        SizeBy
     }
 
     [RequireComponent(typeof(NearInteractionGrabbable))]
@@ -121,23 +121,23 @@ namespace SSVis
         {
             switch (property)
             {
-                case RadialSegmentProperty.XDimension:
+                case RadialSegmentProperty.X:
                     DataVisualisation.XDimension = value.ToString();
                     break;
 
-                case RadialSegmentProperty.YDimension:
+                case RadialSegmentProperty.Y:
                     DataVisualisation.YDimension = value.ToString();
                     break;
 
-                case RadialSegmentProperty.ZDimension:
+                case RadialSegmentProperty.Z:
                     DataVisualisation.ZDimension = value.ToString();
                     break;
 
-                case RadialSegmentProperty.ColourDimension:
+                case RadialSegmentProperty.ColourBy:
                     DataVisualisation.ColourByDimension = value.ToString();
                     break;
 
-                case RadialSegmentProperty.SizeDimension:
+                case RadialSegmentProperty.SizeBy:
                     DataVisualisation.SizeByDimension = value.ToString();
                     break;
 
@@ -292,11 +292,11 @@ namespace SSVis
         {
             switch (property)
             {
-                case RadialSegmentProperty.XDimension:
-                case RadialSegmentProperty.YDimension:
-                case RadialSegmentProperty.ZDimension:
-                case RadialSegmentProperty.ColourDimension:
-                case RadialSegmentProperty.SizeDimension:
+                case RadialSegmentProperty.X:
+                case RadialSegmentProperty.Y:
+                case RadialSegmentProperty.Z:
+                case RadialSegmentProperty.ColourBy:
+                case RadialSegmentProperty.SizeBy:
                     var dataSource = DataVisualisationManager.Instance.DataSource;
                     string[] dimensions = new string[dataSource.DimensionCount + 1];
                     dimensions[0] = "Undefined";
