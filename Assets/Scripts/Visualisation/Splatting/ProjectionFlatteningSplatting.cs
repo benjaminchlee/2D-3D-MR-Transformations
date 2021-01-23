@@ -202,6 +202,9 @@ namespace SSVis
             y1.transform.localPosition = new Vector3(0.03f, 0.075f, 0);
             y2.transform.localPosition = new Vector3(0f, 0.075f, 0);
             y3.transform.localPosition = new Vector3(-0.03f, 0.075f, 0);
+            y1.transform.localEulerAngles = new Vector3(0, 0, -90);
+            y2.transform.localEulerAngles = new Vector3(0, 0, -90);
+            y3.transform.localEulerAngles = new Vector3(0, 0, -90);
             y1.GetComponent<TextMeshPro>().text = "X'";
             y2.GetComponent<TextMeshPro>().text = "Y'";
             y3.GetComponent<TextMeshPro>().text = "Z'";
