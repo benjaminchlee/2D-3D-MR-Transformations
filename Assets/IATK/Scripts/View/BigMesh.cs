@@ -30,8 +30,8 @@ namespace IATK
             public int[] indices;               // The indices of the mesh
             public Color[] colours;             // The colours for each vertex
             public Vector3[] normals;           // The normals of the mesh
-            public Vector3[] uvs;               // The uvs of the mesh
-            public Vector3[] uvsAnimation;      // Store the information for animation  
+            public Vector4[] uvs;               // The uvs of the mesh
+            public Vector3[] uvsAnimation;      // Store the information for animation
 
             public int[] lineLength;
             public int[] chunkIndicesSize;
@@ -39,7 +39,7 @@ namespace IATK
             public Material material;           // The material to apply to the mesh
             public Dictionary<int, int> indexToVertexDictionary;         // Dictionnary that links index buffer indices to vertex buffer indices
 
-            public BigMeshData(MeshTopology meshTopology, Vector3[] vertices, int[] indices, Color[] colours, Vector3[] normals, Vector3[] uvs, Vector3[] uvsAnimation, int[] chunkIndicesSize, Material material, int[] lineLength)
+            public BigMeshData(MeshTopology meshTopology, Vector3[] vertices, int[] indices, Color[] colours, Vector3[] normals, Vector4[] uvs, Vector3[] uvsAnimation, int[] chunkIndicesSize, Material material, int[] lineLength)
             {
                 this.meshTopology = meshTopology;
                 this.vertices = vertices;
@@ -51,7 +51,7 @@ namespace IATK
                 this.chunkIndicesSize = chunkIndicesSize;
                 this.material = material;
                 this.lineLength = lineLength;
-                
+
 
             }
         }
@@ -70,7 +70,7 @@ namespace IATK
         private Material sharedMaterial;
 
         // The common material shared between all submeshes
-        public Material SharedMaterial {                              
+        public Material SharedMaterial {
             get
             {
                 return sharedMaterial;
@@ -345,11 +345,11 @@ namespace IATK
                     v[3] = prev;
                 }
                 meshUVs[meshVertIdx] = v;
-                
+
                 meshVertIdx++;
                 dataPtr++;
             }
-            
+
             // map the final UVs
             meshList[meshIdx].SetUVs(channel, meshUVs);
 
@@ -368,7 +368,7 @@ namespace IATK
         {
             List<Mesh> localMeshList = new List<Mesh>();
             GameObject parentObject = null;
-            
+
             // Optimisation for when there is only one mesh
             //if (meshData.vertices.Length <= VERTEX_LIMIT)
             //{
@@ -403,12 +403,12 @@ namespace IATK
 //                    {
 //                        if ((vertexBuffer.Count) >= VERTEX_LIMIT)
 //                        {
-//                            GameObject meshObject = createMesh(vertexBuffer.ToArray(), 
-//                                indexBuffer.ToArray(), 
+//                            GameObject meshObject = createMesh(vertexBuffer.ToArray(),
+//                                indexBuffer.ToArray(),
 //                                colourBuffer.ToArray(),
 //                                normalBuffer.ToArray(),
 //                                uvBuffer.ToArray(),
-//                                meshData.meshTopology, 
+//                                meshData.meshTopology,
 //                                meshData.material);
 //                            meshObject.transform.parent = parentObject.transform;
 
@@ -444,7 +444,7 @@ namespace IATK
 //                    {
 //                        //get the index of the vertex to access
 //                        int vbIndex = meshData.indices[i];
-                        
+
 //                        if (currentLineCount == 0 && currentLine + 1 < meshData.lineLength.Length)
 //                        {
 //                            int newVertexCounter = 0;
@@ -458,9 +458,9 @@ namespace IATK
 
 //                            if (vertexBuffer.Count + newVertexCounter > VERTEX_LIMIT)
 //                            {
-//                                GameObject meshObject = createMesh(vertexBuffer.ToArray(), 
-//                                                                   indexBuffer.ToArray(), 
-//                                                                   colourBuffer.ToArray(), 
+//                                GameObject meshObject = createMesh(vertexBuffer.ToArray(),
+//                                                                   indexBuffer.ToArray(),
+//                                                                   colourBuffer.ToArray(),
 //                                                                   normalBuffer.ToArray(),
 //                                                                   uvBuffer.ToArray(),
 //                                                                   meshData.meshTopology, meshData.material);
@@ -520,9 +520,9 @@ namespace IATK
 //                if (vertexBuffer.Count > 0)
 //                {
 //                    //print("creeating ")
-//                    GameObject meshObject = createMesh(vertexBuffer.ToArray(), 
-//                                                       indexBuffer.ToArray(), 
-//                                                       colourBuffer.ToArray(), 
+//                    GameObject meshObject = createMesh(vertexBuffer.ToArray(),
+//                                                       indexBuffer.ToArray(),
+//                                                       colourBuffer.ToArray(),
 //                                                       normalBuffer.ToArray(),
 //                                                       uvBuffer.ToArray(),
 //                                                       meshData.meshTopology, meshData.material);
@@ -653,9 +653,9 @@ namespace IATK
         {
             //if (meshData.meshTopology == MeshTopology.Points)
             //{
-                return meshData.vertices.Length; 
+                return meshData.vertices.Length;
             //}
-            //else 
+            //else
             //{
              //   return meshData.lineLength.Length;
             //}
@@ -681,7 +681,7 @@ namespace IATK
         /// <param name="normals">Normals.</param>
         /// <param name="MeshTopology">Mesh topology.</param>
         /// <param name="material">Material.</param>
-        private static GameObject createMesh(Vector3[] vertices, int[] indices, Color[] colours, Vector3[] normals, Vector3[] uvs, MeshTopology meshTopology, Material material)
+        private static GameObject createMesh(Vector3[] vertices, int[] indices, Color[] colours, Vector3[] normals, Vector4[] uvs, MeshTopology meshTopology, Material material)
         {
             GameObject meshObject = new GameObject();
 
@@ -698,12 +698,12 @@ namespace IATK
             mesh.normals = normals;
             mesh.colors = colours;
             mesh.SetUVs(0, uvs.ToList());
-            
+
             mesh.RecalculateBounds();
 
             if (normals == null || normals.Length == 0)
             {
-                mesh.RecalculateNormals(); 
+                mesh.RecalculateNormals();
             }
 
             // Assign to GameObject
@@ -740,7 +740,7 @@ namespace IATK
                 AssetDatabase.SaveAssets();
 
                 Mesh m = AssetDatabase.LoadAssetAtPath<Mesh>(meshNameInPath);
-                
+
                 mf.mesh = m;
 #endif
                 indexCount++;
@@ -771,7 +771,7 @@ namespace IATK
                 saveMesh(this.gameObject, ref countMeshRef, m);
             }
             PrefabUtility.CreatePrefab("Assets/Prefabs/BigMesh.prefab", this.gameObject);
-            
+
             #endif
         }
 
@@ -823,7 +823,7 @@ namespace IATK
         static List<UpdateTweenDelegate> updateTweens = new List<UpdateTweenDelegate>();
 
         private bool hasTweens = false;
-        
+
         private void Update()
         {
             #if !UNITY_EDITOR
@@ -888,7 +888,7 @@ namespace IATK
         private bool DoTheTween()
         {
             bool isTweening = false;
-            
+
             _tweenPosition += Time.deltaTime;
             if (_tweenPosition < 1.0f)
             {

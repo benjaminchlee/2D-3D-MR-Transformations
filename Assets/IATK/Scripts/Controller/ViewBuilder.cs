@@ -49,15 +49,15 @@ namespace IATK
         private List<Vector3> positions;                            // The positions of the data
         private List<int> indices;                                  // The indices for the positions
         private List<Color> colours;                                // The colour at each position
-        private List<Vector3> normals;                              // 
-        private List<Vector3> uvs;                                  // Holds extra data such as id, size
+        private List<Vector3> normals;                              //
+        private List<Vector4> uvs;                                  // Holds extra data such as id, size
         private List<Vector3> uv2s;                                 // Holds extra data such as id, size
 
-        private List<int> lineLength;                               // contains the size of each line when 
+        private List<int> lineLength;                               // contains the size of each line when
         // making a line topology mesh
         private List<int> chunkSizeList;                            // size of each block of indices when the
         // mesh contains more than 65k vertices
-        
+
         private int numberOfDataPoints;                             // number of points in the dataset
 
         private BigMesh bigMesh;                                    // the big mesh
@@ -88,23 +88,23 @@ namespace IATK
             Indices = new List<int>();
             colours = new List<Color>(numberOfPoints);
             normals = new List<Vector3>(numberOfPoints);
-            uvs = new List<Vector3>(numberOfPoints);
+            uvs = new List<Vector4>(numberOfPoints);
             uv2s = new List<Vector3>(numberOfPoints);
 
             LineLength = new List<int>();
             chunkSizeList = new List<int>();
 
             numberOfDataPoints = numberOfPoints;
-            
+
             // Fill
             for (int i = 0; i < numberOfPoints; i++)
             {
                 positions.Add(new Vector3());
                 colours.Add(Color.white);
                 normals.Add(new Vector3());
-                uvs.Add(new Vector3());
+                uvs.Add(new Vector4());
                 uv2s.Add(new Vector3());
-                
+
             }
 
             return this;
@@ -235,7 +235,7 @@ namespace IATK
         public View apply(GameObject parent, Material material)
         {
             parent.name = Name;
-            
+
             GameObject viewGameObject = new GameObject();
 
             viewGameObject.transform.SetParent(parent.transform, false);
@@ -271,7 +271,7 @@ namespace IATK
 
         }
         // PRIVATE
-        
+
         /// <summary>
         /// Updates the mesh from positions.
         /// </summary>
@@ -379,14 +379,14 @@ namespace IATK
                 n.x = (float)(node -1);
                 uvs[node-1] = n;
             }
-            
+
             return this;
         }
 
         // for trajectories, time series
         public ViewBuilder createIndicesConnectedLineTopology(float[] linkingField)
         {
-            //the first member of the Tuple is the index in the index buffer, 
+            //the first member of the Tuple is the index in the index buffer,
             // the second member is the index in the Vertex Buffer.
 
             List<Tuple<int, int>> indexToVertexIndex = new List<Tuple<int, int>>();
@@ -424,7 +424,7 @@ namespace IATK
         /// maps sizes to individual points
         /// </summary>
         /// <param name="sizeArray"></param>
-        /// <returns></returns>         
+        /// <returns></returns>
         public ViewBuilder setSize(float[] sizeArray)
         {
             Debug.Assert(sizeArray != null && sizeArray.Length == numberOfDataPoints);
