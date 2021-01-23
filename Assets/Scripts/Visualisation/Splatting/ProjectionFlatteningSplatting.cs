@@ -7,33 +7,30 @@ using TMPro;
 
 namespace SSVis
 {
-    public class ProjectionFlatteningSplatting : MonoBehaviour
+    public class ProjectionFlatteningSplatting : BaseVisualisationSplatting
     {
-        private DataSource DataSource;
-        private DataVisualisation DataVisualisation;
-        private Visualisation Visualisation;
-
+        // Label variables
         private List<GameObject> axisLabels = new List<GameObject>();
-        float xAxisThetaX;
-        float xAxisThetaY;
-        float xAxisThetaZ;
-        float yAxisThetaX;
-        float yAxisThetaY;
-        float yAxisThetaZ;
+        private float xAxisThetaX;
+        private float xAxisThetaY;
+        private float xAxisThetaZ;
+        private float yAxisThetaX;
+        private float yAxisThetaY;
+        private float yAxisThetaZ;
 
-
-        public void Initialise(DataSource dataSource, DataVisualisation dataVisualisation, Visualisation visualisation)
+        /// <summary>
+        /// Applies the splat. This will modify the referenced Data Visualisation directly.
+        /// </summary>
+        public override void ApplySplat()
         {
-            this.DataSource = dataSource;
-            this.DataVisualisation = dataVisualisation;
-            this.Visualisation = visualisation;
-        }
+            if (!isInitialised)
+            {
+                Debug.LogError("Projection Flattening: Cannot apply the splat before Initialise() has been called.");
+            }
 
-        public void ApplySplat()
-        {
             if (DataVisualisation.XDimension == "Undefined" || DataVisualisation.YDimension == "Undefined" || DataVisualisation.ZDimension == "Undefined")
             {
-                Debug.LogError("Projection flattening requires a 3 dimensional visualisation.");
+                Debug.LogError("Projection Flattening: A 3 dimensional visualisation is required.");
                 return;
             }
 
@@ -55,7 +52,6 @@ namespace SSVis
             {
                 corners[i] = camera.WorldToViewportPoint(corners[i]);
             }
-
             float minX = corners.Min(c => c.x);
             float maxX = corners.Max(c => c.x);
             float minY = corners.Min(c => c.y);
@@ -72,7 +68,7 @@ namespace SSVis
                 yPositions[i] = NormaliseValue(pos.y, minY, maxY);
             }
 
-            // Before we do any modifications to the Data Visualisation, we calculate the angles of rotation between what it is now, to what it will be when fully splatted
+            // Before we do any modifications to the Data Visualisation, we calculate the angles of rotation between what it is now, to what it will be when fully splatted, along the three base axes (x, y, z)
             CalculateAngles();
 
             // Update the points on the Data Visualisation to these positions
@@ -91,6 +87,39 @@ namespace SSVis
 
             // Set labels based on the angles we calculated before
             SetAxisLabels();
+        }
+
+        public override void DestroyThisSplat()
+        {
+            // Remove the axis labels
+            foreach (var go in axisLabels)
+            {
+                Destroy(go);
+            }
+
+            // Force the Data Visualisation to reset the positions of the points
+            DataVisualisation.XDimension = DataVisualisation.XDimension;
+            DataVisualisation.YDimension = DataVisualisation.YDimension;
+            DataVisualisation.ZDimension = DataVisualisation.ZDimension;
+
+            // Destroy this script
+            Destroy(this);
+        }
+
+        private Vector3[] GetColliderVertexPositions (BoxCollider b)
+        {
+            var vertices = new Vector3[8];
+
+            vertices[0] = b.transform.TransformPoint(b.center + new Vector3(-b.size.x, -b.size.y, -b.size.z) * 0.5f);
+            vertices[1] = b.transform.TransformPoint(b.center + new Vector3(b.size.x, -b.size.y, -b.size.z) * 0.5f);
+            vertices[2] = b.transform.TransformPoint(b.center + new Vector3(b.size.x, -b.size.y, b.size.z) * 0.5f);
+            vertices[3] = b.transform.TransformPoint(b.center + new Vector3(-b.size.x, -b.size.y, b.size.z) * 0.5f);
+            vertices[4] = b.transform.TransformPoint(b.center + new Vector3(-b.size.x, b.size.y, -b.size.z) * 0.5f);
+            vertices[5] = b.transform.TransformPoint(b.center + new Vector3(b.size.x, b.size.y, -b.size.z) * 0.5f);
+            vertices[6] = b.transform.TransformPoint(b.center + new Vector3(b.size.x, b.size.y, b.size.z) * 0.5f);
+            vertices[7] = b.transform.TransformPoint(b.center + new Vector3(-b.size.x, b.size.y, b.size.z) * 0.5f);
+
+            return vertices;
         }
 
         private void CalculateAngles()
@@ -115,6 +144,12 @@ namespace SSVis
 
         private void SetAxisLabels()
         {
+            // Get the highest value between width/height/depth so that we can use this to scale the labels based on its axis length
+            float longestAxis = Mathf.Max(new float[] { Mathf.Abs(DataVisualisation.Width), Mathf.Abs(DataVisualisation.Height), Mathf.Abs(DataVisualisation.Depth) });
+            float xAxisPercentage = Mathf.Abs(DataVisualisation.Width) / longestAxis;
+            float yAxisPercentage = Mathf.Abs(DataVisualisation.Height) / longestAxis;
+            float zAxisPercentage = Mathf.Abs(DataVisualisation.Depth) / longestAxis;
+
             // Find the original axis labels which we can use to position our new labels
             var xAxisLabel = DataVisualisation.Visualisation.theVisualizationObject.X_AXIS.transform.Find("AttributeLabel").GetComponent<TextMeshPro>();
             var yAxisLabel = DataVisualisation.Visualisation.theVisualizationObject.Y_AXIS.transform.Find("AttributeLabel").GetComponent<TextMeshPro>();
@@ -153,9 +188,9 @@ namespace SSVis
             x1tm.text = "X'";
             x2.GetComponent<TextMeshPro>().text = "Y'";
             x3.GetComponent<TextMeshPro>().text = "Z'";
-            x1lr.SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaX) * 0.025f, -0.01f, 0));
-            x2.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaY) * 0.025f, -0.01f, 0));
-            x3.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaZ) * 0.025f, -0.01f, 0));
+            x1lr.SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaX) * 0.025f * xAxisPercentage, -0.01f, 0));
+            x2.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaY) * 0.025f * yAxisPercentage, -0.01f, 0));
+            x3.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaZ) * 0.025f * zAxisPercentage, -0.01f, 0));
 
             // Set the y axis labels
             GameObject y1 = Instantiate(x1);
@@ -170,40 +205,23 @@ namespace SSVis
             y1.GetComponent<TextMeshPro>().text = "X'";
             y2.GetComponent<TextMeshPro>().text = "Y'";
             y3.GetComponent<TextMeshPro>().text = "Z'";
-            y1.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaX) * 0.025f, -0.01f, 0));
-            y2.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaY) * 0.025f, -0.01f, 0));
-            y3.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaZ) * 0.025f, -0.01f, 0));
+            y1.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaX) * 0.025f * xAxisPercentage, -0.01f, 0));
+            y2.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaY) * 0.025f * yAxisPercentage, -0.01f, 0));
+            y3.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaZ) * 0.025f * zAxisPercentage, -0.01f, 0));
 
-        }
-
-        private Vector3[] GetColliderVertexPositions (BoxCollider b)
-        {
-            var vertices = new Vector3[8];
-
-            vertices[0] = b.transform.TransformPoint(b.center + new Vector3(-b.size.x, -b.size.y, -b.size.z) * 0.5f);
-            vertices[1] = b.transform.TransformPoint(b.center + new Vector3(b.size.x, -b.size.y, -b.size.z) * 0.5f);
-            vertices[2] = b.transform.TransformPoint(b.center + new Vector3(b.size.x, -b.size.y, b.size.z) * 0.5f);
-            vertices[3] = b.transform.TransformPoint(b.center + new Vector3(-b.size.x, -b.size.y, b.size.z) * 0.5f);
-            vertices[4] = b.transform.TransformPoint(b.center + new Vector3(-b.size.x, b.size.y, -b.size.z) * 0.5f);
-            vertices[5] = b.transform.TransformPoint(b.center + new Vector3(b.size.x, b.size.y, -b.size.z) * 0.5f);
-            vertices[6] = b.transform.TransformPoint(b.center + new Vector3(b.size.x, b.size.y, b.size.z) * 0.5f);
-            vertices[7] = b.transform.TransformPoint(b.center + new Vector3(-b.size.x, b.size.y, b.size.z) * 0.5f);
-
-            return vertices;
+            // Store references to these labels
+            axisLabels.Add(x1);
+            axisLabels.Add(x2);
+            axisLabels.Add(x3);
+            axisLabels.Add(y1);
+            axisLabels.Add(y2);
+            axisLabels.Add(y3);
         }
 
         private float NormaliseValue(float value, float i0, float i1, float j0 = 0, float j1 = 1)
         {
             float L = (j0 - j1) / (i0 - i1);
             return (j0 - (L * i0) + (L * value));
-        }
-
-        private void OnDestroy()
-        {
-            foreach (var go in axisLabels)
-            {
-                Destroy(go);
-            }
         }
     }
 }

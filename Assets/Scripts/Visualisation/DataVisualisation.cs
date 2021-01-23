@@ -49,8 +49,8 @@ namespace SSVis
 
         // Variables for visualisation extrusion and splatting
         private GameObject ghostVisualisation;
-
         private List<BaseVisualisationExtrusion> visualisationExtrusions = new List<BaseVisualisationExtrusion>();
+        private List<BaseVisualisationSplatting> visualisationSplattings = new List<BaseVisualisationSplatting>();
         private bool isAttachedToSurface;
         private List<GameObject> collidingSurfaces = new List<GameObject>();
         private GameObject nearestSurface;
@@ -557,6 +557,14 @@ namespace SSVis
             isAttachedToSurface = false;
             collidingSurfaces.Clear();  // Clear all surfaces as a failsafe if the OnTriggerExit event does not fire in time
 
+            // Handle visualisation splatting scripts
+            if (visualisationSplattings.Count > 0)
+            {
+                foreach (var sp in visualisationSplattings)
+                    sp.DestroyThisSplat();
+                visualisationSplattings.Clear();
+            }
+
             // Handle visualisation extrusion scripts
             if (visualisationExtrusions.Count > 0)
             {
@@ -601,10 +609,10 @@ namespace SSVis
             // Condition 1: Projection flattening for 3D visualisations
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && (new string[] { XDimension, YDimension, ZDimension}).Where(x => x != "Undefined").Count() == 3)
             {
-                var projFlat = gameObject.AddComponent<ProjectionFlatteningSplatting>();
-                projFlat.Initialise(dataSource, this, visualisation);
-                projFlat.ApplySplat();
-                Destroy(projFlat);
+                var projectionFlattening = gameObject.AddComponent<ProjectionFlatteningSplatting>();
+                projectionFlattening.Initialise(dataSource, this, visualisation);
+                projectionFlattening.ApplySplat();
+                visualisationSplattings.Add(projectionFlattening);
                 preventExtrusionForThisPlacement = true;
 
                 // Override the rotation used to place on the surface
