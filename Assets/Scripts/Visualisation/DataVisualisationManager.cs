@@ -56,6 +56,27 @@ namespace SSVis
             return vis;
         }
 
+        public DataVisualisation CloneDataVisualisation(DataVisualisation dataVisualisation)
+        {
+            DataVisualisation vis = CreateDataVisualisation(dataVisualisation.DataSource,
+                                                            dataVisualisation.VisualisationType,
+                                                            dataVisualisation.GeometryType,
+                                                            dataVisualisation.XDimension,
+                                                            dataVisualisation.YDimension,
+                                                            dataVisualisation.ZDimension,
+                                                            dataVisualisation.Size,
+                                                            dataVisualisation.SizeByDimension,
+                                                            dataVisualisation.Colour,
+                                                            dataVisualisation.ColourByDimension,
+                                                            dataVisualisation.Scale);
+
+            vis.transform.position = dataVisualisation.transform.position;
+            vis.transform.rotation = dataVisualisation.transform.rotation;
+            vis.transform.localScale = dataVisualisation.transform.localScale;
+
+            return vis;
+        }
+
         public void CreateRandom3DDataVisualisation()
         {
             // Set random dimensions

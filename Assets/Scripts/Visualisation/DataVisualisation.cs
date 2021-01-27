@@ -3,6 +3,7 @@ using IATK;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
+using Microsoft.MixedReality.Toolkit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -61,7 +62,8 @@ namespace SSVis
         private byte nearestSurfaceCheckCounter = 0;
 
         private List<IMixedRealityPointer> touchingPointers = new List<IMixedRealityPointer>();
-        private bool isPalmTouchingAndOpen = false;
+        private bool isLeftPalmTouchingAndOpen = false;
+        private bool isRightPalmTouchingAndOpen = false;
 
         #region Visualisation Properties
 
@@ -439,25 +441,31 @@ namespace SSVis
                         if (!openPalmFound && HandInputManager.Instance.IsPalmOpen((IMixedRealityHand)pointer.Controller))
                         {
                             openPalmFound = true;
-                            if (!isPalmTouchingAndOpen)
+
+                            if (pointer.Controller.ControllerHandedness == Handedness.Left)
                             {
-                                isPalmTouchingAndOpen = true;
-                                foreach (var extrusion in visualisationExtrusions)
-                                {
-                                    extrusion.DisableExtrusionHandles();
-                                }
+                                isLeftPalmTouchingAndOpen = true;
+                            }
+                            else if (pointer.Controller.ControllerHandedness == Handedness.Right)
+                            {
+                                isRightPalmTouchingAndOpen = true;
+                            }
+
+                            foreach (var extrusion in visualisationExtrusions)
+                            {
+                                extrusion.DisableExtrusionHandles();
                             }
                         }
                     }
 
                     if (!openPalmFound)
                     {
-                        if (isPalmTouchingAndOpen)
+                        isLeftPalmTouchingAndOpen = false;
+                        isRightPalmTouchingAndOpen = false;
+
+                        foreach (var extrusion in visualisationExtrusions)
                         {
-                            foreach (var extrusion in visualisationExtrusions)
-                            {
-                                extrusion.EnableExtrusionHandles();
-                            }
+                            extrusion.EnableExtrusionHandles();
                         }
                     }
                 }
@@ -472,7 +480,19 @@ namespace SSVis
 
             if (isAttachedToSurface)
             {
-                LiftFromSurface();
+                // If the opposite hand's palm was touching the visualisation, then we clone from surface instead
+                Handedness hand = eventData.Pointer.Controller.ControllerHandedness;
+                if ((isLeftPalmTouchingAndOpen && hand == Handedness.Right) || (isRightPalmTouchingAndOpen && hand == Handedness.Left))
+                {
+                    GameObject idxTip = HandInputManager.Instance.GetJointTransform(eventData.Pointer.Controller.ControllerHandedness, Microsoft.MixedReality.Toolkit.Utilities.TrackedHandJoint.IndexTip).gameObject;
+                    CloneFromSurface(idxTip);
+                    objectManipulator.ForceEndManipulation();
+                }
+                else
+                {
+                    LiftFromSurface();
+                }
+
             }
         }
 
@@ -507,7 +527,7 @@ namespace SSVis
 
             if (touchingPointers.Count == 0)
             {
-                isPalmTouchingAndOpen = false;
+                isLeftPalmTouchingAndOpen = false;
 
                 foreach (var extrusion in visualisationExtrusions)
                 {
@@ -552,6 +572,33 @@ namespace SSVis
                 });
         }
 
+        public void CloneFromSurface(GameObject pointer)
+        {
+            DataVisualisation newVis = DataVisualisationManager.Instance.CloneDataVisualisation(this);
+
+            // Move the new Data Visualisation such that it follows the hand
+            newVis.transform.SetParent(pointer.transform);
+            newVis.transform.DOLocalMove(Vector3.zero, 0.1f);
+
+            // Add events to release this Data Visualisation when the grab gesture is released
+            // Note that we have to use a PointerHandler instead of hooking into the existing ObjectManipulator script as I don't know how to
+            // make it think that the manipulation has even begun (there's ForceManipulationEnd but not for start)
+            var pointerHandler = newVis.gameObject.AddComponent<PointerHandler>();
+            CoreServices.InputSystem.RegisterHandler<IMixedRealityPointerHandler>(pointerHandler);
+            pointerHandler.OnPointerUp.AddListener((e) =>
+            {
+                newVis.transform.parent = null;
+                CoreServices.InputSystem.UnregisterHandler<IMixedRealityPointerHandler>(pointerHandler);
+                pointerHandler.OnPointerUp.RemoveAllListeners();
+                Destroy(pointerHandler);
+            });
+            // Hook into the existing VisualisationReleased event handler when this visualisation is lifted and immediately placed back on a surface
+            pointerHandler.OnPointerUp.AddListener((e) =>
+            {
+                newVis.VisualisationReleased(new ManipulationEventData());
+            });
+        }
+
         public void LiftFromSurface(GameObject pointer = null)
         {
             isAttachedToSurface = false;
@@ -571,32 +618,32 @@ namespace SSVis
                 foreach (var ex in visualisationExtrusions)
                     ex.DestroyThisExtrusion();
                 visualisationExtrusions.Clear();
+            }
 
-                // If a pointer was provided, snap this Data Visualisation to that pointer
-                if (pointer != null)
+            // If a pointer was provided, snap this Data Visualisation to that pointer
+            if (pointer != null)
+            {
+                // Move this Data Visualisation such that it follows the hand
+                transform.SetParent(pointer.transform);
+                transform.DOLocalMove(Vector3.zero, 0.1f);
+
+                // Add events to release this Data Visualisation when the grab gesture is released
+                // Note that we have to use a PointerHandler instead of hooking into the existing ObjectManipulator script as I don't know how to
+                // make it think that the manipulation has even begun (there's ForceManipulationEnd but not for start)
+                var pointerHandler = gameObject.AddComponent<PointerHandler>();
+                CoreServices.InputSystem.RegisterHandler<IMixedRealityPointerHandler>(pointerHandler);
+                pointerHandler.OnPointerUp.AddListener((e) =>
                 {
-                    // Move this Data Visualisation such that it follows the hand
-                    transform.SetParent(pointer.transform);
-                    transform.DOLocalMove(Vector3.zero, 0.1f);
-
-                    // Add events to release this Data Visualisation when the grab gesture is released
-                    // Note that we have to use a PointerHandler instead of hooking into the existing ObjectManipulator script as I don't know how to
-                    // make it think that the manipulation has even begun (there's ForceManipulationEnd but not for start)
-                    var pointerHandler = gameObject.AddComponent<PointerHandler>();
-                    CoreServices.InputSystem.RegisterHandler<IMixedRealityPointerHandler>(pointerHandler);
-                    pointerHandler.OnPointerUp.AddListener((e) =>
-                    {
-                        transform.parent = null;
-                        CoreServices.InputSystem.UnregisterHandler<IMixedRealityPointerHandler>(pointerHandler);
-                        pointerHandler.OnPointerUp.RemoveAllListeners();
-                        Destroy(pointerHandler);
-                    });
-                    // Hook into the existing VisualisationReleased event handler when this visualisation is lifted and immediately placed back on a surface
-                    pointerHandler.OnPointerUp.AddListener((e) =>
-                    {
-                        VisualisationReleased(new ManipulationEventData());
-                    });
-                }
+                    transform.parent = null;
+                    CoreServices.InputSystem.UnregisterHandler<IMixedRealityPointerHandler>(pointerHandler);
+                    pointerHandler.OnPointerUp.RemoveAllListeners();
+                    Destroy(pointerHandler);
+                });
+                // Hook into the existing VisualisationReleased event handler when this visualisation is lifted and immediately placed back on a surface
+                pointerHandler.OnPointerUp.AddListener((e) =>
+                {
+                    VisualisationReleased(new ManipulationEventData());
+                });
             }
         }
 
