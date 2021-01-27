@@ -79,13 +79,11 @@ namespace SSVis
                     label.autoSizeTextContainer = false;
                     label.fontSize = MainTextLabel.fontSize;
                     label.alignment = MainTextLabel.alignment;
-                    label.GetComponent<RectTransform>().pivot = MainTextLabel.rectTransform.pivot;
-                    label.GetComponent<RectTransform>().sizeDelta = MainTextLabel.rectTransform.sizeDelta;
-                    TextContainer container = go.AddComponent<TextContainer>();
-                    container.anchorPosition = MainTextLabel.GetComponent<TextContainer>().anchorPosition;
-                    container.margins = MainTextLabel.GetComponent<TextContainer>().margins;
-                    container.size = MainTextLabel.GetComponent<TextContainer>().size;
-                    container.pivot = MainTextLabel.GetComponent<TextContainer>().pivot;
+                    label.margin = MainTextLabel.margin;
+                    label.rectTransform.pivot = MainTextLabel.rectTransform.pivot;
+                    label.rectTransform.sizeDelta = MainTextLabel.rectTransform.sizeDelta;
+                    label.rectTransform.anchoredPosition = MainTextLabel.rectTransform.anchoredPosition;
+                    label.isTextObjectScaleStatic = true;   // Make this label not resize by TMPro whenever it is enabled/disabled. Ignore this error in VSCode!
 
                     textLabels[i] = label;
                 }

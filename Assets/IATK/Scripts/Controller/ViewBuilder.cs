@@ -121,8 +121,13 @@ namespace IATK
             Debug.Assert((int)dimension < 3);
             Debug.Assert(data.Length <= positions.Count);
 
-            float minValue = data.Min();
-            float maxValue = data.Max();
+            float minValue = Mathf.Infinity;
+            float maxValue = 0;
+            for (int i = 0; i < data.Length; i++)
+            {
+                if (data[i] <= minValue) minValue = data[i];
+                if (data[i] >= maxValue) maxValue = data[i];
+            }
 
             for (int i = 0; i < data.Length; i++)
             {
