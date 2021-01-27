@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Microsoft.MixedReality.Toolkit.Utilities;
 
 namespace SSVis
 {
@@ -17,6 +18,9 @@ namespace SSVis
         private float yAxisThetaX;
         private float yAxisThetaY;
         private float yAxisThetaZ;
+        private float xAxisPercentage;
+        private float yAxisPercentage;
+        private float zAxisPercentage;
 
         /// <summary>
         /// Applies the splat. This will modify the referenced Data Visualisation directly.
@@ -38,7 +42,7 @@ namespace SSVis
             Vector3[] positions = Visualisation.theVisualizationObject.viewList[0].GetPositions();
 
             // Convert local space into world space, then into viewport space
-            Camera camera = Camera.main;
+            Camera camera = CameraCache.Main;
             for (int i = 0; i < DataSource.DataCount; i++)
             {
                 Vector3 pos = Visualisation.theVisualizationObject.viewList[0].transform.TransformPoint(positions[i]);
@@ -70,6 +74,8 @@ namespace SSVis
 
             // Before we do any modifications to the Data Visualisation, we calculate the angles of rotation between what it is now, to what it will be when fully splatted, along the three base axes (x, y, z)
             CalculateAngles();
+            // We also get how long each axis is, which effects how much that axis finally contributes to the final projection
+            CalculateAxisPercentages();
 
             // Update the points on the Data Visualisation to these positions
             DataVisualisation.ZDimension = "Undefined";
@@ -77,7 +83,7 @@ namespace SSVis
             Visualisation.theVisualizationObject.viewList[0].UpdateYPositions(yPositions);
             Visualisation.theVisualizationObject.viewList[0].ZeroPosition(2);
             // Face towards the camera
-            DataVisualisation.transform.rotation = Quaternion.LookRotation(DataVisualisation.transform.position - Camera.main.transform.position);
+            DataVisualisation.transform.rotation = Quaternion.LookRotation(DataVisualisation.transform.position - camera.transform.position);
             // Rescale based on bounding box corners
             Vector3 bl = camera.ViewportToWorldPoint(new Vector3(minX, minY, avgZ));
             Vector3 tl = camera.ViewportToWorldPoint(new Vector3(minX, maxY, avgZ));
@@ -124,14 +130,19 @@ namespace SSVis
 
         private void CalculateAngles()
         {
-            // Calculate the angles for each axis based on how much they contribute to the x or y dimension (i.e. the more an axis is parallel to the camera's plane)
-            xAxisThetaX = Vector3.SignedAngle(Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.right, Camera.main.transform.up), Camera.main.transform.up);
-            xAxisThetaY = Vector3.SignedAngle(Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.up, Camera.main.transform.up), Camera.main.transform.up);
-            xAxisThetaZ = Vector3.SignedAngle(Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.forward, Camera.main.transform.up), Camera.main.transform.up);
+            Vector3 cameraUp = Vector3.up;
+            Vector3 cameraForward = Vector3.ProjectOnPlane(CameraCache.Main.transform.forward, cameraUp);
+            Vector3 cameraBackward = -cameraForward;
+            Vector3 cameraRight = Vector3.ProjectOnPlane(CameraCache.Main.transform.right, cameraUp);
 
-            yAxisThetaX = Vector3.SignedAngle(-Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.right, Camera.main.transform.right), Camera.main.transform.right);
-            yAxisThetaY = Vector3.SignedAngle(-Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.up, Camera.main.transform.right), Camera.main.transform.right);
-            yAxisThetaZ = Vector3.SignedAngle(-Camera.main.transform.forward, Vector3.ProjectOnPlane(DataVisualisation.transform.forward, Camera.main.transform.right), Camera.main.transform.right);
+            // Calculate the angles for each axis based on how much they contribute to the x or y dimension (i.e. the more an axis is parallel to the camera's plane)
+            xAxisThetaX = Vector3.SignedAngle(cameraForward, Vector3.ProjectOnPlane(DataVisualisation.transform.right, cameraUp), cameraUp);
+            xAxisThetaY = Vector3.SignedAngle(cameraForward, Vector3.ProjectOnPlane(DataVisualisation.transform.up, cameraUp), cameraUp);
+            xAxisThetaZ = Vector3.SignedAngle(cameraForward, Vector3.ProjectOnPlane(DataVisualisation.transform.forward, cameraUp), cameraUp);
+
+            yAxisThetaX = Vector3.SignedAngle(cameraBackward, Vector3.ProjectOnPlane(DataVisualisation.transform.right, cameraRight), cameraRight);
+            yAxisThetaY = Vector3.SignedAngle(cameraBackward, Vector3.ProjectOnPlane(DataVisualisation.transform.up, cameraRight), cameraRight);
+            yAxisThetaZ = Vector3.SignedAngle(cameraBackward, Vector3.ProjectOnPlane(DataVisualisation.transform.forward, cameraRight), cameraRight);
 
             // Convert to radians
             xAxisThetaX *= Mathf.Deg2Rad;
@@ -142,13 +153,17 @@ namespace SSVis
             yAxisThetaZ *= Mathf.Deg2Rad;
         }
 
-        private void SetAxisLabels()
+        private void CalculateAxisPercentages()
         {
             // Get the highest value between width/height/depth so that we can use this to scale the labels based on its axis length
             float longestAxis = Mathf.Max(new float[] { Mathf.Abs(DataVisualisation.Width), Mathf.Abs(DataVisualisation.Height), Mathf.Abs(DataVisualisation.Depth) });
-            float xAxisPercentage = Mathf.Abs(DataVisualisation.Width) / longestAxis;
-            float yAxisPercentage = Mathf.Abs(DataVisualisation.Height) / longestAxis;
-            float zAxisPercentage = Mathf.Abs(DataVisualisation.Depth) / longestAxis;
+            xAxisPercentage = Mathf.Abs(DataVisualisation.Width) / longestAxis;
+            yAxisPercentage = Mathf.Abs(DataVisualisation.Height) / longestAxis;
+            zAxisPercentage = Mathf.Abs(DataVisualisation.Depth) / longestAxis;
+        }
+
+        private void SetAxisLabels()
+        {
 
             // Find the original axis labels which we can use to position our new labels
             var xAxisLabel = DataVisualisation.Visualisation.theVisualizationObject.X_AXIS.transform.Find("AttributeLabel").GetComponent<TextMeshPro>();
@@ -188,9 +203,9 @@ namespace SSVis
             x1tm.text = "X'";
             x2.GetComponent<TextMeshPro>().text = "Y'";
             x3.GetComponent<TextMeshPro>().text = "Z'";
-            x1lr.SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaX) * 0.025f * xAxisPercentage, -0.01f, 0));
-            x2.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaY) * 0.025f * yAxisPercentage, -0.01f, 0));
-            x3.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaZ) * 0.025f * zAxisPercentage, -0.01f, 0));
+            x1lr.SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaX) * 0.05f * xAxisPercentage, -0.01f, 0));
+            x2.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaY) * 0.05f * yAxisPercentage, -0.01f, 0));
+            x3.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(xAxisThetaZ) * 0.05f * zAxisPercentage, -0.01f, 0));
 
             // Set the y axis labels
             GameObject y1 = Instantiate(x1);
@@ -208,9 +223,9 @@ namespace SSVis
             y1.GetComponent<TextMeshPro>().text = "X'";
             y2.GetComponent<TextMeshPro>().text = "Y'";
             y3.GetComponent<TextMeshPro>().text = "Z'";
-            y1.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaX) * 0.025f * xAxisPercentage, -0.01f, 0));
-            y2.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaY) * 0.025f * yAxisPercentage, -0.01f, 0));
-            y3.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaZ) * 0.025f * zAxisPercentage, -0.01f, 0));
+            y1.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaX) * 0.05f * xAxisPercentage, -0.01f, 0));
+            y2.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaY) * 0.05f * yAxisPercentage, -0.01f, 0));
+            y3.GetComponent<LineRenderer>().SetPosition(1, new Vector3(Mathf.Sin(yAxisThetaZ) * 0.05f * zAxisPercentage, -0.01f, 0));
 
             // Store references to these labels
             axisLabels.Add(x1);
