@@ -43,6 +43,7 @@ namespace SSVis
         {
             propertyAngleSize = 360f / RadialProperties.Count;
             radialMenuHolder = new GameObject("Radial Menu");
+            radialMenuHolder.transform.SetParent(DataVisualisation.transform);
         }
 
         public void OnPointerClicked(MixedRealityPointerEventData eventData)
