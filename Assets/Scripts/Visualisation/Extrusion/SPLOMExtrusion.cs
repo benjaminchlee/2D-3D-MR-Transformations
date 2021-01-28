@@ -12,10 +12,16 @@ namespace SSVis
 
         private ExtrusionHandle extrusionHandle;
 
+        private int numDimensions;
         private List<string> dimensionList;
         private DataVisualisation[,] splomVisualisations;
         private int splomSize = 1;
-        private float splomInterval;
+
+        private const float maximumExtrusionLength = 0.5f;
+        private const float maximumSplomWidth = 1f;
+        private const float maximumSplomHeight = 1f;
+        private Vector3 originalVisualisationScale;
+
 
         public override void Initialise(DataSource dataSource, DataVisualisation dataVisualisation, Visualisation visualisation, AxisDirection extrusionDirection)
         {
@@ -23,9 +29,9 @@ namespace SSVis
 
             splomVisualisations = new DataVisualisation[dataSource.DimensionCount, dataSource.DimensionCount];
             splomVisualisations[0, 0] = DataVisualisation;
-            splomInterval = Mathf.Sqrt(DataVisualisation.Width * DataVisualisation.Width + DataVisualisation.Height * DataVisualisation.Height);
 
             dimensionList = GetDimensionList(dataSource);
+            numDimensions = dimensionList.Count;
         }
 
         public override void InitialiseExtrusionHandles()
@@ -53,9 +59,9 @@ namespace SSVis
 
         public override void DestroyThisExtrusion()
         {
-            for (int i = 0; i < DataSource.DimensionCount; i++)
+            for (int i = 0; i < numDimensions; i++)
             {
-                for (int j = 0; j < DataSource.DimensionCount; j++)
+                for (int j = 0; j < numDimensions; j++)
                 {
                     var vis = splomVisualisations[i, j];
                     if (vis != DataVisualisation)
@@ -81,29 +87,34 @@ namespace SSVis
 
         public override void ExtrudeDimension(float distance, Vector3? extrusionPoint1 = null, Quaternion? extrusionRotation1 = null, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
         {
-            distance = Mathf.Pow(Mathf.Abs(distance) * 50, 2) / 50;
+            float interval = maximumExtrusionLength / (float) numDimensions;
+            int newSplomSize = Mathf.Min(Mathf.FloorToInt(distance / interval), numDimensions);
+            Debug.Log(numDimensions);
+            Debug.Log(newSplomSize);
 
-            int newSplomSize = Mathf.FloorToInt(distance / splomInterval) + 1;
-
-            if (newSplomSize == splomSize || DataSource.DimensionCount < newSplomSize || newSplomSize <= 0)
+            if (newSplomSize == splomSize || numDimensions < newSplomSize || newSplomSize <= 0)
                 return;
+
+            // If this is the first time increasing the size of the SPLOM, we quickly store the original visualisation's scale
+            if (splomSize == 1 && newSplomSize > 1)
+            {
+                originalVisualisationScale = DataVisualisation.Scale;
+                DataVisualisation.HideAxisManipulators();
+            }
 
             // If the size of the SPLOM increased, then we have to create visualisations
             if (splomSize < newSplomSize)
             {
                 int xDimensionIdx = dimensionList.IndexOf(DataVisualisation.XDimension);
                 int yDimensionIdx = dimensionList.IndexOf(DataVisualisation.YDimension);
-                int dimensionCount = dimensionList.Count;
 
                 for (int i = 0; i < newSplomSize; i++)
                 {
                     for (int j = splomSize; j < newSplomSize; j++)
                     {
                         // Determine dimensions to set
-                        int newXDimensionIdx = xDimensionIdx + i;
-                        if (newXDimensionIdx >= dimensionCount) newXDimensionIdx = 0;
-                        int newYDimensionIdx = yDimensionIdx + j;
-                        if (newYDimensionIdx >= dimensionCount) newYDimensionIdx = 0;
+                        int newXDimensionIdx = (xDimensionIdx + i) % numDimensions;
+                        int newYDimensionIdx = (yDimensionIdx + j) % numDimensions;
 
                         if (splomVisualisations[i, j] == null)
                         {
@@ -115,6 +126,7 @@ namespace SSVis
                                                                                                                   size: DataVisualisation.Size,
                                                                                                                   color: DataVisualisation.Colour,
                                                                                                                   scale: DataVisualisation.Scale);
+                            splomVisualisations[i, j].HideAxisManipulators();
                         }
                         if (splomVisualisations[j, i] == null)
                         {
@@ -126,6 +138,7 @@ namespace SSVis
                                                                                                                   size: DataVisualisation.Size,
                                                                                                                   color: DataVisualisation.Colour,
                                                                                                                   scale: DataVisualisation.Scale);
+                            splomVisualisations[j, i].HideAxisManipulators();
                         }
                     }
                 }
@@ -152,8 +165,15 @@ namespace SSVis
 
         private void SetSPLOMPositions()
         {
-            float width = DataVisualisation.Width;
-            float height = DataVisualisation.Height;
+            if (splomSize == 1)
+            {
+                DataVisualisation.Scale = originalVisualisationScale;
+                DataVisualisation.ShowAxisManipulators();
+                return;
+            }
+
+            float width = Mathf.Min(originalVisualisationScale.x, maximumSplomWidth / splomSize);
+            float height = Mathf.Min(originalVisualisationScale.y, maximumSplomHeight / splomSize);
             Vector3 right = DataVisualisation.transform.right;
             Vector3 up = DataVisualisation.transform.up;
 
@@ -162,14 +182,17 @@ namespace SSVis
                 for (int j = 0; j < splomSize; j++)
                 {
                     // Skip the original visualisation
-                    if (i == 0 && j == 0)
-                        continue;
+                    // if (i == 0 && j == 0)
+                    //     continue;
 
                     var vis = splomVisualisations[i, j];
 
                     // Set positions
                     vis.transform.position = DataVisualisation.transform.position + width * right * i + height * up * j;
                     vis.transform.rotation = DataVisualisation.transform.rotation;
+
+                    vis.Width = width;
+                    vis.Height = height;
                 }
             }
         }

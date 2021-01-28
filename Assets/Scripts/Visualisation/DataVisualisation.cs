@@ -948,6 +948,29 @@ namespace SSVis
             }
         }
 
+        public void ShowAxisManipulators()
+        {
+            if (XAxisManipulator != null)
+                XAxisManipulator.gameObject.SetActive(true);
+            if (YAxisManipulator != null)
+                YAxisManipulator.gameObject.SetActive(true);
+            if (ZAxisManipulator != null)
+                ZAxisManipulator.gameObject.SetActive(true);
+            gameObject.GetComponentInChildren<VisualisationRadialMenu>().gameObject.SetActive(true);
+        }
+
+        public void HideAxisManipulators()
+        {
+            if (XAxisManipulator != null)
+                XAxisManipulator.gameObject.SetActive(false);
+            if (YAxisManipulator != null)
+                YAxisManipulator.gameObject.SetActive(false);
+            if (ZAxisManipulator != null)
+                ZAxisManipulator.gameObject.SetActive(false);
+            gameObject.GetComponentInChildren<VisualisationRadialMenu>().gameObject.SetActive(false);
+        }
+
         #endregion // Axis Scaling
+
     }
 }
