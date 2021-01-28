@@ -80,6 +80,8 @@ MonoBehaviour:
   - serializedVersion: 2
     m_Bits: 32
   - serializedVersion: 2
+    m_Bits: 256
+  - serializedVersion: 2
     m_Bits: 19
   triggerInteraction: 0
   sceneQueryBufferSize: 64

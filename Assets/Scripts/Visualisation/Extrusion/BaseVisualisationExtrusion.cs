@@ -12,7 +12,8 @@ namespace SSVis
         Network,
         Histogram,
         ParallelCoordinates,
-        DepthAxis
+        DepthAxis,
+        ScatterplotMatrix
     }
 
     public abstract class BaseVisualisationExtrusion : MonoBehaviour

@@ -38,11 +38,14 @@ namespace SSVis
         public DataVisualisation ExtrudingVisualisation;
         public AxisDirection ExtrusionDirection;
         public float InitialHandleThickness = 0.1f;
+        public float InitialHandleWidth = 0.1f;
+        public float InitialHandleHeight = 0.1f;
         public bool CloneOnMaxDistance = true;
         public float ExtrusionCloneDistance = 0.25f;
         public bool ExtrusionPersists = true;
         public float ExtrusionResetDistance = 0.05f;
         public bool FlipExtrusionCollider = false;
+        public bool DisableNegativeExtrusion = false;
 
         private bool isInitalised = false;
 
@@ -64,19 +67,25 @@ namespace SSVis
             extrusionData = new ExtrusionEventData();
         }
 
-        public void Initialise(DataVisualisation extrudingVisualisation, AxisDirection extrusionDirection, Vector3 position, Vector3 scale, float initialHandleThickness = 0.1f, bool cloneOnMaxDistance = true, float extrusionCloneDistance = 0.25f, bool extrusionPersists = true, float extrusionResetDistance = 0.05f, bool flipExtrusionCollider = false)
+        public void Initialise(DataVisualisation extrudingVisualisation, AxisDirection extrusionDirection, Vector3 position, Vector3 scale,
+                               float initialHandleThickness = 0.1f, float initialHandleWidth = 1f, float initialHandleHeight = 1f,          // Initial width and height are only used for diagonal extrusions at the moment
+                               bool cloneOnMaxDistance = true, float extrusionCloneDistance = 0.25f, bool extrusionPersists = true, float extrusionResetDistance = 0.05f,
+                               bool flipExtrusionCollider = false, bool disableNegativeExtrusion = false, string layer = "UI")
         {
             transform.SetParent(extrudingVisualisation.transform);
             transform.localRotation = Quaternion.identity;
             this.ExtrudingVisualisation = extrudingVisualisation;
             this.ExtrusionDirection = extrusionDirection;
             this.InitialHandleThickness = initialHandleThickness;
+            this.InitialHandleWidth = initialHandleWidth;
+            this.InitialHandleHeight = initialHandleHeight;
             this.CloneOnMaxDistance = cloneOnMaxDistance;
             this.ExtrusionCloneDistance = extrusionCloneDistance;
             this.ExtrusionPersists = extrusionPersists;
             this.ExtrusionResetDistance = extrusionResetDistance;
             this.FlipExtrusionCollider = flipExtrusionCollider;
-            gameObject.layer = LayerMask.NameToLayer("UI");
+            this.DisableNegativeExtrusion = disableNegativeExtrusion;
+            gameObject.layer = LayerMask.NameToLayer(layer);
             isInitalised = true;
 
             UpdateHandlePositionAndScale(position, scale);
@@ -218,6 +227,18 @@ namespace SSVis
                         if (point2 != null)
                             dist2 = rightHandStartDistance + rightHandStartPoint.InverseTransformPoint((Vector3)point2).z;
                         break;
+                    case AxisDirection.X | AxisDirection.Y:
+                        if (point1 != null)
+                        {
+                            Vector3 point = leftHandStartPoint.InverseTransformPoint((Vector3)point1);
+                            dist1 = Mathf.Min(point.x, point.y) + leftHandStartDistance;
+                        }
+                        if (point2 != null)
+                        {
+                            Vector3 point = rightHandStartPoint.InverseTransformPoint((Vector3)point2);
+                            dist2 = Mathf.Min(point.x, point.y) + rightHandStartDistance;
+                        }
+                        break;
                 }
 
                 // Take the one with the larger absolute value
@@ -225,6 +246,16 @@ namespace SSVis
                     extrusionData.distance = dist1;
                 else
                     extrusionData.distance = dist2;
+
+
+                // If the handle is set to ignore negatives, we emit a distance of 0
+                if (DisableNegativeExtrusion && extrusionData.distance < 0)
+                {
+                    extrusionData.distance = 0;
+                    OnExtrusionDistanceChanged.Invoke(extrusionData);
+                    // Update the thickness and position of the collider as well
+                    UpdateColliderThickness();
+                }
 
                 // Second, we check if this distance exceeds the extrusion clone distance threshold. If it does, we clone it (which consequently halts all other extrusions)
                 if (CloneOnMaxDistance && Mathf.Abs(extrusionData.distance) >= ExtrusionCloneDistance)
@@ -277,6 +308,12 @@ namespace SSVis
                 case AxisDirection.Z:
                     size.z = thickness;
                     centre.z = offset;
+                    break;
+                case AxisDirection.X | AxisDirection.Y:
+                    size.x = InitialHandleWidth + Mathf.Abs(extrusionData.distance);
+                    size.y = InitialHandleHeight + Mathf.Abs(extrusionData.distance);
+                    centre.x = offset;
+                    centre.y = offset;
                     break;
             }
             boxCollider.size = size;

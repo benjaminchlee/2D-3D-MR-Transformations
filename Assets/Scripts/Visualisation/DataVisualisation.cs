@@ -12,12 +12,13 @@ using UnityEngine;
 
 namespace SSVis
 {
+    [Flags]
     public enum AxisDirection
     {
-        None,
-        X,
-        Y,
-        Z
+        None = 1,
+        X = 2,
+        Y = 4,
+        Z = 8
     }
 
     public class DataVisualisation : MonoBehaviour
@@ -492,7 +493,6 @@ namespace SSVis
                 {
                     LiftFromSurface();
                 }
-
             }
         }
 
@@ -709,6 +709,17 @@ namespace SSVis
                     var yPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
                     yPCPExtrusion.Initialise(dataSource, this, visualisation, AxisDirection.Y);
                     visualisationExtrusions.Add(yPCPExtrusion);
+                }
+            }
+
+            // Condition 3: SPLOMs for scatterplots with only 2 dimensions along the X and Y axes, and if the z dimension is also the protruding direction
+            if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined")
+            {
+                if (protrudingDimension == AxisDirection.Z)
+                {
+                    var splomExtrusion = gameObject.AddComponent<SPLOMExtrusion>();
+                    splomExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
+                    visualisationExtrusions.Add(splomExtrusion);
                 }
             }
         }
