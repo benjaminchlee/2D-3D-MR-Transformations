@@ -58,9 +58,9 @@ namespace IATK
         }
 
         public enum VisualisationTypes {
-            SCATTERPLOT, 
-            SCATTERPLOT_MATRIX, 
-            PARALLEL_COORDINATES, 
+            SCATTERPLOT,
+            SCATTERPLOT_MATRIX,
+            PARALLEL_COORDINATES,
             GRAPH_LAYOUT};
 
         // PUBLIC HIDDEN
@@ -84,7 +84,7 @@ namespace IATK
         public CreationConfiguration creationConfiguration;
 
         [HideInInspector]
-        public string serializedObjectPath = "SerializedFields"; 
+        public string serializedObjectPath = "SerializedFields";
 
         // ******************************************************
         // ABSTRACT METHODS THAT VISUALISATIONS HAVE TO IMPLEMENT
@@ -116,7 +116,7 @@ namespace IATK
         protected GameObject CreateAxis(AbstractVisualisation.PropertyType propertyType, DimensionFilter dimensionFilter, Vector3 position, Vector3 rotation, int index)
         {
             GameObject AxisHolder;
-            
+
             AxisHolder = (GameObject)Instantiate(Resources.Load("Axis"));
 
             AxisHolder.transform.parent = transform;
@@ -147,7 +147,7 @@ namespace IATK
             object maxScaledvalue = visualisationReference.dataSource.getOriginalValue(dim.maxScale, dim.Attribute);
 
             axis.AttributeFilter = dim;
-            
+
             axis.UpdateAxisAttribute(dim.Attribute);
             axis.SetMinNormalizer(dim.minScale);
             axis.SetMaxNormalizer(dim.maxScale);
@@ -161,12 +161,14 @@ namespace IATK
         public void SerializeViewConfiguration(CreationConfiguration creationConfiguration)
         {
             #if UNITY_EDITOR
+            /*
             string path = ConfigurationFileName();
             if (!Directory.Exists(Path.GetDirectoryName(path)))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
             }
             creationConfiguration.Serialize(ConfigurationFileName());
+            */
             #endif
         }
 
@@ -246,7 +248,7 @@ namespace IATK
                     {
                         throw new UnityException("'Linkinfield' or 'GraphDimension' is undefined. Please select a linking field or a graph dimension");
                     }
-                    break;                    
+                    break;
 
                 case AbstractVisualisation.GeometryType.Quads:
                     builder.createIndicesPointTopology();
@@ -311,7 +313,7 @@ namespace IATK
                     return null;
             }
         }
-        
+
         /// <summary>
         /// Geometries to mesh topology.
         /// </summary>
@@ -338,7 +340,7 @@ namespace IATK
                     return MeshTopology.Points;
             }
         }
-        
+
         //void OnDestroy()
         //{
         //    destroyView();

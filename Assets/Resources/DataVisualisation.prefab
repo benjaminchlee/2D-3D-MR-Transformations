@@ -57,6 +57,7 @@ MonoBehaviour:
   XAxisManipulator: {fileID: 2562848266449757440}
   YAxisManipulator: {fileID: 637346055343907938}
   ZAxisManipulator: {fileID: 6489933202123396808}
+  VisualisationRadialMenu: {fileID: 4638372459788508480}
 --- !u!65 &1087838904650364543
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -45,6 +45,9 @@ namespace SSVis
         public ObjectManipulator YAxisManipulator;
         public ObjectManipulator ZAxisManipulator;
 
+        [Header("Visualisation Property UI")]
+        public VisualisationRadialMenu VisualisationRadialMenu;
+
         private bool isXAxisScaling = false;
         private bool isYAxisScaling = false;
         private bool isZAxisScaling = false;
@@ -956,7 +959,8 @@ namespace SSVis
                 YAxisManipulator.gameObject.SetActive(true);
             if (ZAxisManipulator != null)
                 ZAxisManipulator.gameObject.SetActive(true);
-            gameObject.GetComponentInChildren<VisualisationRadialMenu>().gameObject.SetActive(true);
+            if (VisualisationRadialMenu != null)
+                VisualisationRadialMenu.gameObject.SetActive(true);
         }
 
         public void HideAxisManipulators()
@@ -967,8 +971,42 @@ namespace SSVis
                 YAxisManipulator.gameObject.SetActive(false);
             if (ZAxisManipulator != null)
                 ZAxisManipulator.gameObject.SetActive(false);
-            gameObject.GetComponentInChildren<VisualisationRadialMenu>().gameObject.SetActive(false);
+            if (VisualisationRadialMenu != null)
+                VisualisationRadialMenu.gameObject.SetActive(false);
         }
+
+        public void ShowAxes()
+        {
+            SetXAxisVisibility(true);
+            SetYAxisVisibility(true);
+            SetZAxisVisibility(true);
+        }
+
+        public void HideAxes()
+        {
+            SetXAxisVisibility(false);
+            SetYAxisVisibility(false);
+            SetZAxisVisibility(false);
+        }
+
+        public void SetXAxisVisibility(bool visible)
+        {
+            if (visualisation.theVisualizationObject.X_AXIS != null)
+                visualisation.theVisualizationObject.X_AXIS.SetActive(visible);
+        }
+
+        public void SetYAxisVisibility(bool visible)
+        {
+            if (visualisation.theVisualizationObject.Y_AXIS != null)
+                visualisation.theVisualizationObject.Y_AXIS.SetActive(visible);
+        }
+
+        public void SetZAxisVisibility(bool visible)
+        {
+            if (visualisation.theVisualizationObject.Z_AXIS != null)
+                visualisation.theVisualizationObject.Z_AXIS.SetActive(visible);
+        }
+
 
         #endregion // Axis Scaling
 
