@@ -92,11 +92,11 @@ namespace SSVis
 
         private void Update()
         {
-            #if UNITY_EDITOR
-            if (HandInputManager.Instance.IsHandTracked(HandToUse))
-            #else
+            // #if UNITY_EDITOR
+            // if (HandInputManager.Instance.IsHandTracked(HandToUse))
+            // #else
             if (HandInputManager.Instance.IsHandIndexPointing(HandToUse))
-            #endif
+            // #endif
             {
                 if (inspectionPoint == null)
                 {

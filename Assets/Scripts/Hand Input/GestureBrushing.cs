@@ -51,7 +51,8 @@ namespace SSVis
             {
                 int leftTouch = HandInputManager.Instance.GetNumTouchingFingers(Handedness.Left);
                 int rightTouch = HandInputManager.Instance.GetNumTouchingFingers(Handedness.Right);
-                if (leftTouch > 2)
+                //if (leftTouch > 2)
+                if (leftTouch > 4)
                 {
                     if (!isTracking)
                     {
@@ -76,7 +77,8 @@ namespace SSVis
                             break;
                     }
                 }
-                else if (rightTouch > 2)
+                //else if (rightTouch > 2)
+                else if (rightTouch > 4)
                 {
                     if (!isTracking)
                     {
@@ -126,7 +128,7 @@ namespace SSVis
                 Transform leftPointer = HandInputManager.Instance.GetJointTransform(Handedness.Left, TrackedHandJoint.IndexKnuckle);
                 Transform rightPointer = HandInputManager.Instance.GetJointTransform(Handedness.Right, TrackedHandJoint.IndexKnuckle);
 
-                brushingAndLinkingScript.BRUSH_TYPE = BrushingAndLinking.BrushType.BOXSCREEN;
+                brushingAndLinkingScript.BRUSH_TYPE = BrushingAndLinking.BrushType.BOXSCREENSPACE;
                 brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
                 brushingAndLinkingScript.input1 = leftPointer;
                 brushingAndLinkingScript.input2 = rightPointer;
@@ -153,20 +155,21 @@ namespace SSVis
 
         private void UpdateBrushingAndLinkingVisualisations()
         {
-            var visualisations = GameObject.FindObjectsOfType<Visualisation>().ToList();
+            var dataVisualisations = GameObject.FindGameObjectsWithTag("DataVisualisation");
+            var visualisations = new List<Visualisation>();
 
-            for (int i = visualisations.Count - 1; i >= 0; i--)
+            for (int i = 0; i < dataVisualisations.Length; i++)
             {
-                if (visualisations[i].dataSource != null)
+                var dataVis = dataVisualisations[i].GetComponent<DataVisualisation>();
+                if (dataVis.DataSource != null)
                 {
-                    //if (((CSVDataSource)visualisations[i].dataSource).data.name != "auto-mpg")
-                    if (((CSVDataSource)visualisations[i].dataSource).data.name != ((CSVDataSource)DataVisualisationManager.Instance.DataSource).data.name)
+                    if (((CSVDataSource)dataVis.DataSource).data.name == ((CSVDataSource)DataVisualisationManager.Instance.DataSource).data.name)
                     {
-                        visualisations.RemoveAt(i);
+                        visualisations.Add(dataVis.Visualisation);
                     }
                 }
             }
-            brushingAndLinkingScript.brushingVisualisations = visualisations.ToList();
+            brushingAndLinkingScript.brushingVisualisations = visualisations;
 
             var linkingVisualisations = GameObject.FindObjectsOfType<LinkingVisualisations>();
             brushingAndLinkingScript.brushedLinkingVisualisations = linkingVisualisations.ToList();

@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace SSVis
 {
@@ -16,6 +17,9 @@ namespace SSVis
         public Color VisualisationColour = Color.white;
         public float VisualisationSize = 0.1f;
         public Vector3 VisualisationScale = new Vector3(0.25f, 0.25f, 0.25f);
+
+        public UnityEvent OnVisualisationCreated;
+        public UnityEvent OnVisualisationsDestroyed;
 
         private void Awake()
         {
@@ -52,6 +56,8 @@ namespace SSVis
             vis.Visualisation.colourDimension = colourDimension;
             vis.Visualisation.CreateVisualisation(AbstractVisualisation.VisualisationTypes.SCATTERPLOT);
             vis.Scale = scale != default(Vector3) ? scale : Vector3.one;
+
+            OnVisualisationCreated.Invoke();
 
             return vis;
         }
@@ -119,6 +125,8 @@ namespace SSVis
             {
                 Destroy(vis.gameObject);
             }
+
+            OnVisualisationsDestroyed.Invoke();
         }
     }
 }
