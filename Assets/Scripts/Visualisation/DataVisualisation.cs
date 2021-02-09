@@ -48,6 +48,9 @@ namespace SSVis
         [Header("Visualisation Property UI")]
         public VisualisationRadialMenu VisualisationRadialMenu;
 
+        [Header("Misc Visualisation Properties")]
+        public bool IsPrototype = false;
+
         private bool isXAxisScaling = false;
         private bool isYAxisScaling = false;
         private bool isZAxisScaling = false;
@@ -482,7 +485,14 @@ namespace SSVis
         {
             isManipulating = true;
 
-            if (isAttachedToSurface)
+            // If this data visualisation is marked as a prototype, any attempt to grab it immediately clones it
+            if (IsPrototype)
+            {
+                GameObject idxTip = HandInputManager.Instance.GetJointTransform(eventData.Pointer.Controller.ControllerHandedness, Microsoft.MixedReality.Toolkit.Utilities.TrackedHandJoint.IndexTip).gameObject;
+                CloneFromSurface(idxTip);
+                objectManipulator.ForceEndManipulation();
+            }
+            else if (isAttachedToSurface)
             {
                 // If the opposite hand's palm was touching the visualisation, then we clone from surface instead
                 Handedness hand = eventData.Pointer.Controller.ControllerHandedness;
@@ -920,10 +930,10 @@ namespace SSVis
             isXAxisScaling = false;
 
             float pos = XAxisManipulator.transform.localPosition.x;
-            if (-0.05f < pos && pos < 0.05f)
+            if (-0.025f < pos && pos < 0.025f)
             {
                 XDimension = "Undefined";
-                XAxisManipulator.transform.DOLocalMoveX(0.05f, 0.1f);
+                XAxisManipulator.transform.DOLocalMoveX(0.025f, 0.1f);
             }
         }
 
@@ -932,10 +942,10 @@ namespace SSVis
             isYAxisScaling = false;
 
             float pos = YAxisManipulator.transform.localPosition.y;
-            if (-0.05f < pos && pos < 0.05f)
+            if (-0.025f < pos && pos < 0.025f)
             {
                 YDimension = "Undefined";
-                YAxisManipulator.transform.DOLocalMoveY(0.05f, 0.1f);
+                YAxisManipulator.transform.DOLocalMoveY(0.025f, 0.1f);
             }
         }
 
@@ -944,10 +954,10 @@ namespace SSVis
             isZAxisScaling = false;
 
             float pos = ZAxisManipulator.transform.localPosition.z;
-            if (-0.05f < pos && pos < 0.05f)
+            if (-0.025f < pos && pos < 0.025f)
             {
                 ZDimension = "Undefined";
-                ZAxisManipulator.transform.DOLocalMoveZ(0.05f, 0.1f);
+                ZAxisManipulator.transform.DOLocalMoveZ(0.025f, 0.1f);
             }
         }
 

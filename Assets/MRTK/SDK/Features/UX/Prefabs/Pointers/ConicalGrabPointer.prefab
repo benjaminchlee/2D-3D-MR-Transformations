@@ -78,11 +78,15 @@ MonoBehaviour:
   nearObjectSmoothingFactor: 0.4
   grabLayerMasks:
   - serializedVersion: 2
-    m_Bits: 32
-  - serializedVersion: 2
     m_Bits: 256
   - serializedVersion: 2
-    m_Bits: 19
+    m_Bits: 512
+  - serializedVersion: 2
+    m_Bits: 2147483703
+  - serializedVersion: 2
+    m_Bits: 1024
+  - serializedVersion: 2
+    m_Bits: 2048
   triggerInteraction: 0
   sceneQueryBufferSize: 64
   ignoreCollidersNotInFOV: 1

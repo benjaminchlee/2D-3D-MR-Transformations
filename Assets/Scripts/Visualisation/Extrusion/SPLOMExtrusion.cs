@@ -17,17 +17,19 @@ namespace SSVis
         private DataVisualisation[,] splomVisualisations;
         private int splomSize = 1;
 
-        private Coroutine createVisualisationsCoroutine;
-        private bool isCreateVisualisationsCoroutineRunning = false;
-
-        private const float maximumExtrusionLength = 0.5f;
-        private const float maximumSplomWidth = 1f;
-        private const float maximumSplomHeight = 1f;
+        private const float maximumSplomWidth = 1.5f;
+        private const float maximumSplomHeight = 1.5f;
         private const float splomSpacing = 0.02f;
+
+        private Vector3 originalVisualisationPosition;
         private Vector3 originalVisualisationScale;
         private int originalVisualisationXDimensionIdx;
         private int originalVisualisationYDimensionIdx;
 
+        private float extrusionInterval;
+        private bool isCreatingNewVisualisations = false;
+        private float currentExtrusionDistance = 0;
+        private float previousExtrusionDistance = 0;
 
         public override void Initialise(DataSource dataSource, DataVisualisation dataVisualisation, Visualisation visualisation, AxisDirection extrusionDirection)
         {
@@ -47,7 +49,7 @@ namespace SSVis
             Vector3 position = new Vector3(0.05f, 0.05f, 0);
 
             extrusionHandle = (GameObject.Instantiate(Resources.Load("ExtrusionHandle")) as GameObject).GetComponent<ExtrusionHandle>();
-            extrusionHandle.Initialise(DataVisualisation, AxisDirection.X | AxisDirection.Y, position, scale, initialHandleWidth: scale.x, initialHandleHeight: scale.y, cloneOnMaxDistance: false, disableNegativeExtrusion: true, layer: "UI 2");
+            extrusionHandle.Initialise(DataVisualisation, AxisDirection.X | AxisDirection.Y, position, scale, initialHandleWidth: scale.x, initialHandleHeight: scale.y, cloneOnMaxDistance: false, disableNegativeExtrusion: true, layer: "Back Trigger Layer");
             extrusionHandle.OnExtrusionDistanceChanged.AddListener((e) =>
             {
                 ExtrudeDimension(e.distance);
@@ -93,42 +95,38 @@ namespace SSVis
 
         public override void ExtrudeDimension(float distance, Vector3? extrusionPoint1 = null, Quaternion? extrusionRotation1 = null, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
         {
-            float interval = maximumExtrusionLength / (float) numDimensions;
-            int newSplomSize = Mathf.Min(Mathf.FloorToInt(distance / interval), numDimensions);
-
-            if (newSplomSize == splomSize || numDimensions < newSplomSize || newSplomSize <= 0)
-                return;
-
-            // If this is the first time increasing the size of the SPLOM, we quickly store the original visualisation's scale and starting dimensions
-            if (splomSize == 1 && newSplomSize > 1)
+            // If this is the first time the extrusion distance has changed, we quickly store the original visualisation's scale and starting dimensions
+            if (!isExtruding && distance > 0)
             {
+                originalVisualisationPosition = DataVisualisation.transform.position;
                 originalVisualisationScale = DataVisualisation.Scale;
                 originalVisualisationXDimensionIdx = dimensionList.IndexOf(DataVisualisation.XDimension);
                 originalVisualisationYDimensionIdx = dimensionList.IndexOf(DataVisualisation.YDimension);
                 DataVisualisation.HideAxisManipulators();
+
+                // Calculate and store the interval which causes a the SPLOM to increase in size
+                extrusionInterval = Mathf.Max((maximumSplomWidth - originalVisualisationScale.x) / (float)numDimensions,
+                                       (maximumSplomHeight - originalVisualisationScale.y) / (float)numDimensions);
+
+                isExtruding = true;
             }
+
+            currentExtrusionDistance = distance;
+
+            int newSplomSize = Mathf.Min(Mathf.FloorToInt(distance / extrusionInterval) + 1, numDimensions);
+            if (numDimensions < newSplomSize || newSplomSize <= 0)
+                return;
 
             // If the size of the SPLOM increased, then we have to create visualisations
             if (splomSize < newSplomSize)
             {
-                if (isCreateVisualisationsCoroutineRunning)
-                {
-                    StopCoroutine(createVisualisationsCoroutine);
-                    isCreateVisualisationsCoroutineRunning = false;
-                }
-
-                createVisualisationsCoroutine = StartCoroutine(CreateAndPositionVisualisationEachFrame(newSplomSize));
+                // This flag causes visualisations to be created in the update loop
+                isCreatingNewVisualisations = true;
             }
             // If the size of the SPLOM decreased, then we have to destroy visualisations
-            else if (newSplomSize < splomSize || newSplomSize == 1)
+            else if (newSplomSize < splomSize)
             {
-                if (isCreateVisualisationsCoroutineRunning)
-                {
-                    // Restart the coroutine with the new splom value
-                    StopCoroutine(createVisualisationsCoroutine);
-                    createVisualisationsCoroutine = StartCoroutine(CreateAndPositionVisualisationEachFrame(newSplomSize));
-                }
-
+                /// We do that immediately here as the update loop should be able to resolve itself
                 for (int i = 0; i < splomSize; i++)
                 {
                     for (int j = newSplomSize; j < splomSize; j++)
@@ -146,91 +144,100 @@ namespace SSVis
                     }
                 }
 
-                SetSPLOMPositions();
             }
+
+            // Restore the original visualisation's properties if it's the only one left
+            if (newSplomSize == 1 && currentExtrusionDistance == 0)
+            {
+                DataVisualisation.ShowAxisManipulators();
+                DataVisualisation.transform.position = originalVisualisationPosition;
+                DataVisualisation.Scale = originalVisualisationScale;
+
+                isCreatingNewVisualisations = false;
+                previousExtrusionDistance = 0;
+                isExtruding = false;
+            }
+
 
             splomSize = newSplomSize;
         }
 
-        private IEnumerator CreateAndPositionVisualisationEachFrame(int targetSplomSize)
+        private void Update()
         {
-            isCreateVisualisationsCoroutineRunning = true;
-
-            float width = Mathf.Min(originalVisualisationScale.x, (maximumSplomWidth - splomSpacing * (targetSplomSize - 1)) / splomSize);
-            float height = Mathf.Min(originalVisualisationScale.y, (maximumSplomHeight - splomSpacing * (targetSplomSize - 1)) / splomSize);
-            Vector3 right = DataVisualisation.transform.right;
-            Vector3 up = DataVisualisation.transform.up;
-            int instantiationCount = 0;
-
-            for (int i = 0; i < targetSplomSize; i++)
+            if (isCreatingNewVisualisations || (previousExtrusionDistance != currentExtrusionDistance))
             {
-                for (int j = 0; j < targetSplomSize; j++)
+                // Lerp values between the expected visualisation scale at this SPLOM size and the next SPLOM size
+                float thisSplomWidth = Mathf.Min(originalVisualisationScale.x + extrusionInterval * (splomSize - 1), maximumSplomWidth);
+                float thisSplomHeight = Mathf.Min(originalVisualisationScale.y + extrusionInterval * (splomSize - 1), maximumSplomHeight);
+
+                float nextSplomWidth = Mathf.Min(originalVisualisationScale.x + extrusionInterval * splomSize, maximumSplomWidth);
+                float nextSplomHeight = Mathf.Min(originalVisualisationScale.y + extrusionInterval * splomSize, maximumSplomHeight);
+
+                float t = (currentExtrusionDistance % extrusionInterval) / extrusionInterval;
+
+                float visWidth = Mathf.Lerp((thisSplomWidth - splomSpacing * (splomSize - 1)) / splomSize,
+                                            (nextSplomWidth - splomSpacing * splomSize) / (splomSize + 1),
+                                            t);
+                float visHeight = Mathf.Lerp((thisSplomHeight - splomSpacing * (splomSize - 1)) / splomSize,
+                                            (nextSplomHeight - splomSpacing * splomSize) / (splomSize + 1),
+                                            t);
+
+                Vector3 right = DataVisualisation.transform.right;
+                Vector3 up = DataVisualisation.transform.up;
+
+                int instantiationCount = 0;
+                bool isThereMoreToInstantiate = false;
+
+                for (int i = 0; i < splomSize; i++)
                 {
-                    // Determine dimensions to set
-                    string newXDimension = dimensionList[(originalVisualisationXDimensionIdx + i) % numDimensions];
-                    string newYDimension = dimensionList[(originalVisualisationYDimensionIdx + j) % numDimensions];
-
-                    // Instantiate visualisations if they do not yet exist
-                    var vis = splomVisualisations[i, j];
-                    if (vis == null)
+                    for (int j = 0; j < splomSize; j++)
                     {
-                        vis = DataVisualisationManager.Instance.CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.SCATTERPLOT, AbstractVisualisation.GeometryType.Points,
-                                                                                        xDimension: newXDimension, yDimension: newYDimension,
-                                                                                        size: DataVisualisation.Size, color: DataVisualisation.Colour, scale: DataVisualisation.Scale);
-                        splomVisualisations[i, j] = vis;
+                        // Determine dimensions to set
+                        string newXDimension = dimensionList[(originalVisualisationXDimensionIdx + i) % numDimensions];
+                        string newYDimension = dimensionList[(originalVisualisationYDimensionIdx + j) % numDimensions];
 
-                        // Hide parts of the visualisation to improve visibility
-                        vis.HideAxisManipulators();
-                        if (i > 0)  vis.SetYAxisVisibility(false);
-                        if (j > 0)  vis.SetXAxisVisibility(false);
+                        var vis = splomVisualisations[i, j];
+                        // Create a new visualisation in the SPLOM if need be
+                        if (vis == null)
+                        {
+                            // We set a max on how many can be created each frame to prevent lag spikes. If we aren't allowed to instantiate any more, set a flag to ensure it attempts again the next frame
+                            if (instantiationCount > 4)
+                            {
+                                isThereMoreToInstantiate = true;
+                                continue;
+                            }
 
-                        instantiationCount++;
-                    }
-                    vis.transform.position = DataVisualisation.transform.position + (width + splomSpacing) * right * i + (height + splomSpacing) * up * j;
-                    vis.transform.rotation = DataVisualisation.transform.rotation;
-                    vis.Width = width;
-                    vis.Height = height;
+                            vis = DataVisualisationManager.Instance.CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.SCATTERPLOT, AbstractVisualisation.GeometryType.Points,
+                                                                                            xDimension: newXDimension, yDimension: newYDimension,
+                                                                                            size: DataVisualisation.Size, color: DataVisualisation.Colour, scale: DataVisualisation.Scale);
+                            splomVisualisations[i, j] = vis;
 
-                    if (instantiationCount >= 2)
-                    {
-                        instantiationCount = 0;
-                        yield return null;
-                    }
-                }
-            }
+                            // Hide parts of the visualisation to improve visibility
+                            vis.HideAxisManipulators();
+                            if (i > 0)  vis.SetYAxisVisibility(false);
+                            if (j > 0)  vis.SetXAxisVisibility(false);
 
-            isCreateVisualisationsCoroutineRunning = false;
-        }
+                            // Mark the visualisation as a prototype so the user can grab a copy of any visualisation
+                            vis.IsPrototype = true;
 
-        private void SetSPLOMPositions()
-        {
-            if (splomSize == 1)
-            {
-                DataVisualisation.Scale = originalVisualisationScale;
-                DataVisualisation.ShowAxisManipulators();
-                return;
-            }
+                            instantiationCount++;
+                        }
 
-            float width = Mathf.Min(originalVisualisationScale.x, maximumSplomWidth / splomSize);
-            float height = Mathf.Min(originalVisualisationScale.y, maximumSplomHeight / splomSize);
-            Vector3 right = DataVisualisation.transform.right;
-            Vector3 up = DataVisualisation.transform.up;
-
-            for (int i = 0; i < splomSize; i++)
-            {
-                for (int j = 0; j < splomSize; j++)
-                {
-                    var vis = splomVisualisations[i, j];
-                    if (vis != null)
-                    {
-                        // Set positions
-                        vis.transform.position = DataVisualisation.transform.position + width * right * i + height * up * j;
+                        // Position and resize visualisations. We can do all of them in a single frame if necessary
+                        vis.transform.position = originalVisualisationPosition + (visWidth + splomSpacing) * right * i + (visHeight + splomSpacing) * up * j;
                         vis.transform.rotation = DataVisualisation.transform.rotation;
-                        // Set scales
-                        vis.Width = width;
-                        vis.Height = height;
+                        vis.Width = visWidth;
+                        vis.Height = visHeight;
                     }
                 }
+
+                // If we made it to the end and there's no more left to instantiate, we can disable the creating visualisations flag
+                if (!isThereMoreToInstantiate)
+                {
+                    isCreatingNewVisualisations = false;
+                }
+
+                previousExtrusionDistance = currentExtrusionDistance;
             }
         }
 

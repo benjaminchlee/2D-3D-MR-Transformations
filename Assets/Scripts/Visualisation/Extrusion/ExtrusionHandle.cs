@@ -70,7 +70,7 @@ namespace SSVis
         public void Initialise(DataVisualisation extrudingVisualisation, AxisDirection extrusionDirection, Vector3 position, Vector3 scale,
                                float initialHandleThickness = 0.1f, float initialHandleWidth = 1f, float initialHandleHeight = 1f,          // Initial width and height are only used for diagonal extrusions at the moment
                                bool cloneOnMaxDistance = true, float extrusionCloneDistance = 0.25f, bool extrusionPersists = true, float extrusionResetDistance = 0.05f,
-                               bool flipExtrusionCollider = false, bool disableNegativeExtrusion = false, string layer = "UI")
+                               bool flipExtrusionCollider = false, bool disableNegativeExtrusion = false, string layer = "Front Trigger Layer")
         {
             transform.SetParent(extrudingVisualisation.transform);
             transform.localRotation = Quaternion.identity;
