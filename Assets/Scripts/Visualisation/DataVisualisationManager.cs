@@ -113,6 +113,12 @@ namespace SSVis
             {
                 Destroy(vis.gameObject);
             }
+
+            var linkingVisualisations = GameObject.FindObjectsOfType<LinkingVisualisations>();
+            foreach (var vis in visualisations)
+            {
+                Destroy(vis.gameObject);
+            }
         }
     }
 }

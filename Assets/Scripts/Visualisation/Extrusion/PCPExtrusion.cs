@@ -180,6 +180,9 @@ namespace SSVis
                                                                         scale: DataVisualisation.Scale
                                                                         );
             visualisations.Add(vis);
+            vis.HideAxisManipulators();
+            // Mark the visualisation as a prototype so the user can grab a copy of any visualisation
+            vis.IsPrototype = true;
 
             BrushingAndLinking brushingAndLinking = FindObjectOfType<BrushingAndLinking>();
 
