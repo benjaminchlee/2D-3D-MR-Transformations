@@ -37,7 +37,7 @@ namespace IATK
             DestinationDimension,
             GraphDimension,
             DimensionFiltering,
-            Scaling,
+            DimensionScaling,
             BlendSourceMode,
             BlendDestinationMode,
             AttributeFiltering,
@@ -45,9 +45,7 @@ namespace IATK
             VisualisationType,
             SizeValues,
             DimensionChangeFiltering,
-            VisualisationWidth,
-            VisualisationHeight,
-            VisualisationLength
+            VisualisationScale
         }
 
         public enum NormalChannel
@@ -125,32 +123,9 @@ namespace IATK
             AxisHolder.transform.localPosition = position;
 
             Axis axis = AxisHolder.GetComponent<Axis>();
-            axis.Initialise(visualisationReference.dataSource, dimensionFilter, visualisationReference);
-            axis.SetDirection((int)propertyType);
-            BindMinMaxAxisValues(axis, dimensionFilter);
-
+            axis.Initialise(visualisationReference.dataSource, dimensionFilter, visualisationReference, (int)propertyType);
 
             return AxisHolder;
-        }
-
-        /// <summary>
-        /// Binds metadata to an axis component
-        /// </summary>
-        /// <param name="axis"></param>
-        /// <param name="dim"></param>
-        protected void BindMinMaxAxisValues(Axis axis, DimensionFilter dim)
-        {
-            object minvalue = visualisationReference.dataSource.getOriginalValue(dim.minFilter, dim.Attribute);
-            object maxvalue = visualisationReference.dataSource.getOriginalValue(dim.maxFilter, dim.Attribute);
-
-            object minScaledvalue = visualisationReference.dataSource.getOriginalValue(dim.minScale, dim.Attribute);
-            object maxScaledvalue = visualisationReference.dataSource.getOriginalValue(dim.maxScale, dim.Attribute);
-
-            axis.AttributeFilter = dim;
-
-            axis.UpdateAxisAttribute(dim.Attribute);
-            axis.SetMinNormalizer(dim.minScale);
-            axis.SetMaxNormalizer(dim.maxScale);
         }
 
         /// <summary>

@@ -121,14 +121,6 @@ namespace IATK
             Debug.Assert((int)dimension < 3);
             Debug.Assert(data.Length <= positions.Count);
 
-            float minValue = Mathf.Infinity;
-            float maxValue = 0;
-            for (int i = 0; i < data.Length; i++)
-            {
-                if (data[i] <= minValue) minValue = data[i];
-                if (data[i] >= maxValue) maxValue = data[i];
-            }
-
             for (int i = 0; i < data.Length; i++)
             {
                 Vector3 p = positions[i];
@@ -326,7 +318,7 @@ namespace IATK
         {
             for (int i = 0; i < numberOfDataPoints; i++)
             {
-                Vector3 n = uvs[i];
+                Vector4 n = uvs[i];
                 n[0] = (float)i;
                 uvs[i] = n;
             }

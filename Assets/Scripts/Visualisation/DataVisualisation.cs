@@ -220,7 +220,7 @@ namespace SSVis
             set
             {
                 visualisation.width = value;
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.VisualisationScale);
 
                 if (XAxisManipulator != null)
                     XAxisManipulator.transform.localPosition = new Vector3(value, 0, 0);
@@ -233,7 +233,7 @@ namespace SSVis
             set
             {
                 visualisation.height = value;
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.VisualisationScale);
 
                 if (YAxisManipulator != null)
                     YAxisManipulator.transform.localPosition = new Vector3(0, value, 0);
@@ -246,7 +246,7 @@ namespace SSVis
             set
             {
                 visualisation.depth = value;
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.VisualisationScale);
 
                 if (ZAxisManipulator != null)
                     ZAxisManipulator.transform.localPosition = new Vector3(0, 0, value);
@@ -272,7 +272,7 @@ namespace SSVis
                 visualisation.height = value.y;
                 visualisation.depth = value.z;
 
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.VisualisationScale);
 
                 if (AutoCenterVisualisation)
                 {

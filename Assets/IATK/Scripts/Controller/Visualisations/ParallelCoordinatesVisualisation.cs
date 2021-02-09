@@ -36,7 +36,7 @@ namespace IATK
         /// </summary>
         /// <returns>The colours.</returns>
         /// <param name="data">Data.</param>
-        /// 
+        ///
         public override Color[] mapColoursContinuous(float[] data)
         {
             int nbAxes = visualisationReference.parallelCoordinatesDimensions.Length;
@@ -146,7 +146,7 @@ namespace IATK
                 View v = viewParallel.
                     createIndicesPointTopology(parallelCoordinatesIndices.ToArray()).
                     updateView().apply(gameObject, mt);
-                
+
                 //v.SetVertexIdChannel(parallelCoordinatesIndices.ToArray());
 
                 viewList.Add(v);
@@ -196,7 +196,7 @@ namespace IATK
                         {
                             for (int i = 0; i < viewList.Count; i++)
                             {
-                                Color[] colours = viewList[0].GetColors(); 
+                                Color[] colours = viewList[0].GetColors();
                                 for (int j = 0; j < colours.Length; ++j)
                                 {
                                     colours[j] = visualisationReference.colour;
@@ -242,15 +242,15 @@ namespace IATK
                         break;
                     case AbstractVisualisation.PropertyType.LinkingDimension:
                         creationConfiguration.LinkingDimension = visualisationReference.linkingDimension;
-                        CreateVisualisation(); // needs to recreate the visualsiation because the mesh properties have changed 
+                        CreateVisualisation(); // needs to recreate the visualsiation because the mesh properties have changed
                         break;
 
                     case AbstractVisualisation.PropertyType.GeometryType:
                         creationConfiguration.Geometry = visualisationReference.geometry;
-                        CreateVisualisation(); // needs to recreate the visualsiation because the mesh properties have changed 
+                        CreateVisualisation(); // needs to recreate the visualsiation because the mesh properties have changed
                         break;
 
-                    case AbstractVisualisation.PropertyType.Scaling:
+                    case AbstractVisualisation.PropertyType.DimensionScaling:
 
                         for (int i = 0; i < viewList.Count; i++)
                         {
@@ -264,7 +264,7 @@ namespace IATK
                         for (int i = 0; i < GameObject_Axes_Holders.Count; ++i)
                         {
                             Axis axis = GameObject_Axes_Holders[i].GetComponent<Axis>();
-                            BindMinMaxAxisValues(axis, visualisationReference.parallelCoordinatesDimensions[i]);
+                            axis.UpdateAxisRanges();
                         }
                         break;
 
@@ -296,7 +296,7 @@ namespace IATK
                             for (int i = 0; i < GameObject_Axes_Holders.Count; ++i)
                             {
                                 Axis axis = GameObject_Axes_Holders[i].GetComponent<Axis>();
-                                BindMinMaxAxisValues(axis, visualisationReference.parallelCoordinatesDimensions[i]);
+                                axis.UpdateAxisRanges();
                             }
                         }
                         break;
@@ -350,7 +350,7 @@ namespace IATK
                         break;
                     case PropertyType.DimensionChangeFiltering:
                         //foreach (var viewElement in viewList)
-                        
+
                         break;
                     default:
                         break;
@@ -383,14 +383,12 @@ namespace IATK
                         if (GameObject_Axes_Holders[i] != null)
                         {
                             Axis axis = GameObject_Axes_Holders[i].GetComponent<Axis>();
-                            axis.Initialise(visualisationReference.dataSource, visualisationReference.parallelCoordinatesDimensions[i], visualisationReference);
-                            BindMinMaxAxisValues(axis, visualisationReference.parallelCoordinatesDimensions[i]);
-                            axis.AttributeName = visualisationReference.parallelCoordinatesDimensions[i].Attribute;
+                            axis.Initialise(visualisationReference.dataSource, visualisationReference.parallelCoordinatesDimensions[i], visualisationReference, -1);
                         }
                     }
-                    else if (sceneAxes.Any(x => x.SourceIndex == i && x.AttributeName == visualisationReference.parallelCoordinatesDimensions[i].Attribute))
+                    else if (sceneAxes.Any(x => x.SourceIndex == i && x.AttributeFilter.Attribute == visualisationReference.parallelCoordinatesDimensions[i].Attribute))
                     {
-                        Axis a = sceneAxes.Single(x => x.SourceIndex == i && x.AttributeName == visualisationReference.parallelCoordinatesDimensions[i].Attribute);
+                        Axis a = sceneAxes.Single(x => x.SourceIndex == i && x.AttributeFilter.Attribute == visualisationReference.parallelCoordinatesDimensions[i].Attribute);
                         GameObject_Axes_Holders.Add(a.transform.gameObject);
                     }
                     else

@@ -259,7 +259,7 @@ namespace IATK
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.GeometryType);
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.LinkingDimension);
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.None);
-            theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.Scaling);
+            theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.DimensionScaling);
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.Size);
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.SizeValues);
             theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.VisualisationType);

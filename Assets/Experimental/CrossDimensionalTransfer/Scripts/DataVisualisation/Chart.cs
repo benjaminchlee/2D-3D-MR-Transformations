@@ -104,7 +104,7 @@ namespace Experimental.CrossDimensionalTransfer
             set
             {
                 visualisation.width = value;
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.DimensionScaling);
 
                 AdjustVisualisationPosition();
             }
@@ -116,7 +116,7 @@ namespace Experimental.CrossDimensionalTransfer
             set
             {
                 visualisation.height = value;
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.DimensionScaling);
 
                 AdjustVisualisationPosition();
             }
@@ -128,7 +128,7 @@ namespace Experimental.CrossDimensionalTransfer
             set
             {
                 visualisation.depth = value;
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.DimensionScaling);
 
                 AdjustVisualisationPosition();
             }
@@ -143,7 +143,7 @@ namespace Experimental.CrossDimensionalTransfer
                 visualisation.height = value.y;
                 visualisation.depth = value.z;
 
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Scaling);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.DimensionScaling);
 
                 AdjustVisualisationPosition();
             }

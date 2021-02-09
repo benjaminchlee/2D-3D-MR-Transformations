@@ -269,7 +269,7 @@ namespace IATK
                         rescaleViews();
                         break;
 
-                    case AbstractVisualisation.PropertyType.Scaling:
+                    case AbstractVisualisation.PropertyType.DimensionScaling:
 
                         for (int i = 0; i < viewList.Count; i++)
                         {
@@ -364,22 +364,20 @@ namespace IATK
             switch (propertyType)
             {
                 case AbstractVisualisation.PropertyType.X:
-                    if (visualisationReference.xDimension.Attribute == "Undefined" && X_AXIS != null)// GameObject_Axes_Holders[0] != null)
+                    if (visualisationReference.xDimension.Attribute == "Undefined" && X_AXIS != null)
                     {
                         DestroyImmediate(X_AXIS);
                     }
                     else if (X_AXIS != null)
                     {
                         Axis a = X_AXIS.GetComponent<Axis>();
-                        a.Initialise(visualisationReference.dataSource, visualisationReference.xDimension, visualisationReference);
-                        BindMinMaxAxisValues(a, visualisationReference.xDimension);
+                        a.Initialise(visualisationReference.dataSource, visualisationReference.xDimension, visualisationReference, (int)propertyType);
                     }
                     else if (visualisationReference.xDimension.Attribute != "Undefined")
                     {
                         Vector3 pos = Vector3.zero;
                         //pos.y = -0.025f;
                         X_AXIS = CreateAxis(propertyType, visualisationReference.xDimension, pos, new Vector3(0f, 0f, 0f), 0);
-
                     }
                     break;
                 case AbstractVisualisation.PropertyType.Y:
@@ -390,8 +388,7 @@ namespace IATK
                     else if (Y_AXIS != null)
                     {
                         Axis a = Y_AXIS.GetComponent<Axis>();
-                        a.Initialise(visualisationReference.dataSource, visualisationReference.yDimension, visualisationReference);
-                        BindMinMaxAxisValues(a, visualisationReference.yDimension);
+                        a.Initialise(visualisationReference.dataSource, visualisationReference.yDimension, visualisationReference, (int)propertyType);
                     }
                     else if (visualisationReference.yDimension.Attribute != "Undefined")
                     {
@@ -408,8 +405,7 @@ namespace IATK
                     else if (Z_AXIS != null)
                     {
                         Axis a = Z_AXIS.GetComponent<Axis>();
-                        a.Initialise(visualisationReference.dataSource, visualisationReference.zDimension, visualisationReference);
-                        BindMinMaxAxisValues(Z_AXIS.GetComponent<Axis>(), visualisationReference.zDimension);
+                        a.Initialise(visualisationReference.dataSource, visualisationReference.zDimension, visualisationReference, (int)propertyType);
                     }
                     else if (visualisationReference.zDimension.Attribute != "Undefined")
                     {
@@ -423,26 +419,41 @@ namespace IATK
                 case AbstractVisualisation.PropertyType.DimensionFiltering:
                     if (visualisationReference.xDimension.Attribute != "Undefined")
                     {
-                        BindMinMaxAxisValues(X_AXIS.GetComponent<Axis>(), visualisationReference.xDimension);
+                        X_AXIS.GetComponent<Axis>().UpdateAxisRanges();
                     }
                     if (visualisationReference.yDimension.Attribute != "Undefined")
                     {
-                        BindMinMaxAxisValues(Y_AXIS.GetComponent<Axis>(), visualisationReference.yDimension);
+                        Y_AXIS.GetComponent<Axis>().UpdateAxisRanges();
                     }
                     if (visualisationReference.zDimension.Attribute != "Undefined")
                     {
-                        BindMinMaxAxisValues(Z_AXIS.GetComponent<Axis>(), visualisationReference.zDimension);
+                        Z_AXIS.GetComponent<Axis>().UpdateAxisRanges();
                     }
                     break;
-                case AbstractVisualisation.PropertyType.Scaling:
+
+                case AbstractVisualisation.PropertyType.DimensionScaling:
+                    if (visualisationReference.xDimension.Attribute != "Undefined")
+                    {
+                        X_AXIS.GetComponent<Axis>().UpdateAxisRanges();
+                    }
+                    if (visualisationReference.yDimension.Attribute != "Undefined")
+                    {
+                        Y_AXIS.GetComponent<Axis>().UpdateAxisRanges();
+                    }
+                    if (visualisationReference.zDimension.Attribute != "Undefined")
+                    {
+                        Z_AXIS.GetComponent<Axis>().UpdateAxisRanges();
+                    }
+                    break;
+
+                case AbstractVisualisation.PropertyType.VisualisationScale:
                     if (visualisationReference.xDimension.Attribute != "Undefined")
                     {
                         if (X_AXIS == null)
                             UpdateVisualisationAxes(PropertyType.X);
 
                         Axis axis = X_AXIS.GetComponent<Axis>();
-                        BindMinMaxAxisValues(axis, visualisationReference.xDimension);
-                        axis.UpdateLength(visualisationReference.width);
+                        axis.UpdateAxisAttributeAndLength(axis.AttributeFilter, visualisationReference.width);
                     }
                     if (visualisationReference.yDimension.Attribute != "Undefined")
                     {
@@ -450,8 +461,7 @@ namespace IATK
                             UpdateVisualisationAxes(PropertyType.Y);
 
                         Axis axis = Y_AXIS.GetComponent<Axis>();
-                        BindMinMaxAxisValues(axis, visualisationReference.yDimension);
-                        axis.UpdateLength(visualisationReference.height);
+                        axis.UpdateAxisAttributeAndLength(axis.AttributeFilter, visualisationReference.height);
                     }
                     if (visualisationReference.zDimension.Attribute != "Undefined")
                     {
@@ -459,12 +469,11 @@ namespace IATK
                             UpdateVisualisationAxes(PropertyType.Z);
 
                         Axis axis = Z_AXIS.GetComponent<Axis>();
-                        BindMinMaxAxisValues(axis, visualisationReference.zDimension);
-                        axis.UpdateLength(visualisationReference.depth);
+                        axis.UpdateAxisAttributeAndLength(axis.AttributeFilter, visualisationReference.depth);
                     }
-
                     rescaleViews();
                     break;
+
                 default:
                     break;
             }

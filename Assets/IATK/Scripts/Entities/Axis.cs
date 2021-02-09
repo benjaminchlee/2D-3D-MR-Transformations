@@ -48,8 +48,6 @@ namespace IATK
         private float AxisTickSpacing = 0.075f;
 
         [HideInInspector]
-        public string AttributeName = "";
-        [HideInInspector]
         public AttributeFilter AttributeFilter;
         [HideInInspector]
         public float Length = 1.0f;
@@ -63,8 +61,6 @@ namespace IATK
         public int SourceIndex = -1;
         [HideInInspector]
         public int AxisDirection = 0;
-
-        private bool isPositiveLength = false;
 
         private List<GameObject> axisTickLabels = new List<GameObject>();
 
@@ -83,7 +79,7 @@ namespace IATK
         /// <param name="srcData"></param>
         /// <param name="attributeFilter"></param>
         /// <param name="visualisation"></param>
-        public void Initialise(DataSource srcData, AttributeFilter attributeFilter, Visualisation visualisation)
+        public void Initialise(DataSource srcData, AttributeFilter attributeFilter, Visualisation visualisation, int direction)
         {
             AttributeFilter = attributeFilter;
             dataSource = srcData;
@@ -92,31 +88,17 @@ namespace IATK
             SourceIndex = idx;
             name = "Axis " + srcData[idx].Identifier;
 
-            attributeLabel.text = srcData[idx].Identifier;
             visualisationReference = visualisation;
-            axisTickLabelPrefab.SetActive(false);
+            axisTickLabelPrefab.GetComponentInChildren<TextMeshPro>().text = "";
 
-            UpdateAxisAttribute(attributeFilter.Attribute);
-        }
-
-        /// <summary>
-        /// Updates the attribute (i.e., dimension) that this axis represents.
-        /// </summary>
-        /// <param name="newAttribute"></param>
-        public void UpdateAxisAttribute(string newAttribute)
-        {
-            AttributeName = newAttribute;
-            attributeLabel.text = AttributeName;
-            SetYLocalPosition(attributeLabel.transform, Length * 0.5f);
-
-            UpdateAxisTickLabels();
+            SetDirection(direction);
         }
 
         /// <summary>
         /// Sets the direction (dimension) that this axis represents
         /// </summary>
         /// <param name="direction">X=1, Y=2, Z=3</param>
-        public void SetDirection(int direction)
+        private void SetDirection(int direction)
         {
             AxisDirection = direction;
             switch (direction)
@@ -141,7 +123,7 @@ namespace IATK
                     SetXLocalPosition(axisTickLabelHolder.transform, 0);
                     attributeLabel.alignment = TextAlignmentOptions.Top;
                     attributeLabel.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                    UpdateLength(visualisationReference.width);
+                    UpdateAxisAttributeAndLength(AttributeFilter, visualisationReference.width);
                     break;
 
                 case 2:
@@ -150,7 +132,7 @@ namespace IATK
                     SetXLocalPosition(maxNormaliserObject, -maxNormaliserObject.transform.localPosition.x);
                     minNormaliserObject.localEulerAngles = new Vector3(90, 90, 0);
                     maxNormaliserObject.localEulerAngles = new Vector3(90, 90, 0);
-                    UpdateLength(visualisationReference.height);
+                    UpdateAxisAttributeAndLength(AttributeFilter, visualisationReference.height);
                     break;
 
                 case 3:
@@ -159,37 +141,58 @@ namespace IATK
                     SetXLocalPosition(maxNormaliserObject, -maxNormaliserObject.transform.localPosition.x);
                     minNormaliserObject.localEulerAngles = new Vector3(90, 90, 0);
                     maxNormaliserObject.localEulerAngles = new Vector3(90, 90, 0);
-                    UpdateLength(visualisationReference.depth);
+                    UpdateAxisAttributeAndLength(AttributeFilter, visualisationReference.depth);
                     break;
             }
         }
 
         /// <summary>
-        /// Updates the length of this axis.
+        /// Updates the labels to reflect the new attribute and the length of this axis. Call this whenever the length of the axis changes
         /// </summary>
-        /// <param name="length">The new length of this axis, in metres</param>
-        public void UpdateLength(float length)
+        /// <param name="attribute"></param>
+        /// <param name="length"></param>
+        public void UpdateAxisAttributeAndLength(AttributeFilter attributeFilter, float length)
         {
-            Length = length;
+            // If nothing has changed, then don't update anything
+            if (attributeFilter.Attribute == attributeLabel.text && Length == length)
+                return;
 
+            // Attribute
+            AttributeFilter = attributeFilter;
+            attributeLabel.text = AttributeFilter.Attribute;
+            SetYLocalPosition(attributeLabel.transform, length * 0.5f);
+
+            // Length
+            Length = length;
             axisRod.localScale = new Vector3(axisRod.localScale.x, Length, axisRod.localScale.z);
             axisTip.localPosition = new Vector3(axisTip.localPosition.x, Length, axisTip.localPosition.z);
             axisTip.localEulerAngles = new Vector3(length >= 0 ? 0 : 180, -45, 0);
 
-            SetMinFilter(AttributeFilter.minFilter);
-            SetMaxFilter(AttributeFilter.maxFilter);
-
-            SetMinNormalizer(AttributeFilter.minScale);
-            SetMaxNormalizer(AttributeFilter.maxScale);
-
-            UpdateAxisAttribute(AttributeName);
+            UpdateAxisTickLabels();
         }
 
         /// <summary>
-        /// Updates all of the tick labels on this axis.
+        /// Updates the labels to reflect the new min and max normalisers and filters of this axis.
         /// </summary>
-        public void UpdateAxisTickLabels()
+        /// <param name="dimensionFilter"></param>
+        public void UpdateAxisRanges()
         {
+            SetMinFilter(AttributeFilter.minFilter);
+            SetMaxFilter(AttributeFilter.maxFilter);
+            SetMinNormalizer(AttributeFilter.minScale);
+            SetMaxNormalizer(AttributeFilter.maxScale);
+
+            UpdateAxisTickLabels();
+        }
+
+        /// <summary>
+        /// Updates the text of the tick labels on this axis.
+        /// </summary>
+        private void UpdateAxisTickLabels()
+        {
+            if (!gameObject.activeSelf)
+                return;
+
             int currentNumberOfLabels = axisTickLabels.Count;
             int targetNumberOfLabels = CalculateNumAxisTickLabels();
 
@@ -222,35 +225,36 @@ namespace IATK
             }
         }
 
-        public void SetMinFilter(float val)
+        private void SetMinFilter(float val)
         {
-            UpdateAxisTickLabels();
+            // UpdateAxisTickLabels();
         }
 
-        public void SetMaxFilter(float val)
+        private void SetMaxFilter(float val)
         {
-            UpdateAxisTickLabels();
+            // UpdateAxisTickLabels();
         }
 
-        public void SetMinNormalizer(float val)
+        private void SetMinNormalizer(float val)
         {
             MinNormaliser = Mathf.Clamp(val, 0, 1);
 
             Vector3 p = minNormaliserObject.transform.localPosition;
             p.y = MinNormaliser * Length;
             minNormaliserObject.transform.localPosition = p;
-
-            UpdateAxisTickLabels();
         }
 
-        public void SetMaxNormalizer(float val)
+        private void SetMaxNormalizer(float val)
         {
             MaxNormaliser = Mathf.Clamp(val, 0, 1);
 
             Vector3 p = maxNormaliserObject.transform.localPosition;
             p.y = MaxNormaliser * Length;
             maxNormaliserObject.transform.localPosition = p;
+        }
 
+        public void OnEnable()
+        {
             UpdateAxisTickLabels();
         }
 
@@ -268,8 +272,8 @@ namespace IATK
 
                     // If this discrete dimension has less unique values than the maximum number of ticks allowed due to spacing,
                     // give an axis tick label for each unique value
-                    int numValues = ((CSVDataSource)dataSource).TextualDimensionsListReverse[AttributeName].Count;
-                    int maxTicks = Mathf.CeilToInt(Length / AxisTickSpacing);
+                    int numValues = ((CSVDataSource)dataSource).TextualDimensionsListReverse[AttributeFilter.Attribute].Count;
+                    int maxTicks = Mathf.CeilToInt(Mathf.Abs(Length) / AxisTickSpacing);
                     if (numValues < maxTicks)
                         return numValues;
                     // Otherwise just use 2 labels
@@ -280,7 +284,8 @@ namespace IATK
                 }
                 else
                 {
-                    return Mathf.CeilToInt(Length / AxisTickSpacing);
+                    // Always have at least 2 labels for continuous variables
+                    return Mathf.Max(Mathf.CeilToInt(Mathf.Abs(Length) / AxisTickSpacing), 2);
                 }
             }
             catch

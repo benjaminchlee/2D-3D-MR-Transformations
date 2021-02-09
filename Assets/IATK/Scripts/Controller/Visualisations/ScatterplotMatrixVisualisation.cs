@@ -12,7 +12,7 @@ namespace IATK {
         public float xPadding = 1.5f;
         public float yPadding = 1.5f;
         public float zPadding = 1.5f;
-        
+
         public override void CreateVisualisation()
         {
             viewList.Clear();
@@ -129,7 +129,7 @@ namespace IATK {
                                    && visualisationReference.yScatterplotMatrixDimensions[j] != null)
                             {
                                 Create2DVisualisation(i, j);
-                                
+
                                 Vector3 posX = new Vector3(i * xPadding, j * yPadding - 0.05f, 0);
                                 Vector3 posY = new Vector3(i * xPadding - 0.05f, j * yPadding, 0);
 
@@ -149,17 +149,17 @@ namespace IATK {
                                 };
 
                                 AxisHolder[i, j, 0] = localList;
-                            }                           
+                            }
                         }
                     }
                 }
             }
-            
+
             if (viewList.Count > 0)
             {
                 UpdateVisualisation(PropertyType.Colour);
                 UpdateVisualisation(PropertyType.Size);
-                UpdateVisualisation(PropertyType.SizeValues);                
+                UpdateVisualisation(PropertyType.SizeValues);
             }
         }
 
@@ -182,7 +182,7 @@ namespace IATK {
                 viewList.Add(v);
             }
 
-           
+
         }
 
         private void Create3DVisualisation(int i, int j, int k)
@@ -205,7 +205,7 @@ namespace IATK {
                 viewList.Add(v);
             }
 
-          
+
         }
 
         public override void LoadConfiguration()
@@ -319,15 +319,15 @@ namespace IATK {
                     case AbstractVisualisation.PropertyType.LinkingDimension:
                         creationConfiguration.LinkingDimension = visualisationReference.linkingDimension;
 
-                        CreateVisualisation(); // needs to recreate the visualsiation because the mesh properties have changed 
+                        CreateVisualisation(); // needs to recreate the visualsiation because the mesh properties have changed
                         break;
 
                     case AbstractVisualisation.PropertyType.GeometryType:
                         creationConfiguration.Geometry = visualisationReference.geometry;
-                        CreateVisualisation(); // needs to recreate the visualsiation because the mesh properties have changed 
+                        CreateVisualisation(); // needs to recreate the visualsiation because the mesh properties have changed
                         break;
 
-                    case AbstractVisualisation.PropertyType.Scaling:
+                    case AbstractVisualisation.PropertyType.DimensionScaling:
 
                         for (int i = 0; i < viewList.Count; i++)
                         {
@@ -341,7 +341,7 @@ namespace IATK {
                         break;
 
                     case AbstractVisualisation.PropertyType.DimensionFiltering:
-                        {  
+                        {
                             float[] isFiltered = new float[visualisationReference.dataSource.DataCount];
                             for (int i = 0; i < visualisationReference.dataSource.DimensionCount; i++)
                             {
@@ -394,7 +394,7 @@ namespace IATK {
                             for (int i = 0; i < GameObject_Axes_Holders.Count; ++i)
                             {
                                 Axis axis = GameObject_Axes_Holders[i].GetComponent<Axis>();
-                                BindMinMaxAxisValues(axis, visualisationReference.parallelCoordinatesDimensions[i]);
+                                axis.UpdateAxisRanges();
                             }
                         }
                         break;
@@ -441,7 +441,7 @@ namespace IATK {
             ////Update any label on the corresponding axes
             if (propertyType == AbstractVisualisation.PropertyType.DimensionChange)
                 CreateVisualisation();
-            
+
         }
 
         public Color[] mapColoursPalette(float[] data, Color[] palette)

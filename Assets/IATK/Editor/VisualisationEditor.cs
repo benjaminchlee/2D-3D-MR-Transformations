@@ -137,7 +137,7 @@ namespace IATK
 
             if (EditorGUI.EndChangeCheck())
             {
-                dirtyFlag = AbstractVisualisation.PropertyType.Scaling;
+                dirtyFlag = AbstractVisualisation.PropertyType.DimensionScaling;
             }
 
             EditorGUI.EndDisabledGroup();
@@ -435,7 +435,7 @@ namespace IATK
                 {
                     int nbPaletteCategories = dataSource.getNumberOfCategories(colorPaletteDimensionProperty.stringValue);
                     //float[] uniqueValues = dataSource[colorPaletteDimensionProperty.stringValue].MetaData.categories;
-                    
+
                     colourPaletteProperty.ClearArray();
                     colourPaletteProperty.arraySize = nbPaletteCategories;
                     colourDimensionProperty.stringValue = "Undefined";
@@ -512,7 +512,7 @@ namespace IATK
                 }
             }
 
-            
+
             if (EnumPopup("Size dimension", dimensions.ToArray(), sizeDimensionProperty))
             {
                 dirtyFlags = AbstractVisualisation.PropertyType.Size;
@@ -532,7 +532,7 @@ namespace IATK
 
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
             EditorGUILayout.LabelField("Connectivity", EditorStyles.boldLabel);
-            
+
             if (EnumPopup("Linking dimension", dimensions.ToArray(), linkingDimensionProperty))
             {
                 dirtyFlags = AbstractVisualisation.PropertyType.LinkingDimension;
@@ -561,7 +561,7 @@ namespace IATK
             {
                 dirtyFlags = AbstractVisualisation.PropertyType.AttributeFiltering;
             }
-           
+
 
             // Visualisation dimensions
             EditorGUI.BeginChangeCheck();
@@ -571,7 +571,7 @@ namespace IATK
 
             if (EditorGUI.EndChangeCheck())
             {
-                dirtyFlags = AbstractVisualisation.PropertyType.Scaling;
+                dirtyFlags = AbstractVisualisation.PropertyType.DimensionScaling;
             }
 
             // Update the options for this visualisation
@@ -843,7 +843,7 @@ namespace IATK
         [MenuItem("GameObject/IATK/BrushingAndLinking", false, 10)]
         static void CreateBrushingAndLinkingPrefab()
         {
-            GameObject obj = (GameObject)Instantiate(Resources.Load("BrushingAndLinking"));// new GameObject("[IATK] New Brushing And Linking");           
+            GameObject obj = (GameObject)Instantiate(Resources.Load("BrushingAndLinking"));// new GameObject("[IATK] New Brushing And Linking");
             Selection.activeGameObject = obj;
         }
     }
