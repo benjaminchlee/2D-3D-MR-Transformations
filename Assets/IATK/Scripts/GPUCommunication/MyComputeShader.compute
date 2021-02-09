@@ -45,6 +45,11 @@ float RadiusSphere;
 int BrushMode;
 int SelectionMode;
 
+// Overlap box brushing
+float3 OverlapBoxHalfExtents;
+float4x4 OverlapBoxWorldToLocalMatrix;
+
+// Sceen-space cube brushing
 float4x4 LocalToWorldMatrix;
 float4x4 WorldToClipMatrix;
 
@@ -159,6 +164,20 @@ bool Brush(int brushType, float3 filteredPosition)
 			BR.y = min(TFL.y, BBR.y);
 
 			return BrushSquare(TL, BR, float2(pos.x, pos.y));
+		}
+
+		// Boxcast brushing based on the given extents and rotation of pointer1
+		case 3:
+		{
+			// // Get corners of the overlap box in local space
+			float3 TFL = float3(-OverlapBoxHalfExtents.x, OverlapBoxHalfExtents.y, -OverlapBoxHalfExtents.z);
+			float3 BBR = float3(OverlapBoxHalfExtents.x, -OverlapBoxHalfExtents.y, OverlapBoxHalfExtents.z);
+
+			// Convert the data point position into the local space of the overlap box pointer
+			float3 worldPoint = MultiplyPoint(LocalToWorldMatrix, filteredPosition);
+			float3 localPoint = MultiplyPoint(OverlapBoxWorldToLocalMatrix, worldPoint);
+
+			return BrushCube(TFL, BBR, localPoint);
 		}
 
 		default:

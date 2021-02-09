@@ -28,8 +28,7 @@ public class BrushingAndLinking : MonoBehaviour {
     [SerializeField]
     public bool showBrush = false;
     [SerializeField]
-    [Range (1f,10f)]
-    public float brushSizeFactor = 1f;
+    public Vector3 OverlapBoxHalfExtents;
 
     [SerializeField]
     public Transform input1;
@@ -41,8 +40,9 @@ public class BrushingAndLinking : MonoBehaviour {
     public enum BrushType
     {
         SPHERE = 0,
-        BOX = 1,
-        BOXSCREEN = 2
+        BOXAXISALIGNED = 1,
+        BOXSCREENSPACE = 2,
+        OVERLAPBOX = 3
     };
 
     [SerializeField]
@@ -63,15 +63,15 @@ public class BrushingAndLinking : MonoBehaviour {
     private int kernelComputeBrushTexture;
     private int kernelComputeBrushedIndices;
 
-    private RenderTexture brushedIndicesTexture;
-    private int texSize;
+    private static RenderTexture brushedIndicesTexture;
+    private static int texSize;
 
     private ComputeBuffer dataBuffer;
     private ComputeBuffer filteredIndicesBuffer;
     private ComputeBuffer brushedIndicesBuffer;
 
     private bool hasInitialised = false;
-    private bool hasFreeBrushReset = false;
+    private static bool hasFreeBrushReset = false;
     private AsyncGPUReadbackRequest brushedIndicesRequest;
 
     private void Start()
@@ -84,6 +84,8 @@ public class BrushingAndLinking : MonoBehaviour {
     /// </summary>
     private void InitialiseShaders()
     {
+        computeShader = Instantiate(computeShader);
+
         kernelComputeBrushTexture = computeShader.FindKernel("CSMain");
         kernelComputeBrushedIndices = computeShader.FindKernel("ComputeBrushedIndicesArray");
     }
@@ -106,11 +108,14 @@ public class BrushingAndLinking : MonoBehaviour {
         brushedIndicesBuffer.SetData(Enumerable.Repeat(-1, dataCount).ToArray());
         computeShader.SetBuffer(kernelComputeBrushedIndices, "brushedIndicesBuffer", brushedIndicesBuffer);
 
-        texSize = NextPowerOf2((int)Mathf.Sqrt(dataCount));
-        brushedIndicesTexture = new RenderTexture(texSize, texSize, 24);
-        brushedIndicesTexture.enableRandomWrite = true;
-        brushedIndicesTexture.filterMode = FilterMode.Point;
-        brushedIndicesTexture.Create();
+        if (brushedIndicesTexture == null)
+        {
+            texSize = NextPowerOf2((int)Mathf.Sqrt(dataCount));
+            brushedIndicesTexture = new RenderTexture(texSize, texSize, 24);
+            brushedIndicesTexture.enableRandomWrite = true;
+            brushedIndicesTexture.filterMode = FilterMode.Point;
+            brushedIndicesTexture.Create();
+        }
 
         myRenderMaterial.SetTexture("_MainTex", brushedIndicesTexture);
 
@@ -174,31 +179,19 @@ public class BrushingAndLinking : MonoBehaviour {
     }
 
     /// <summary>
-    /// Returns a list with all indices - if index > 0, index is brushed. It's not otherwise
+    /// Returns a list with all indices that are brushed
     /// </summary>
     /// <returns></returns>
     public List<int> GetBrushedIndices()
     {
+        UpdateBrushedIndices();
+        List<int> indicesBrushed = new List<int>();
 
-            UpdateBrushedIndices();
-            List<int> indicesBrushed = new List<int>();
-
-            for (int i = 0; i < brushedIndices.Count; i++)
-            {
-                if (brushedIndices[i] > 0)
-                    indicesBrushed.Add(i);
-            }
-
-        //foreach (var item in indicesBrushed)
-        //{
-        //    float xVal = brushingVisualisations[0].dataSource[brushingVisualisations[0].xDimension.Attribute].Data[item];
-        //    float yVal = brushingVisualisations[0].dataSource[brushingVisualisations[0].yDimension.Attribute].Data[item];
-        //    float zVal = brushingVisualisations[0].dataSource[brushingVisualisations[0].zDimension.Attribute].Data[item];
-
-        //    //print("X: " + brushingVisualisations[0].dataSource.getOriginalValue(xVal, brushingVisualisations[0].xDimension.Attribute)
-        //    //   + " Y: " + brushingVisualisations[0].dataSource.getOriginalValue(yVal, brushingVisualisations[0].yDimension.Attribute)
-        //    //   + " Z: " + brushingVisualisations[0].dataSource.getOriginalValue(zVal, brushingVisualisations[0].zDimension.Attribute));
-        //}
+        for (int i = 0; i < brushedIndices.Count; i++)
+        {
+            if (brushedIndices[i] > 0)
+                indicesBrushed.Add(i);
+        }
 
         return indicesBrushed;
     }
@@ -214,8 +207,6 @@ public class BrushingAndLinking : MonoBehaviour {
         computeShader.SetInt("BrushMode", (int)BRUSH_TYPE);
         computeShader.SetInt("SelectionMode", (int)SELECTION_TYPE);
 
-        hasFreeBrushReset = false;
-
         foreach (var vis in brushingVisualisations)
         {
             UpdateComputeBuffers(vis);
@@ -226,9 +217,9 @@ public class BrushingAndLinking : MonoBehaviour {
                     projectedPointer1 = vis.transform.InverseTransformPoint(input1.transform.position);
 
                     computeShader.SetFloats("pointer1", projectedPointer1.x, projectedPointer1.y, projectedPointer1.z);
-
                     break;
-                case BrushType.BOX:
+
+                case BrushType.BOXAXISALIGNED:
                     projectedPointer1 = vis.transform.InverseTransformPoint(input1.transform.position);
                     projectedPointer2 = vis.transform.InverseTransformPoint(input2.transform.position);
 
@@ -236,7 +227,7 @@ public class BrushingAndLinking : MonoBehaviour {
                     computeShader.SetFloats("pointer2", projectedPointer2.x, projectedPointer2.y, projectedPointer2.z);
                     break;
 
-                case BrushType.BOXSCREEN:
+                case BrushType.BOXSCREENSPACE:
                     projectedPointer1 = vis.transform.InverseTransformPoint(input1.transform.position);
                     projectedPointer2 = vis.transform.InverseTransformPoint(input2.transform.position);
 
@@ -244,6 +235,12 @@ public class BrushingAndLinking : MonoBehaviour {
                     computeShader.SetFloats("pointer2", projectedPointer2.x, projectedPointer2.y, projectedPointer2.z);
                     computeShader.SetMatrix("LocalToWorldMatrix", vis.transform.localToWorldMatrix);
                     computeShader.SetMatrix("WorldToClipMatrix", (Camera.main.projectionMatrix * Camera.main.worldToCameraMatrix));
+                    break;
+
+                case BrushType.OVERLAPBOX:
+                    computeShader.SetFloats("OverlapBoxHalfExtents", OverlapBoxHalfExtents.x, OverlapBoxHalfExtents.y, OverlapBoxHalfExtents.z);
+                    computeShader.SetMatrix("LocalToWorldMatrix", vis.transform.localToWorldMatrix);
+                    computeShader.SetMatrix("OverlapBoxWorldToLocalMatrix", input1.worldToLocalMatrix);
                     break;
 
                 default:
@@ -287,7 +284,8 @@ public class BrushingAndLinking : MonoBehaviour {
                 view.BigMesh.SharedMaterial.SetFloat("_ShowBrush", Convert.ToSingle(showBrush));
                 view.BigMesh.SharedMaterial.SetColor("_BrushColor", brushColor);
             }
-
+            // Now that we are the first BrushingAndLinking computeshader to have reset the brushed indices texture this frame, we set this to true so
+            // that no other computeshaders reset it any more
             hasFreeBrushReset = true;
         }
 
@@ -299,6 +297,13 @@ public class BrushingAndLinking : MonoBehaviour {
             linkingVis.View.BigMesh.SharedMaterial.SetFloat("_ShowBrush", Convert.ToSingle(showBrush));
             linkingVis.View.BigMesh.SharedMaterial.SetColor("_BrushColor", brushColor);
         }
+    }
+
+    // This is here so that the free brushing can work with multiple BrushingAndLinking scripts
+    // We set the boolean to false at the end of the update loop to reset its value for the first BrushingAndLinking script in the following frame
+    private void LateUpdate()
+    {
+        hasFreeBrushReset = false;
     }
 
     /// <summary>
