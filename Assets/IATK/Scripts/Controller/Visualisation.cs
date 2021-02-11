@@ -8,126 +8,112 @@ using System;
 
 namespace IATK
 {
-
     /// <summary>
     /// Visualisation class to act as a view controller - reads the model to create the view
     /// </summary>
     [ExecuteInEditMode]
     public class Visualisation : MonoBehaviour
     {
-
-        //// DATA
+        /// <summary>
+        /// Shared variables across all visualisations
+        /// </summary>
+        [Tooltip("Unique ID for visualisation creation")]
+        public string uid = null;
         [Tooltip("The source for the data")]
         public DataSource dataSource;
-
+        [Tooltip("The type of the visualisation you want to display")]
+        public AbstractVisualisation.VisualisationTypes visualisationType;
         [Tooltip("The type of geometry to display")]
         public AbstractVisualisation.GeometryType geometry;
-
+        [Tooltip("The size of the geometry")] [Range(0.0f, 1.0f)]
+        public float size = 0.3f;
+        [Tooltip("The dimension to map the size to")]
+        public string sizeDimension;
+        [Tooltip("The minimum size of the geometry")] [Range(0.0f, 1.0f)]
+        public float minSize = 0.01f;
+        [Tooltip("The maximum size of the geometry")] [Range(0.0f, 1.0f)]
+        public float maxSize = 1.0f;
         [Tooltip("The colour of the geometry")]
         public Color colour = Color.white;
-
-        [Tooltip("The size of the geometry")]
-        [Range(0.0f, 1.0f)]
-        public float size = 0.3f;
-
-        [Tooltip("The minimum size of the geometry")]
-        [Range(0.0f, 1.0f)]
-        public float minSize = 0.01f;
-
-        [Tooltip("The maximum size of the geometry")]
-        [Range(0.0f, 1.0f)]
-        public float maxSize = 1.0f;
-
-        [Tooltip("The X dimension")]
-        public DimensionFilter xDimension = new DimensionFilter { Attribute = "Undefined" };
-
-        [Tooltip("The Y dimension")]
-        public DimensionFilter yDimension = new DimensionFilter { Attribute = "Undefined" };
-
-        [Tooltip("The Z dimension")]
-        public DimensionFilter zDimension = new DimensionFilter { Attribute = "Undefined" };
-
+        [Tooltip("The dimension to map the colour to")]
+        public string colourDimension;
+        [Tooltip("The colour gradient used to map to the colour data dimension")]
+        public Gradient dimensionColour;
+        [Tooltip("The dimension to set discrete colour values for")]
+        public string colorPaletteDimension;
+        [Tooltip("The list of colours to map to categories in the set colour palette dimension")]
+        public Color[] coloursPalette;
+        [Tooltip("The length of the x axis")]
+        public float width = 1.0f;
+        [Tooltip("The length of the y axis")]
+        public float height = 1.0f;
+        [Tooltip("The length of the z axis")]
+        public float depth = 1.0f;
+        [Tooltip("The blending mode source")]
+        public string blendingModeSource = UnityEngine.Rendering.BlendMode.SrcAlpha.ToString();
+        [Tooltip("The blending mode destination")]
+        public string blendingModeDestination = UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha.ToString();
         public AttributeFilter[] attributeFilters;
 
+        /// <summary>
+        /// Scatterplot visualisation variables
+        /// </summary>
+        [Tooltip("The X dimension")]
+        public DimensionFilter xDimension = new DimensionFilter { Attribute = "Undefined" };
+        [Tooltip("The Y dimension")]
+        public DimensionFilter yDimension = new DimensionFilter { Attribute = "Undefined" };
+        [Tooltip("The Z dimension")]
+        public DimensionFilter zDimension = new DimensionFilter { Attribute = "Undefined" };
+        [Tooltip("The dimension that links data points for trajectories")]
+        public string linkingDimension;
+
+        /// <summary>
+        /// Scatterplot matrix visualisation variables
+        /// </summary>
         [Tooltip("The x dimensions represented in a scatterplot matrix")]
         [SerializeField]
         public DimensionFilter[] xScatterplotMatrixDimensions;
-
         [Tooltip("The y dimensions represented in a scatterplot matrix")]
         [SerializeField]
         public DimensionFilter[] yScatterplotMatrixDimensions;
-
         [Tooltip("The z dimensions represented in a scatterplot matrix")]
         [SerializeField]
         public DimensionFilter[] zScatterplotMatrixDimensions;
+        private const int MAX_INIT_SCATTERPLOTMATRIX = 5;
 
+        /// <summary>
+        /// Parallel coordinates visualisation variables
+        /// </summary>
         [Tooltip("The dimensions of the Parallel Coordinates")]
         [SerializeField]
         public DimensionFilter[] parallelCoordinatesDimensions;
 
-        [Tooltip("The dimension to map the colour to")]
-        public string colourDimension;
-
-        [Tooltip("The colour gradient used to map to the colour data dimension")]
-        public Gradient dimensionColour;
-
-        [Tooltip("The blending mode source")]
-        public string blendingModeSource = UnityEngine.Rendering.BlendMode.SrcAlpha.ToString();
-
-        [Tooltip("The blending mode destination")]
-        public string blendingModeDestination = UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha.ToString();
-
-        [Tooltip("The dimension to map the size to")]
-        public string sizeDimension;
-
-        [Tooltip("The dimension that links data points for trajectories")]
-        public string linkingDimension;
-
+        /// <summary>
+        /// Graph visualisation variables
+        /// </summary>
         [Tooltip("The dimension that links origin points to destination")]
         public string originDimension;
-
         [Tooltip("The dimension that links origin points to destination")]
         public string destinationDimension;
-
         [Tooltip("The graph dimension that links data points for networks")]
         public string graphDimension;
 
-        [Tooltip("The number of loaded data points")]
-        public string dataPoints = "";
-
-        [Tooltip("The number of dimensions")]
-        public string dataDimensions = "";
-
-        [Tooltip("The size of the font for the axes labels")]
-        public int fontAxesSize = 500;
-
-        [Tooltip("The type of the visualisation you want to display")]
-        public AbstractVisualisation.VisualisationTypes visualisationType;// = AbstractViualisation.VisualisationTypes.SIMPLE_VISUALISATION;
-
-        [Tooltip("The color palette for discrete variables mapping")]
-        public Color[] coloursPalette;
-
-        public float width = 1.0f;
-        public float height = 1.0f;
-        public float depth = 1.0f;
-
-        public string colorPaletteDimension;
+        /// <summary>
+        /// Bar visualisation variables
+        /// </summary>
+        [Tooltip("The aggregation to apply to the Bar Visualisation which affects the y height")]
+        public string barAggregation = BarAggregation.None.ToString();  // use string to work properly with inspector
+        [Tooltip("The number of bins along the x dimension")] [Min(1)]
+        public int numXBins = 2;
+        [Tooltip("The number of bins along the z dimension")] [Min(1)]
+        public int numZBins = 2;
 
         [HideInInspector]
         public AbstractVisualisation theVisualizationObject;// = null;
-
-        // Unique ID for visualisation creation
-        public string uid = null;
-
         public delegate void UpdateViewAction(AbstractVisualisation.PropertyType propertyType);
         public static event UpdateViewAction OnUpdateViewAction;
 
-        //Private
-        // Key
-        GameObject key;
-
-        int MAX_INIT_SCATTERPLOTMATRIX = 5;
-
+        private GameObject key;
 
         // PUBLIC
         public void CreateVisualisation(AbstractVisualisation.VisualisationTypes visualizationType)
@@ -195,11 +181,17 @@ namespace IATK
                     theVisualizationObject.UpdateVisualisation(AbstractVisualisation.PropertyType.DimensionChange);
 
                     theVisualizationObject.CreateVisualisation();
-
-
                     break;
                 case AbstractVisualisation.VisualisationTypes.GRAPH_LAYOUT:
                     break;
+
+                case AbstractVisualisation.VisualisationTypes.BAR:
+                    theVisualizationObject = gameObject.AddComponent<BarVisualisation>();
+                    theVisualizationObject.visualisationReference = this;
+
+                    theVisualizationObject.CreateVisualisation();
+                    break;
+
                 default:
                     break;
             }

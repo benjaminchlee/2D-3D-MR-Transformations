@@ -57,6 +57,9 @@ namespace IATK
         private SerializedProperty heightProperty;
         private SerializedProperty depthProperty;
 
+        private SerializedProperty barAggregationProperty;
+        private SerializedProperty numXBinsProperty;
+        private SerializedProperty numZBinsProperty;
 
         private DataSource dataSource;
 
@@ -188,6 +191,10 @@ namespace IATK
             zScatterplotMatrixDimensionsProperty = serializedObject.FindProperty("zScatterplotMatrixDimensions");
 
             parallelCoordinatesDimensionsProperty = serializedObject.FindProperty("parallelCoordinatesDimensions");
+
+            barAggregationProperty = serializedObject.FindProperty("barAggregation");
+            numXBinsProperty = serializedObject.FindProperty("numXBins");
+            numZBinsProperty = serializedObject.FindProperty("numZBins");
 
             scatterplotMatrixListX = new UnityEditorInternal.ReorderableList(
                 serializedObject,
@@ -401,6 +408,11 @@ namespace IATK
                         break;
                     case AbstractVisualisation.VisualisationTypes.GRAPH_LAYOUT:
                         break;
+
+                    case AbstractVisualisation.VisualisationTypes.BAR:
+                        ShowSimpleVisualisationMenu(ref dirtyFlags);
+                        break;
+
                     default:
                         break;
                 }
@@ -563,7 +575,7 @@ namespace IATK
             }
 
 
-            // Visualisation dimensions
+            // Visualisation axis lengths (object scale)
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(widthProperty);
             EditorGUILayout.PropertyField(heightProperty);
@@ -572,6 +584,28 @@ namespace IATK
             if (EditorGUI.EndChangeCheck())
             {
                 dirtyFlags = AbstractVisualisation.PropertyType.DimensionScaling;
+            }
+
+            // Bar visualisation specific options
+            if (targetVisualisation.visualisationType == AbstractVisualisation.VisualisationTypes.BAR)
+            {
+                if (EnumPopup("Aggregation Type", Enum.GetNames(typeof(BarAggregation)), barAggregationProperty))
+                {
+                    dirtyFlags = AbstractVisualisation.PropertyType.AggregationType;
+                }
+
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(numXBinsProperty);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    dirtyFlags = AbstractVisualisation.PropertyType.NumXBins;
+                }
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(numZBinsProperty);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    dirtyFlags = AbstractVisualisation.PropertyType.NumZBins;
+                }
             }
 
             // Update the options for this visualisation

@@ -137,6 +137,178 @@ namespace IATK
         }
 
         /// <summary>
+        /// Sets a data dimension that is binned
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="dimension"></param>
+        /// <param name="numBins"></param>
+        /// <param name="isCategorical"></param>
+        /// <returns></returns>
+        public ViewBuilder setBinnedDataDimension(float[] data, VIEW_DIMENSION dimension, int numBins, bool isCategorical = false)
+        {
+            Debug.Assert(dimension == VIEW_DIMENSION.X || dimension == VIEW_DIMENSION.Z);
+            Debug.Assert(data.Length <= positions.Count);
+            Debug.Assert(numBins > 0);
+
+            DiscreteBinner binner = new DiscreteBinner();
+            // If the dimension is categorical, numBins is fixed to the number of distinct values in it
+            if (isCategorical)
+                numBins = data.Distinct().Count();
+            binner.MakeIntervals(data, numBins);
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                Vector3 p = positions[i];
+                Vector3 n = normals[i];
+
+                // Position such that the centre of the bar is never at 0 or 1
+                float value = binner.Bin(data[i]);
+                value = (value * 2 + 1) / (float)(numBins * 2);
+
+                p[(int)dimension] = value;
+                n[(int)dimension] = value;
+
+                positions[i] = p;
+                normals[i] = n;
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Sets a data dimension to be based on some given aggregation.
+        /// This MUST be called AFTER each time the other dimensions change.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="dimension"></param>
+        /// <param name="aggregation"></param>
+        /// <returns></returns>
+        public ViewBuilder setAggregatedDimension(float[] data, VIEW_DIMENSION dimension, BarAggregation aggregation)
+        {
+            Debug.Assert(positions != null);
+            Debug.Assert(dimension == VIEW_DIMENSION.Y);
+            Debug.Assert(aggregation != BarAggregation.None);
+
+            // Extract list versions of the position values for the x and z dimensions
+            List<float> xValues = new List<float>();
+            List<float> zValues = new List<float>();
+            for (int i = 0; i < positions.Count; i++)
+            {
+                xValues.Add(positions[i].x);
+                zValues.Add(positions[i].z);
+            }
+
+            // Get the unique "categories" of the x and z dimensions (these are technically floats)
+            var xCategories = xValues.Distinct();
+            var zCategories = zValues.Distinct();
+
+            // Create a dictionary that will store the values assocatied with each (x, z) pairs of aggregating values (x bins * z bins = n lists)
+            Dictionary<float, Dictionary<float, List<float>>> aggGroups = new Dictionary<float, Dictionary<float, List<float>>>();
+            // Iterate through each position and assign the data values to the respective (x, z) pair
+            for (int i = 0; i < positions.Count; i++)
+            {
+                Dictionary<float, List<float>> innerDict;
+                if (!aggGroups.TryGetValue(xValues[i], out innerDict))
+                {
+                    innerDict = new Dictionary<float, List<float>>();
+                    aggGroups[xValues[i]] = innerDict;
+                }
+
+                List<float> innerList;
+                if (!innerDict.TryGetValue(zValues[i], out innerList))
+                {
+                    innerList = new List<float>();
+                    innerDict[zValues[i]] = innerList;
+                }
+
+                // If the aggregation type is count, we don't need to use the y axis values
+                if (aggregation == BarAggregation.Count)
+                    innerList.Add(0);
+                else
+                    innerList.Add(data[i]);
+            }
+
+            // Create another dictionary that will store the aggregated value for each (x, z) pair group
+            float max = 0;
+            Dictionary<float, Dictionary<float, float>> aggregatedValues = new Dictionary<float, Dictionary<float, float>>();
+            foreach (float xCategory in xCategories)
+            {
+                foreach (float zCategory in zCategories)
+                {
+                    // Calculate final aggregated value
+                    if (!aggGroups[xCategory].ContainsKey(zCategory))
+                        continue;
+
+                    List<float> values = aggGroups[xCategory][zCategory];
+                    float aggregated = 0;
+                    switch (aggregation)
+                    {
+                        case BarAggregation.Count:
+                            aggregated = values.Count;
+                            break;
+                        case BarAggregation.Average:
+                            aggregated = values.Average();
+                            break;
+                        case BarAggregation.Sum:
+                            aggregated = values.Sum();
+                            break;
+                        case BarAggregation.Median:
+                            values.Sort();
+                            float mid = (values.Count - 1) / 2f;
+                            aggregated = (values[(int)(mid)] + values[(int)(mid + 0.5f)]) / 2;
+                            break;
+                        case BarAggregation.Min:
+                            aggregated = values.Min();
+                            break;
+                        case BarAggregation.Max:
+                            aggregated = values.Max();
+                            break;
+                    }
+
+                    // Set value
+                    Dictionary<float, float> innerDict;
+                    if (!aggregatedValues.TryGetValue(xCategory, out innerDict))
+                    {
+                        innerDict = new Dictionary<float, float>();
+                        aggregatedValues[xCategory] = innerDict;
+                    }
+                    innerDict[zCategory] = aggregated;
+
+                    // We need to normalise back into 0..1 for these specific aggregations, so we collect the max value
+                    if (aggregation == BarAggregation.Count || aggregation == BarAggregation.Sum)
+                    {
+                        if (max < aggregated)
+                            max = aggregated;
+                    }
+                }
+            }
+
+            // Set y position based on newly aggregated values
+            for (int i = 0; i < positions.Count; i++)
+            {
+                Vector3 p = positions[i];
+                Vector3 n = normals[i];
+
+                // For specific aggregations, normalise
+                if (aggregation == BarAggregation.Count || aggregation == BarAggregation.Sum)
+                {
+                    p.y = UtilMath.normaliseValue(aggregatedValues[p.x][p.z], 0, max, 0, 1);
+                }
+                else
+                {
+                    p.y = aggregatedValues[p.x][p.z];
+                }
+
+                n.y = p.y;
+
+                positions[i] = p;
+                normals[i] = n;
+            }
+
+            return this;
+        }
+
+        /// <summary>
         /// Updates the view.
         /// </summary>
         /// <param name="linking">Linking.</param>

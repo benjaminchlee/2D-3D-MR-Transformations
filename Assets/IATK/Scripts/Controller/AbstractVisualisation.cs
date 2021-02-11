@@ -45,7 +45,10 @@ namespace IATK
             VisualisationType,
             SizeValues,
             DimensionChangeFiltering,
-            VisualisationScale
+            VisualisationScale,
+            AggregationType,
+            NumXBins,
+            NumZBins
         }
 
         public enum NormalChannel
@@ -59,7 +62,9 @@ namespace IATK
             SCATTERPLOT,
             SCATTERPLOT_MATRIX,
             PARALLEL_COORDINATES,
-            GRAPH_LAYOUT};
+            GRAPH_LAYOUT,
+            BAR
+        }
 
         // PUBLIC HIDDEN
 
