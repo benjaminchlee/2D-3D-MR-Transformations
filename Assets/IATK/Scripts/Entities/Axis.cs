@@ -62,14 +62,14 @@ namespace IATK
         [HideInInspector]
         public int AxisDirection = 0;
 
-        private List<GameObject> axisTickLabels = new List<GameObject>();
-
         #endregion
 
         #region Private variables
 
         private Visualisation visualisationReference;
         private DataSource dataSource;
+        private List<GameObject> axisTickLabels = new List<GameObject>();
+        private bool isInitialised = false;
 
         #endregion
 
@@ -81,6 +81,8 @@ namespace IATK
         /// <param name="visualisation"></param>
         public void Initialise(DataSource srcData, AttributeFilter attributeFilter, Visualisation visualisation, int direction)
         {
+            isInitialised = false;
+
             AttributeFilter = attributeFilter;
             dataSource = srcData;
 
@@ -92,6 +94,8 @@ namespace IATK
             axisTickLabelPrefab.GetComponentInChildren<TextMeshPro>().text = "";
 
             SetDirection(direction);
+
+            isInitialised = true;
         }
 
         /// <summary>
@@ -118,7 +122,6 @@ namespace IATK
                             SetXLocalPosition(child, -child.localPosition.x);
                         }
                     }
-
                     transform.localEulerAngles = new Vector3(0, 0, -90);
                     SetXLocalPosition(axisTickLabelHolder.transform, 0);
                     attributeLabel.alignment = TextAlignmentOptions.Top;
@@ -154,7 +157,7 @@ namespace IATK
         public void UpdateAxisAttributeAndLength(AttributeFilter attributeFilter, float length)
         {
             // If nothing has changed, then don't update anything
-            if (attributeFilter.Attribute == attributeLabel.text && Length == length)
+            if (isInitialised && attributeFilter.Attribute == attributeLabel.text && Length == length)
                 return;
 
             // Attribute
@@ -255,16 +258,34 @@ namespace IATK
 
         public void OnEnable()
         {
-            UpdateAxisTickLabels();
+            if (isInitialised)
+                UpdateAxisTickLabels();
         }
 
         #region Private helper functions
 
         private int CalculateNumAxisTickLabels()
         {
-            try
+            // Special case for categorical x and z axes in bar charts
+            if (visualisationReference.visualisationType == AbstractVisualisation.VisualisationTypes.BAR &&
+                (AxisDirection == 1 || AxisDirection == 3))
             {
-                if (IsAttributeDiscrete())
+                // For categorical dimensions, use the distinct count of values rather that using the user defined num bins
+                if (IsAttributeCategorical())
+                {
+                    return dataSource[AttributeFilter.Attribute].Data.Distinct().Count();
+                }
+                else
+                {
+                    if (AxisDirection == 1)
+                        return visualisationReference.numXBins + 1;
+                    else
+                        return visualisationReference.numZBins + 1;
+                }
+            }
+            else
+            {
+                if (IsAttributeCategorical())
                 {
                     // If this axis dimension has been rescaled at all, don't show any ticks
                     if (AttributeFilter.minScale > 0.001f || AttributeFilter.maxScale < 0.999f)
@@ -275,7 +296,9 @@ namespace IATK
                     int numValues = ((CSVDataSource)dataSource).TextualDimensionsListReverse[AttributeFilter.Attribute].Count;
                     int maxTicks = Mathf.CeilToInt(Mathf.Abs(Length) / AxisTickSpacing);
                     if (numValues < maxTicks)
+                    {
                         return numValues;
+                    }
                     // Otherwise just use 2 labels
                     else
                     {
@@ -288,13 +311,9 @@ namespace IATK
                     return Mathf.Max(Mathf.CeilToInt(Mathf.Abs(Length) / AxisTickSpacing), 2);
                 }
             }
-            catch
-            {
-                return 0;
-            }
         }
 
-        private bool IsAttributeDiscrete()
+        private bool IsAttributeCategorical()
         {
             try
             {
@@ -309,10 +328,20 @@ namespace IATK
 
         private float GetAxisTickLabelPosition(int labelIndex, int numLabels)
         {
-            if (numLabels == 1)
-                return 0;
+            // Special case for categorical x and z axes in bar charts
+            if (visualisationReference.visualisationType == AbstractVisualisation.VisualisationTypes.BAR &&
+                (AxisDirection == 1 || AxisDirection == 3) &&
+                IsAttributeCategorical())
+            {
+                return (labelIndex * 2 + 1) / (float)(numLabels * 2);
+            }
+            else
+            {
+                if (numLabels == 1)
+                    return 0;
 
-            return (labelIndex / (float) (numLabels - 1));
+                return (labelIndex / (float) (numLabels - 1));
+            }
         }
 
         private string GetAxisTickLabelText(int labelIndex, int numLabels)

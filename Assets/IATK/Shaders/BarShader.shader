@@ -204,10 +204,10 @@ Shader "IATK/BarShader"
 					// Determine if we should discard this point
 					if (Tween > 0.99)
 					{
-						if (v.normal.y < 0.9)
-							o.isDiscarding = 1.0;
+						if (v.uv_MainTex.y < 0.9)
+							o.isDiscarding = 1;
 						else
-							o.isDiscarding = 0.0;
+							o.isDiscarding = 0;
 					}
 					else
 					{
@@ -240,7 +240,7 @@ Shader "IATK/BarShader"
 					UNITY_SETUP_INSTANCE_ID(p[0]);
 					UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(p[0]);
 
-					if (p[0].isDiscarding < 0.5)
+					if (p[0].isDiscarding < 0.9)
 					{
 
 						// Access instanced variables

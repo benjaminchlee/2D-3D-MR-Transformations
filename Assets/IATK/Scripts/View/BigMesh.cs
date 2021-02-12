@@ -133,30 +133,30 @@ namespace IATK
         /// sets the x positions of the vertices in the bigmesh
         /// </summary>
         /// <param name="values"></param>
-        public void updateXPositions(float[] values)
+        public void updateXPositions(float[] values, bool retainPrevious = false)
         {
-            UpdateNPositions(0, values);
+            UpdateNPositions(0, values, retainPrevious);
         }
 
         /// <summary>
         /// sets the y positions of the vertices in the bigmesh
         /// </summary>
         /// <param name="values"></param>
-        public void updateYPositions(float[] values)
+        public void updateYPositions(float[] values, bool retainPrevious = false)
         {
-            UpdateNPositions(1, values);
+            UpdateNPositions(1, values, retainPrevious);
         }
 
         /// <summary>
         /// sets the y positions of the vertices in the bigmesh
         /// </summary>
         /// <param name="values"></param>
-        public void updateZPositions(float[] values)
+        public void updateZPositions(float[] values, bool retainPrevious = false)
         {
-            UpdateNPositions(2, values);
+            UpdateNPositions(2, values, retainPrevious);
         }
 
-        private void UpdateNPositions(int component, float[] values)
+        private void UpdateNPositions(int component, float[] values, bool retainPrevious = false)
         {
             int cpt = 0;
             foreach (var mesh in meshList)
@@ -176,7 +176,8 @@ namespace IATK
                     normals[i] = norm;
                     vertices[i] = val;
                 }
-                mesh.SetNormals(normals.ToList());
+                if (!retainPrevious)
+                    mesh.SetNormals(normals.ToList());
                 mesh.SetVertices(vertices.ToList());
                 mesh.RecalculateBounds();
                 cpt += mesh.vertexCount;

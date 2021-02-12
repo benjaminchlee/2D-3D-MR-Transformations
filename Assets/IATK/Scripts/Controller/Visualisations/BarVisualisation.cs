@@ -20,6 +20,8 @@ namespace IATK
     [ExecuteInEditMode]
     public class BarVisualisation : AbstractVisualisation
     {
+        private bool retainPreviousXZNormals = false;
+
         public override void CreateVisualisation()
         {
             string savedName = name;
@@ -153,6 +155,7 @@ namespace IATK
                             viewList[0].UpdateXPositions(xPositions);
                         }
 
+                        retainPreviousXZNormals = true;
                         UpdateVisualisation(PropertyType.Y);
 
                         if (creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.X))
@@ -166,25 +169,34 @@ namespace IATK
                         if (visualisationReference.yDimension.Attribute.Equals("Undefined"))
                         {
                             yPositions = SetAggregatedDimension(null, BarAggregation.Count);
-
                         }
                         // If the aggregation type is not set, just use the raw position
                         else if ((BarAggregation)Enum.Parse(typeof(BarAggregation), visualisationReference.barAggregation) == BarAggregation.None)
                         {
                             yPositions = visualisationReference.dataSource[visualisationReference.yDimension.Attribute].Data;
+                            // Override the array such that all bars are shown
+                            float[] oneArray = new float[visualisationReference.dataSource.DataCount];
+                            for (int i = 0; i < visualisationReference.dataSource.DataCount; i++)
+                                oneArray[i] = 1;
+                            viewList[0].BigMesh.MapUVChannel(0, 1, oneArray);
                         }
                         else
                         {
                             yPositions = SetAggregatedDimension(visualisationReference.dataSource[visualisationReference.yDimension.Attribute].Data, (BarAggregation)Enum.Parse(typeof(BarAggregation), visualisationReference.barAggregation));
                         }
 
-                        viewList[0].UpdateYPositions(yPositions);
+                        viewList[0].BigMesh.updateYPositions(yPositions, retainPreviousXZNormals);
                         viewList[0].TweenPosition();
+
+                        retainPreviousXZNormals = false;
 
                         if (creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.Y))
                             creationConfiguration.Axies[CreationConfiguration.Axis.Y] = visualisationReference.yDimension.Attribute;
                         else
                             creationConfiguration.Axies.Add(CreationConfiguration.Axis.Y, visualisationReference.yDimension.Attribute);
+
+                        UpdateVisualisationAxes(PropertyType.Y);
+                        UpdateVisualisation(PropertyType.SizeValues);
                         break;
 
                     case AbstractVisualisation.PropertyType.Z:
@@ -198,6 +210,7 @@ namespace IATK
                             viewList[0].UpdateZPositions(zPositions);
                         }
 
+                        retainPreviousXZNormals = true;
                         UpdateVisualisation(PropertyType.Y);
 
                         if (creationConfiguration.Axies.ContainsKey(CreationConfiguration.Axis.Z))
@@ -230,14 +243,13 @@ namespace IATK
                                 }
                                 viewList[i].SetColors(colours);
                             }
-
                         }
 
                         creationConfiguration.ColourDimension = visualisationReference.colourDimension;
                         creationConfiguration.colourKeys = visualisationReference.dimensionColour;
                         creationConfiguration.colour = visualisationReference.colour;
-
                         break;
+
                     case AbstractVisualisation.PropertyType.Size:
                         {
                             for (int i = 0; i < viewList.Count; i++)
@@ -253,22 +265,33 @@ namespace IATK
                             }
                             creationConfiguration.SizeDimension = visualisationReference.sizeDimension;
                             viewList[0].TweenSize();
-
                             break;
-
                         }
+
                     case PropertyType.SizeValues:
+                        float xBins = (float)visualisationReference.numXBins;
+                        float zBins = (float)visualisationReference.numZBins;
+
+                        if (!visualisationReference.xDimension.Attribute.Equals("Undefined") && IsDimensionCategorical(visualisationReference.xDimension.Attribute))
+                        {
+                            xBins = visualisationReference.dataSource[visualisationReference.xDimension.Attribute].Data.Distinct().Count();
+                        }
+                        if (!visualisationReference.zDimension.Attribute.Equals("Undefined") && IsDimensionCategorical(visualisationReference.zDimension.Attribute))
+                        {
+                            zBins = visualisationReference.dataSource[visualisationReference.zDimension.Attribute].Data.Distinct().Count();
+                        }
+
                         for (int i = 0; i < viewList.Count; i++)
                         {
                             if (visualisationReference.xDimension.Attribute.Equals("Undefined"))
-                                viewList[i].BigMesh.SharedMaterial.SetFloat("_Width", 0.01f);
+                                viewList[i].BigMesh.SharedMaterial.SetFloat("_Width", 0.005f);
                             else
-                                viewList[i].BigMesh.SharedMaterial.SetFloat("_Width", 1 / (float)visualisationReference.numXBins / 2f);
+                                viewList[i].BigMesh.SharedMaterial.SetFloat("_Width", 1 / xBins / 2f);
 
                             if (visualisationReference.zDimension.Attribute.Equals("Undefined"))
-                                viewList[i].BigMesh.SharedMaterial.SetFloat("_Depth", 0.01f);
+                                viewList[i].BigMesh.SharedMaterial.SetFloat("_Depth", 0.005f);
                             else
-                                viewList[i].BigMesh.SharedMaterial.SetFloat("_Depth", 1 / (float)visualisationReference.numZBins / 2f);
+                                viewList[i].BigMesh.SharedMaterial.SetFloat("_Depth", 1 / zBins / 2f);
                         }
                         creationConfiguration.Size = visualisationReference.size;
                         creationConfiguration.MinSize = visualisationReference.minSize;
@@ -317,6 +340,7 @@ namespace IATK
                             viewList[i].SetMaxZ(visualisationReference.zDimension.maxFilter);
                         }
                         break;
+
                     case AbstractVisualisation.PropertyType.AttributeFiltering:
                         if (visualisationReference.attributeFilters!=null)
                         {
@@ -347,16 +371,18 @@ namespace IATK
                             }
                         }
                         break;
+
                     case PropertyType.VisualisationType:
                         break;
+
                     case PropertyType.BlendDestinationMode:
                         float bmds = (int)(System.Enum.Parse(typeof(UnityEngine.Rendering.BlendMode), visualisationReference.blendingModeDestination));
                         for (int i = 0; i < viewList.Count; i++)
                         {
                             viewList[i].SetBlendindDestinationMode(bmds);
                         }
+                        break;
 
-                            break;
                     case PropertyType.BlendSourceMode:
                         float bmd = (int)(System.Enum.Parse(typeof(UnityEngine.Rendering.BlendMode), visualisationReference.blendingModeSource));
                         for (int i = 0; i < viewList.Count; i++)
@@ -373,11 +399,13 @@ namespace IATK
                     case PropertyType.NumXBins:
                         UpdateVisualisation(PropertyType.X);
                         UpdateVisualisation(PropertyType.SizeValues);
+                        UpdateVisualisationAxes(PropertyType.X);
                         break;
 
                     case PropertyType.NumZBins:
                         UpdateVisualisation(PropertyType.Z);
                         UpdateVisualisation(PropertyType.SizeValues);
+                        UpdateVisualisationAxes(PropertyType.Z);
                         break;
 
                     default:
@@ -410,7 +438,6 @@ namespace IATK
                     else if (visualisationReference.xDimension.Attribute != "Undefined")
                     {
                         Vector3 pos = Vector3.zero;
-                        //pos.y = -0.025f;
                         X_AXIS = CreateAxis(propertyType, visualisationReference.xDimension, pos, new Vector3(0f, 0f, 0f), 0);
                     }
                     break;
@@ -427,7 +454,6 @@ namespace IATK
                     else if (visualisationReference.yDimension.Attribute != "Undefined")
                     {
                         Vector3 pos = Vector3.zero;
-                        //pos.x = -0.025f;
                         Y_AXIS = CreateAxis(propertyType, visualisationReference.yDimension, pos, new Vector3(0f, 0f, 0f), 1);
                     }
                     break;
@@ -444,8 +470,6 @@ namespace IATK
                     else if (visualisationReference.zDimension.Attribute != "Undefined")
                     {
                         Vector3 pos = Vector3.zero;
-                        //pos.y = -0.025f;
-                        //pos.x = -0.025f;
                         Z_AXIS = CreateAxis(propertyType, visualisationReference.zDimension, pos, new Vector3(90f, 0f, 0f), 2);
                     }
                     break;
