@@ -27,7 +27,7 @@ namespace SSVis
             this.isInitialised = true;
         }
 
-        public abstract void ApplySplat();
+        public abstract void ApplySplat(System.Tuple<Vector3, Vector3> placementValues = null);
 
         public abstract void DestroyThisSplat();
     }

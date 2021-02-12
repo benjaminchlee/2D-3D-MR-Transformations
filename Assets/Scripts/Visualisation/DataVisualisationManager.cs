@@ -80,6 +80,13 @@ namespace SSVis
             vis.transform.rotation = dataVisualisation.transform.rotation;
             vis.transform.localScale = dataVisualisation.transform.localScale;
 
+            if (dataVisualisation.VisualisationType == AbstractVisualisation.VisualisationTypes.BAR)
+            {
+                vis.BarAggregation = dataVisualisation.BarAggregation;
+                vis.NumXBins = dataVisualisation.NumXBins;
+                vis.NumZBins = dataVisualisation.NumZBins;
+            }
+
             return vis;
         }
 

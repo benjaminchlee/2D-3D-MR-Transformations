@@ -207,8 +207,16 @@ public class BrushingAndLinking : MonoBehaviour {
         computeShader.SetInt("BrushMode", (int)BRUSH_TYPE);
         computeShader.SetInt("SelectionMode", (int)SELECTION_TYPE);
 
-        foreach (var vis in brushingVisualisations)
+        for (int i = 0; i < brushingVisualisations.Count; i++)
         {
+            var vis = brushingVisualisations[i];
+            if (vis == null)
+            {
+                brushingVisualisations.RemoveAt(i);
+                i--;
+                continue;
+            }
+
             UpdateComputeBuffers(vis);
 
             switch (BRUSH_TYPE)
@@ -289,8 +297,16 @@ public class BrushingAndLinking : MonoBehaviour {
             hasFreeBrushReset = true;
         }
 
-        foreach (var linkingVis in brushedLinkingVisualisations)
+        for (int i = 0; i < brushedLinkingVisualisations.Count; i++)
         {
+            var linkingVis = brushedLinkingVisualisations[i];
+            if (linkingVis == null)
+            {
+                brushedLinkingVisualisations.RemoveAt(i);
+                i--;
+                continue;
+            }
+
             linkingVis.View.BigMesh.SharedMaterial.SetTexture("_BrushedTexture", brushedIndicesTexture);
             linkingVis.View.BigMesh.SharedMaterial.SetFloat("_DataWidth", texSize);
             linkingVis.View.BigMesh.SharedMaterial.SetFloat("_DataHeight", texSize);

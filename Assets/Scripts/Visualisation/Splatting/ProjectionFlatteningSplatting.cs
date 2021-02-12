@@ -25,16 +25,17 @@ namespace SSVis
         /// <summary>
         /// Applies the splat. This will modify the referenced Data Visualisation directly.
         /// </summary>
-        public override void ApplySplat()
+        public override void ApplySplat(System.Tuple<Vector3, Vector3> placementValues = null)
         {
             if (!isInitialised)
             {
                 Debug.LogError("Projection Flattening: Cannot apply the splat before Initialise() has been called.");
+                return;
             }
 
-            if (DataVisualisation.XDimension == "Undefined" || DataVisualisation.YDimension == "Undefined" || DataVisualisation.ZDimension == "Undefined")
+            if (DataVisualisation.XDimension == "Undefined" || DataVisualisation.YDimension == "Undefined" || DataVisualisation.ZDimension == "Undefined" || DataVisualisation.VisualisationType != AbstractVisualisation.VisualisationTypes.SCATTERPLOT)
             {
-                Debug.LogError("Projection Flattening: A 3 dimensional visualisation is required.");
+                Debug.LogError("Projection Flattening: A 3 dimensional scatterplot is required.");
                 return;
             }
 

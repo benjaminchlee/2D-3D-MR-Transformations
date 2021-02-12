@@ -493,12 +493,14 @@ namespace SSVis
 
                     if (nearestSurface != null)
                     {
-                        if (ghostVisualisation == null)
+                        if (ghostVisualisation == null && visualisationSplattings.Count == 0 && visualisationExtrusions.Count == 0)
+                        {
                             ghostVisualisation = (Instantiate(Resources.Load("GhostVisualisation") as GameObject));
-                        System.Tuple<Vector3, Vector3> values = CalculatePositionAndRotationOnSurface(nearestSurface);
-                        ghostVisualisation.transform.position = values.Item1;
-                        ghostVisualisation.transform.eulerAngles = values.Item2;
-                        ghostVisualisation.transform.localScale = boxCollider.size;
+                            System.Tuple<Vector3, Vector3> values = CalculatePositionAndRotationOnSurface(nearestSurface);
+                            ghostVisualisation.transform.position = values.Item1;
+                            ghostVisualisation.transform.eulerAngles = values.Item2;
+                            ghostVisualisation.transform.localScale = boxCollider.size;
+                        }
                     }
                 }
                 else
@@ -753,6 +755,21 @@ namespace SSVis
                 Vector3 pos = nearestSurface.transform.TransformPoint(localPosOnSurface);
                 pos = pos - nearestSurface.transform.forward * ((boxCollider.size.z + 0.01f) / 2);
                 return new System.Tuple<Vector3, Vector3>(pos, nearestSurface.transform.eulerAngles);
+            }
+            // Condition 2: Faceting for 3D bar charts
+            if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension != "Undefined")
+            {
+                var facetFlattening = gameObject.AddComponent<BarFacetSplatting>();
+                facetFlattening.Initialise(dataSource, this, visualisation);
+                facetFlattening.ApplySplat(placementValues);
+                visualisationSplattings.Add(facetFlattening);
+                preventExtrusionForThisPlacement = true;
+
+                // Override the position to place it directly on the surface
+                Vector3 localPosOnSurface = nearestSurface.transform.InverseTransformPoint(placementValues.Item1);
+                localPosOnSurface.z = 0;
+                Vector3 pos = nearestSurface.transform.TransformPoint(localPosOnSurface);
+                return new System.Tuple<Vector3, Vector3>(pos, placementValues.Item2);
             }
 
             return placementValues;
