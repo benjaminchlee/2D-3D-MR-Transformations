@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using IATK;
+using System.Collections;
 using System.Collections.Generic;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
@@ -17,7 +18,10 @@ namespace SSVis
         Colour,
         ColourBy,
         Size,
-        SizeBy
+        SizeBy,
+        Aggregation,
+        NumXBins,
+        NumZBins
     }
 
     [RequireComponent(typeof(NearInteractionGrabbable))]
@@ -39,11 +43,45 @@ namespace SSVis
 
         private GameObject radialMenuHolder;
 
+        private bool isInitialised = false;
+
         private void Start()
         {
-            propertyAngleSize = 360f / RadialProperties.Count;
             radialMenuHolder = new GameObject("Radial Menu");
             radialMenuHolder.transform.SetParent(DataVisualisation.transform);
+        }
+
+        private void SetRadialPropertiesBasedOnType()
+        {
+            switch (DataVisualisation.VisualisationType)
+            {
+                case AbstractVisualisation.VisualisationTypes.SCATTERPLOT:
+                    RadialProperties = new List<RadialSegmentProperty>()
+                    {
+                        RadialSegmentProperty.X,
+                        RadialSegmentProperty.Y,
+                        RadialSegmentProperty.Z,
+                        RadialSegmentProperty.Colour,
+                        RadialSegmentProperty.Size,
+                        RadialSegmentProperty.SizeBy
+                    };
+                    break;
+
+                case AbstractVisualisation.VisualisationTypes.BAR:
+                    RadialProperties = new List<RadialSegmentProperty>()
+                    {
+                        RadialSegmentProperty.X,
+                        RadialSegmentProperty.Y,
+                        RadialSegmentProperty.Z,
+                        RadialSegmentProperty.Colour,
+                        RadialSegmentProperty.Aggregation,
+                        RadialSegmentProperty.NumXBins,
+                        RadialSegmentProperty.NumZBins
+                    };
+                    break;
+            }
+
+            propertyAngleSize = 360f / RadialProperties.Count;
         }
 
         public void OnPointerClicked(MixedRealityPointerEventData eventData)
@@ -52,6 +90,12 @@ namespace SSVis
 
         public void OnPointerDown(MixedRealityPointerEventData eventData)
         {
+            if (!isInitialised)
+            {
+                SetRadialPropertiesBasedOnType();
+                isInitialised = true;
+            }
+
             if (eventData.Handedness != Handedness.None)
                 startPos = HandInputManager.Instance.GetJointTransform(eventData.Handedness, TrackedHandJoint.IndexTip).position;
         }
@@ -158,6 +202,18 @@ namespace SSVis
 
                 case RadialSegmentProperty.Size:
                     DataVisualisation.Size = (float)value;
+                    break;
+
+                case RadialSegmentProperty.Aggregation:
+                    DataVisualisation.BarAggregation = (BarAggregation)System.Enum.Parse(typeof(BarAggregation), value.ToString());
+                    break;
+
+                case RadialSegmentProperty.NumXBins:
+                    DataVisualisation.NumXBins = (int)value;
+                    break;
+
+                case RadialSegmentProperty.NumZBins:
+                    DataVisualisation.NumZBins = (int)value;
                     break;
 
                 default:
@@ -334,6 +390,13 @@ namespace SSVis
                         0.2f
                     };
                     return sizes;
+
+                case RadialSegmentProperty.Aggregation:
+                    return System.Enum.GetNames(typeof(BarAggregation));
+
+                case RadialSegmentProperty.NumXBins:
+                case RadialSegmentProperty.NumZBins:
+                    return new object[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
 
                 default:
                     return null;

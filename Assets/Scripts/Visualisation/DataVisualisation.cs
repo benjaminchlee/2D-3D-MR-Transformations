@@ -314,6 +314,78 @@ namespace SSVis
             get; set;
         } = true;
 
+        public BarAggregation BarAggregation
+        {
+            get
+            {
+                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
+                {
+                    Debug.LogError("Data Visualisation must be of Bar type to have an aggregation!");
+                    return BarAggregation.None;
+                }
+                return (BarAggregation)Enum.Parse(typeof(BarAggregation), visualisation.barAggregation);
+            }
+            set
+            {
+                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
+                {
+                    Debug.LogError("Data Visualisation must be of Bar type to set an aggregation!");
+                    return;
+                }
+
+                visualisation.barAggregation = value.ToString();
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.AggregationType);
+            }
+        }
+
+        public int NumXBins
+        {
+            get
+            {
+                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
+                {
+                    Debug.LogError("Data Visualisation must be of Bar type to have a num bins value!");
+                    return 0;
+                }
+                return visualisation.numXBins;
+            }
+            set
+            {
+                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
+                {
+                    Debug.LogError("Data Visualisation must be of Bar type to set a num bins value!");
+                    return;
+                }
+
+                visualisation.numXBins = Mathf.Max(value, 1);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.NumXBins);
+            }
+        }
+
+        public int NumZBins
+        {
+            get
+            {
+                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
+                {
+                    Debug.LogError("Data Visualisation must be of Bar type to have a num bins value!");
+                    return 0;
+                }
+                return visualisation.numZBins;
+            }
+            set
+            {
+                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
+                {
+                    Debug.LogError("Data Visualisation must be of Bar type to set a num bins value!");
+                    return;
+                }
+
+                visualisation.numZBins = Mathf.Max(value, 1);
+                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.NumZBins);
+            }
+        }
+
         #endregion
 
         private void Awake()

@@ -54,7 +54,7 @@ namespace SSVis
             vis.Visualisation.sizeDimension = sizeDimension;
             vis.Visualisation.colour = color != default(Color) ? color : Color.white;
             vis.Visualisation.colourDimension = colourDimension;
-            vis.Visualisation.CreateVisualisation(AbstractVisualisation.VisualisationTypes.SCATTERPLOT);
+            vis.Visualisation.CreateVisualisation(visualisationType);
             vis.Scale = scale != default(Vector3) ? scale : Vector3.one;
 
             OnVisualisationCreated.Invoke();
@@ -83,7 +83,21 @@ namespace SSVis
             return vis;
         }
 
-        public void CreateRandom3DDataVisualisation()
+        public void CreateRandom2DScatterplot()
+        {
+            // Set random dimensions
+            System.Random random = new System.Random(System.DateTime.Now.Millisecond);
+            int numDimensions = DataSource.DimensionCount;
+            string xDimension = DataSource[random.Next(0, numDimensions)].Identifier;
+            string yDimension = DataSource[random.Next(0, numDimensions)].Identifier;
+
+            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.SCATTERPLOT, AbstractVisualisation.GeometryType.Points, xDimension: xDimension, yDimension: yDimension, size: VisualisationSize, scale: VisualisationScale);
+
+            vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
+            vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
+        }
+
+        public void CreateRandom3DScatterplot()
         {
             // Set random dimensions
             System.Random random = new System.Random(System.DateTime.Now.Millisecond);
@@ -98,7 +112,24 @@ namespace SSVis
             vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
         }
 
-        public void CreateRandom2DDataVisualisation()
+        public void CreateRandomHistogram()
+        {
+            // Set random dimensions
+            System.Random random = new System.Random(System.DateTime.Now.Millisecond);
+            int numDimensions = DataSource.DimensionCount;
+            string xDimension = DataSource[random.Next(0, numDimensions)].Identifier;
+
+            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.BAR, AbstractVisualisation.GeometryType.Bars, xDimension: xDimension, scale: VisualisationScale);
+
+            vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
+            vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
+
+            vis.BarAggregation = BarAggregation.Count;
+            vis.NumXBins = 5;
+            vis.NumZBins = 5;
+        }
+
+        public void CreateRandom2DBarChart()
         {
             // Set random dimensions
             System.Random random = new System.Random(System.DateTime.Now.Millisecond);
@@ -106,10 +137,33 @@ namespace SSVis
             string xDimension = DataSource[random.Next(0, numDimensions)].Identifier;
             string yDimension = DataSource[random.Next(0, numDimensions)].Identifier;
 
-            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.SCATTERPLOT, AbstractVisualisation.GeometryType.Points, xDimension: xDimension, yDimension: yDimension, size: VisualisationSize, scale: VisualisationScale);
+            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.BAR, AbstractVisualisation.GeometryType.Bars, xDimension: xDimension, yDimension: yDimension, scale: VisualisationScale);
 
             vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
             vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
+
+            vis.BarAggregation = BarAggregation.Sum;
+            vis.NumXBins = 5;
+            vis.NumZBins = 5;
+        }
+
+        public void CreateRandom3DBarChart()
+        {
+            // Set random dimensions
+            System.Random random = new System.Random(System.DateTime.Now.Millisecond);
+            int numDimensions = DataSource.DimensionCount;
+            string xDimension = DataSource[random.Next(0, numDimensions)].Identifier;
+            string yDimension = DataSource[random.Next(0, numDimensions)].Identifier;
+            string zDimension = DataSource[random.Next(0, numDimensions)].Identifier;
+
+            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.BAR, AbstractVisualisation.GeometryType.Bars, xDimension: xDimension, yDimension: yDimension, zDimension:zDimension, scale: VisualisationScale);
+
+            vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
+            vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
+
+            vis.BarAggregation = BarAggregation.Sum;
+            vis.NumXBins = 5;
+            vis.NumZBins = 5;
         }
 
         public void DestroyAllDataVisualisations()
