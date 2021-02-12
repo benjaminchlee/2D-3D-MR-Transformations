@@ -583,15 +583,18 @@ namespace IATK
 
             if (EditorGUI.EndChangeCheck())
             {
-                dirtyFlags = AbstractVisualisation.PropertyType.DimensionScaling;
+                dirtyFlags = AbstractVisualisation.PropertyType.VisualisationScale;
             }
 
             // Bar visualisation specific options
             if (targetVisualisation.visualisationType == AbstractVisualisation.VisualisationTypes.BAR)
             {
-                if (EnumPopup("Aggregation Type", Enum.GetNames(typeof(BarAggregation)), barAggregationProperty))
+                if (yDimensionProperty.FindPropertyRelative("Attribute").stringValue != "Undefined" && yDimensionProperty.FindPropertyRelative("Attribute").stringValue != "")
                 {
-                    dirtyFlags = AbstractVisualisation.PropertyType.AggregationType;
+                    if (EnumPopup("Aggregation Type", Enum.GetNames(typeof(BarAggregation)), barAggregationProperty))
+                    {
+                        dirtyFlags = AbstractVisualisation.PropertyType.AggregationType;
+                    }
                 }
 
                 EditorGUI.BeginChangeCheck();
