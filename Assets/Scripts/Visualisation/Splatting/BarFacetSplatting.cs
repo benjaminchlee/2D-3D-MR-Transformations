@@ -2,6 +2,8 @@
 using IATK;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 
 namespace SSVis
@@ -9,9 +11,10 @@ namespace SSVis
     public class BarFacetSplatting : BaseVisualisationSplatting
     {
         private List<DataVisualisation> facetVisualisations = new List<DataVisualisation>();
+        private List<TextMeshPro> facetLabels = new List<TextMeshPro>();
 
-        private const float maxFacetWidth = 1;
-        private const float maxFacetHeight = 1;
+        private const float maxFacetWidth = 1.25f;
+        private const float maxFacetHeight = 1.25f;
 
         private Vector3 originalScale;
 
@@ -39,14 +42,24 @@ namespace SSVis
             Vector3 right = target.transform.right;
             Vector3 forward = target.transform.forward;
 
-            int numFacets = DataVisualisation.NumZBins;
+            int numFacets;
+            float[] categories = null;
+            if (IsDimensionCategorical(DataVisualisation.ZDimension))
+            {
+                categories = DataSource[DataVisualisation.ZDimension].Data.Distinct().ToArray();
+                numFacets = categories.Count();
+            }
+            else
+            {
+                numFacets = DataVisualisation.NumZBins;
+            }
+
             string facetingDimension = DataVisualisation.ZDimension;
             int numRows = (int)Mathf.Sqrt(numFacets);
             int numCols = (int)Mathf.Ceil(numFacets / (float)numRows);
 
             float visWidth = Mathf.Min(maxFacetWidth / numCols, DataVisualisation.Width);
             float visHeight = Mathf.Min(maxFacetHeight / numRows, DataVisualisation.Height);
-
 
             float xDelta = Mathf.Min(maxFacetWidth, visWidth * numCols) / (numCols * 2);
             float yDelta = Mathf.Min(maxFacetHeight, visHeight * numCols) / (numRows * 2);
@@ -61,6 +74,7 @@ namespace SSVis
                         var facet = DataVisualisationManager.Instance.CloneDataVisualisation(DataVisualisation);
                         facetVisualisations.Add(facet);
                         facet.SetZAxisVisibility(false);
+                        facet.HideAxisManipulators();
                         facet.IsPrototype = true;
 
                         // Set filtering
@@ -83,14 +97,46 @@ namespace SSVis
                         facet.transform.DOMove(targetPos, 0.1f);
                         facet.transform.DORotate(target.transform.eulerAngles, 0.1f);
 
-                        // Set scale
-                        facet.Scale = new Vector3(visWidth, visHeight, 0.0025f);
+                        // Set scale, make it a bit smaller in order to have some gaps between them
+                        facet.Scale = new Vector3(visWidth - 0.075f, visHeight - 0.075f, 0.0025f);
+
+                        // Create a label and place it above
+                        TextMeshPro label = new GameObject("FacetLabel").AddComponent<TextMeshPro>();
+                        facetLabels.Add(label);
+                        label.GetComponent<RectTransform>().sizeDelta = new Vector2(0.175f, 0.05f);
+                        label.autoSizeTextContainer = false;
+                        label.alignment = TextAlignmentOptions.Midline;
+                        label.fontSize = 0.15f;
+                        label.transform.SetParent(facet.transform);
+                        label.transform.localPosition = new Vector3(0, visHeight / 2, 0);
+                        label.transform.localRotation = Quaternion.identity;
+                        // Set text
+                        if (categories != null)
+                        {
+                            label.text = DataSource.getOriginalValue(categories[index], facetingDimension).ToString();
+                        }
+                        else
+                        {
+                            string range1 = DataSource.getOriginalValue(index / (float)numFacets, facetingDimension).ToString();
+                            string range2 = DataSource.getOriginalValue((index + 1) / (float)numFacets, facetingDimension).ToString();
+                            label.text = (range1 == range2) ? range1 : range1 + " ... " + range2;
+                        }
 
                         index++;
                     }
                 }
-
             }
+
+            // Create a main label above everything that shows the faceting dimension
+            TextMeshPro mainLabel = new GameObject("FacetLabel").AddComponent<TextMeshPro>();
+            facetLabels.Add(mainLabel);
+            mainLabel.GetComponent<RectTransform>().sizeDelta = new Vector2(0.5f, 0.05f);
+            mainLabel.autoSizeTextContainer = false;
+            mainLabel.alignment = TextAlignmentOptions.Midline;
+            mainLabel.fontSize = 0.25f;
+            mainLabel.transform.position = target.transform.position + up * (visHeight * numRows / 2 + 0.05f) + forward * DataVisualisation.Depth / 2;
+            mainLabel.transform.rotation = target.transform.rotation;
+            mainLabel.text = "Faceting by " + facetingDimension;
 
             // Scale up the original visualisation such that its collider overlaps with the entire facet grid
             originalScale = DataVisualisation.Scale;
@@ -109,6 +155,10 @@ namespace SSVis
             {
                 Destroy(facet.gameObject);
             }
+            foreach (var textMesh in facetLabels)
+            {
+                Destroy(textMesh.gameObject);
+            }
 
             DataVisualisation.Scale = originalScale;
             DataVisualisation.gameObject.layer = LayerMask.NameToLayer("Default");
@@ -123,6 +173,12 @@ namespace SSVis
             if (visible) DataVisualisation.ShowAxisManipulators();
             else DataVisualisation.HideAxisManipulators();
             DataVisualisation.Visualisation.theVisualizationObject.viewList[0].gameObject.SetActive(visible);
+        }
+
+        private bool IsDimensionCategorical(string dimension)
+        {
+            var type = DataSource[dimension].MetaData.type;
+            return (type == DataType.String || type == DataType.Date);
         }
     }
 }
