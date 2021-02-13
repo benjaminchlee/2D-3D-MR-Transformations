@@ -202,7 +202,8 @@ Shader "IATK/BarShader"
 					o.color =  v.color;
 
 					// Determine if we should discard this point
-					if (Tween > 0.99)
+					// if (Tween > 0.99)
+					if (true)
 					{
 						if (v.uv_MainTex.y < 0.9)
 							o.isDiscarding = 1;

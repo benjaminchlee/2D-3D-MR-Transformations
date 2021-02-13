@@ -82,9 +82,10 @@ namespace SSVis
 
             if (dataVisualisation.VisualisationType == AbstractVisualisation.VisualisationTypes.BAR)
             {
-                vis.BarAggregation = dataVisualisation.BarAggregation;
-                vis.NumXBins = dataVisualisation.NumXBins;
-                vis.NumZBins = dataVisualisation.NumZBins;
+                vis.Visualisation.barAggregation = dataVisualisation.BarAggregation.ToString();
+                vis.Visualisation.numXBins = dataVisualisation.NumXBins;
+                vis.Visualisation.numZBins = dataVisualisation.NumZBins;
+                vis.Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Y);
             }
 
             return vis;
@@ -131,9 +132,10 @@ namespace SSVis
             vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
             vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
 
-            vis.BarAggregation = BarAggregation.Count;
-            vis.NumXBins = 5;
-            vis.NumZBins = 5;
+            vis.Visualisation.barAggregation = BarAggregation.Count.ToString();
+            vis.Visualisation.numXBins = 5;
+            vis.Visualisation.numZBins = 5;
+            vis.Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Y);
         }
 
         public void CreateRandom2DBarChart()
@@ -149,9 +151,10 @@ namespace SSVis
             vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
             vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
 
-            vis.BarAggregation = BarAggregation.Sum;
-            vis.NumXBins = 5;
-            vis.NumZBins = 5;
+            vis.Visualisation.barAggregation = BarAggregation.Sum.ToString();
+            vis.Visualisation.numXBins = 5;
+            vis.Visualisation.numZBins = 5;
+            vis.Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Y);
         }
 
         public void CreateRandom3DBarChart()
@@ -168,9 +171,10 @@ namespace SSVis
             vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
             vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
 
-            vis.BarAggregation = BarAggregation.Sum;
-            vis.NumXBins = 5;
-            vis.NumZBins = 5;
+            vis.Visualisation.barAggregation = BarAggregation.Sum.ToString();
+            vis.Visualisation.numXBins = 5;
+            vis.Visualisation.numZBins = 5;
+            vis.Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Y);
         }
 
         public void DestroyAllDataVisualisations()

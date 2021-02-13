@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using IATK;
 using UnityEngine;
+using Microsoft.MixedReality.SceneUnderstanding.Samples.Unity;
 
 namespace SSVis
 {
@@ -16,7 +17,7 @@ namespace SSVis
         {
             #if !UNITY_EDITOR
             // Hook into SceneUnderstandingManager to know whenever the scene is updated
-            var sceneUnderstanding = GameObject.FindObjectOfType<Microsoft.MixedReality.SceneUnderstanding.Samples.Unity.SceneUnderstandingManager>();
+            SceneUnderstandingManager sceneUnderstanding = GameObject.FindObjectOfType<SceneUnderstandingManager>();
             sceneUnderstanding.OnLoadFinished.AddListener(SceneWallsUpdated);
             #else
             SceneWallsUpdated();
@@ -28,8 +29,10 @@ namespace SSVis
         /// <summary>
         /// Finds all SceneWalls and creates BrushingAndLinking scripts that match their size
         /// </summary>
-        private void SceneWallsUpdated()
+        public void SceneWallsUpdated()
         {
+            Debug.Log("Scene walls updated");
+
             // Clean all previous transforms
             foreach (var t in brushingAndLinkingTransforms)
             {
@@ -43,26 +46,20 @@ namespace SSVis
             for (int i = 0; i < sceneWalls.Length; i++)
             {
                 GameObject wall = sceneWalls[i];
-                // Ignore walls that are too small
-                if (wall.transform.localScale.x > 0.1f &&
-                    wall.transform.localScale.y > 0.1f &&
-                    wall.transform.localScale.z > 0.1f
-                )
+
+                // Check for a cached BrushingAndLinking, otherwise create a new one if there isn't a spare one
+                BrushingAndLinking bal = null;
+                if (idx < brushingAndLinkingScripts.Count)
                 {
-                    // Check for a cached BrushingAndLinking, otherwise create a new one if there isn't a spare one
-                    BrushingAndLinking bal = null;
-                    if (idx < brushingAndLinkingScripts.Count)
-                    {
-                        bal = brushingAndLinkingScripts[idx];
-                    }
-                    else
-                    {
-                        bal = ((GameObject)GameObject.Instantiate(Resources.Load("BrushingAndLinking"))).GetComponent<BrushingAndLinking>();
-                        brushingAndLinkingScripts.Add(bal);
-                    }
-                    ConfigureBrushingAndLinking(wall, bal);
-                    idx++;
+                    bal = brushingAndLinkingScripts[idx];
                 }
+                else
+                {
+                    bal = ((GameObject)GameObject.Instantiate(Resources.Load("BrushingAndLinking"))).GetComponent<BrushingAndLinking>();
+                    brushingAndLinkingScripts.Add(bal);
+                }
+                ConfigureBrushingAndLinking(wall, bal);
+                idx++;
             }
 
             // Disable all unused BrushingAndLinking scripts

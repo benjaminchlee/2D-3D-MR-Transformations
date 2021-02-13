@@ -302,7 +302,11 @@ namespace IATK
         {
             if (uid == null)
             {
+                #if UNITY_EDITOR
                 uid = Guid.NewGuid().ToString().Substring(0, 8);
+                #else
+                uid = "";
+                #endif
             }
 
             if (theVisualizationObject != null)
