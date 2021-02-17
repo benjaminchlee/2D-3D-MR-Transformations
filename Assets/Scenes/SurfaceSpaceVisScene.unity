@@ -458,6 +458,75 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &808316984
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 993410556867760658, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_Name
+      value: VolumeRendering
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_RootOrder
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.6092263
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.6092263
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.35894758
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.35894758
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 993410556867760662, guid: 20318a0e25d31f44da0b29103f840d6f,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 61.012
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 20318a0e25d31f44da0b29103f840d6f, type: 3}
 --- !u!1 &820394103
 GameObject:
   m_ObjectHideFlags: 0
@@ -1921,8 +1990,8 @@ MonoBehaviour:
   OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: OnToggleHandJoint
+      - m_Target: {fileID: 509898015}
+        m_MethodName: CreateVolumeRendering
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2381,7 +2450,7 @@ MonoBehaviour:
   iconSprite: {fileID: 21300000, guid: 20f25674b9512834f88938d45ed495d7, type: 3}
   iconQuadRenderer: {fileID: 7127698320099355580}
   iconQuadTextureNameID: _MainTex
-  iconQuadTexture: {fileID: 2800000, guid: 114589bc5b891c3488cbb8607b6b9171, type: 3}
+  iconQuadTexture: {fileID: 2800000, guid: bd30f98596e69f7469fda20a47760dd1, type: 3}
   defaultButtonQuadMaterial: {fileID: 2100000, guid: fa419ab56051229449e3b813df8f295f,
     type: 2}
   iconSet: {fileID: 11400000, guid: 8b386ef895f7c924f8c4b03d1d3ed683, type: 2}
@@ -3467,7 +3536,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Menu Six
+  m_text: Destroy Volume Rendering
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6a84f857bec7e7345843ae29404c57ce, type: 2}
   m_sharedMaterial: {fileID: 21202819797275496, guid: 6a84f857bec7e7345843ae29404c57ce,
@@ -3638,7 +3707,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!82 &1072947175458805805
 AudioSource:
   m_ObjectHideFlags: 0
@@ -13203,7 +13272,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!82 &7127698320587163415
 AudioSource:
   m_ObjectHideFlags: 0
@@ -13396,7 +13465,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Create 3D Barchart
+  m_text: Create Volume Rendering
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6a84f857bec7e7345843ae29404c57ce, type: 2}
   m_sharedMaterial: {fileID: 21202819797275496, guid: 6a84f857bec7e7345843ae29404c57ce,
@@ -13744,7 +13813,7 @@ MonoBehaviour:
   iconSprite: {fileID: 21300000, guid: 20f25674b9512834f88938d45ed495d7, type: 3}
   iconQuadRenderer: {fileID: 1072947173797115014}
   iconQuadTextureNameID: _MainTex
-  iconQuadTexture: {fileID: 2800000, guid: 49a59150fd8a7c1438828c262032e023, type: 3}
+  iconQuadTexture: {fileID: 2800000, guid: 8d0274d8bc6a17844a08b493920d9491, type: 3}
   defaultButtonQuadMaterial: {fileID: 2100000, guid: fa419ab56051229449e3b813df8f295f,
     type: 2}
   iconSet: {fileID: 11400000, guid: 8b386ef895f7c924f8c4b03d1d3ed683, type: 2}
@@ -14752,8 +14821,8 @@ MonoBehaviour:
   OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 509898014}
-        m_MethodName: 
+      - m_Target: {fileID: 509898015}
+        m_MethodName: DestroyAllVolumeRenderings
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

@@ -280,15 +280,18 @@ namespace SSVis
         [RuntimeInitializeOnLoadMethod]
         public static void CalculateCorrelationMatrix()
         {
-            numCols = DataVisualisationManager.Instance.DataSource.DimensionCount;
-            correlationMatrix = new float[numCols, numCols];
-
-            for (int i = 0; i < numCols; i++)
+            if (DataVisualisationManager.Instance != null)
             {
-                for (int j = 0; j < numCols; j++)
+                numCols = DataVisualisationManager.Instance.DataSource.DimensionCount;
+                correlationMatrix = new float[numCols, numCols];
+
+                for (int i = 0; i < numCols; i++)
                 {
-                    var corr = Correlation(DataVisualisationManager.Instance.DataSource[i].Data, DataVisualisationManager.Instance.DataSource[j].Data);
-                    correlationMatrix[i,j] = Mathf.Abs(corr);
+                    for (int j = 0; j < numCols; j++)
+                    {
+                        var corr = Correlation(DataVisualisationManager.Instance.DataSource[i].Data, DataVisualisationManager.Instance.DataSource[j].Data);
+                        correlationMatrix[i,j] = Mathf.Abs(corr);
+                    }
                 }
             }
         }

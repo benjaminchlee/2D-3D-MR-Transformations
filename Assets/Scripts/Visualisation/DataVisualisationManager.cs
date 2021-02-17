@@ -178,5 +178,21 @@ namespace SSVis
 
             OnVisualisationsDestroyed.Invoke();
         }
+
+        public void CreateVolumeRendering()
+        {
+            GameObject volume = GameObject.Instantiate(Resources.Load("VolumeRendering")) as GameObject;
+
+            volume.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.4f;
+        }
+
+        public void DestroyAllVolumeRenderings()
+        {
+            var volumes = FindObjectsOfType<VolumeRendering.VolumeRendering>();
+            foreach (var volume in volumes)
+            {
+                Destroy(volume.gameObject);
+            }
+        }
     }
 }
