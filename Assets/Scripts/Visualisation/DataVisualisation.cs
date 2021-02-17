@@ -756,13 +756,13 @@ namespace SSVis
                 pos = pos - nearestSurface.transform.forward * ((boxCollider.size.z + 0.01f) / 2);
                 return new System.Tuple<Vector3, Vector3>(pos, nearestSurface.transform.eulerAngles);
             }
-            // Condition 2: Faceting for 3D bar charts
+            // Condition 2: Cracking of 3D bar charts
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension != "Undefined")
             {
-                var facetFlattening = gameObject.AddComponent<BarFacetSplatting>();
-                facetFlattening.Initialise(dataSource, this, visualisation);
-                facetFlattening.ApplySplat(placementValues);
-                visualisationSplattings.Add(facetFlattening);
+                var barChartCracking = gameObject.AddComponent<BarChartCrackingSplatting>();
+                barChartCracking.Initialise(dataSource, this, visualisation);
+                barChartCracking.ApplySplat(placementValues);
+                visualisationSplattings.Add(barChartCracking);
                 preventExtrusionForThisPlacement = true;
 
                 // Override the position to place it directly on the surface

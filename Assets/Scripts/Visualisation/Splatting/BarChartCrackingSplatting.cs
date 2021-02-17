@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace SSVis
 {
-    public class BarFacetSplatting : BaseVisualisationSplatting
+    public class BarChartCrackingSplatting : BaseVisualisationSplatting
     {
         private List<DataVisualisation> facetVisualisations = new List<DataVisualisation>();
         private List<TextMeshPro> facetLabels = new List<TextMeshPro>();
