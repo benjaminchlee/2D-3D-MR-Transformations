@@ -100,7 +100,6 @@ namespace IATK
                 }
             }
 
-
             if (viewList.Count > 0)
             {
                 for (int i = 0; i < viewList.Count; i++)
@@ -132,6 +131,8 @@ namespace IATK
                     viewList[i].SetSizeChannel(visualisationReference.dataSource[visualisationReference.sizeDimension].Data);
                 }
             }
+
+            UpdateVisualisation(PropertyType.SizeValues);
 
             name = savedName;
         }
@@ -705,7 +706,7 @@ namespace IATK
         /// <returns></returns>
         public float[] SetAggregatedDimension(float[] yData, BarAggregation aggregation)
         {
-            // Extract list versions of the position values for the x and z dimensions
+            // Extract independent arrays of the position values for the x and z dimensions
             Vector3[] bigMeshVertices = viewList[0].BigMesh.getBigMeshVertices();
             float[] xData = new float[bigMeshVertices.Length];
             float[] zData = new float[bigMeshVertices.Length];

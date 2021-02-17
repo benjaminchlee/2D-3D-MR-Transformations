@@ -38,7 +38,8 @@ namespace SSVis
         }
 
         public DataVisualisation CreateDataVisualisation(DataSource dataSource, AbstractVisualisation.VisualisationTypes visualisationType, AbstractVisualisation.GeometryType geometryType,
-            string xDimension = "Undefined", string yDimension = "Undefined", string zDimension = "Undefined", float size = 1, string sizeDimension = "Undefined", Color color = default(Color), string colourDimension = "Undefined", Vector3 scale = default(Vector3)
+            string xDimension = "Undefined", string yDimension = "Undefined", string zDimension = "Undefined", float size = 1, string sizeDimension = "Undefined", Color color = default(Color), string colourDimension = "Undefined", Vector3 scale = default(Vector3),
+            BarAggregation barAggregation = BarAggregation.Count, int numXBins = 2, int numZBins = 2
         )
         {
             DataVisualisation vis = Instantiate(Resources.Load("DataVisualisation") as GameObject).GetComponent<DataVisualisation>();
@@ -54,6 +55,9 @@ namespace SSVis
             vis.Visualisation.sizeDimension = sizeDimension;
             vis.Visualisation.colour = color != default(Color) ? color : Color.white;
             vis.Visualisation.colourDimension = colourDimension;
+            vis.Visualisation.barAggregation = barAggregation.ToString();
+            vis.Visualisation.numXBins = numXBins;
+            vis.Visualisation.numZBins = numZBins;
             vis.Visualisation.CreateVisualisation(visualisationType);
             vis.Scale = scale != default(Vector3) ? scale : Vector3.one;
 
@@ -74,19 +78,15 @@ namespace SSVis
                                                             dataVisualisation.SizeByDimension,
                                                             dataVisualisation.Colour,
                                                             dataVisualisation.ColourByDimension,
-                                                            dataVisualisation.Scale);
+                                                            dataVisualisation.Scale,
+                                                            dataVisualisation.BarAggregation,
+                                                            dataVisualisation.NumXBins,
+                                                            dataVisualisation.NumZBins
+                                                            );
 
             vis.transform.position = dataVisualisation.transform.position;
             vis.transform.rotation = dataVisualisation.transform.rotation;
             vis.transform.localScale = dataVisualisation.transform.localScale;
-
-            if (dataVisualisation.VisualisationType == AbstractVisualisation.VisualisationTypes.BAR)
-            {
-                vis.Visualisation.barAggregation = dataVisualisation.BarAggregation.ToString();
-                vis.Visualisation.numXBins = dataVisualisation.NumXBins;
-                vis.Visualisation.numZBins = dataVisualisation.NumZBins;
-                vis.Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Y);
-            }
 
             return vis;
         }
@@ -127,15 +127,10 @@ namespace SSVis
             int numDimensions = DataSource.DimensionCount;
             string xDimension = DataSource[random.Next(0, numDimensions)].Identifier;
 
-            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.BAR, AbstractVisualisation.GeometryType.Bars, xDimension: xDimension, scale: VisualisationScale);
+            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.BAR, AbstractVisualisation.GeometryType.Bars, xDimension: xDimension, scale: VisualisationScale, barAggregation: BarAggregation.Count, numXBins: 5, numZBins: 5);
 
             vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
             vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
-
-            vis.Visualisation.barAggregation = BarAggregation.Count.ToString();
-            vis.Visualisation.numXBins = 5;
-            vis.Visualisation.numZBins = 5;
-            vis.Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Y);
         }
 
         public void CreateRandom2DBarChart()
@@ -146,15 +141,10 @@ namespace SSVis
             string xDimension = DataSource[random.Next(0, numDimensions)].Identifier;
             string yDimension = DataSource[random.Next(0, numDimensions)].Identifier;
 
-            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.BAR, AbstractVisualisation.GeometryType.Bars, xDimension: xDimension, yDimension: yDimension, scale: VisualisationScale);
+            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.BAR, AbstractVisualisation.GeometryType.Bars, xDimension: xDimension, yDimension: yDimension, scale: VisualisationScale, barAggregation: BarAggregation.Sum, numXBins: 5, numZBins: 5);
 
             vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
             vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
-
-            vis.Visualisation.barAggregation = BarAggregation.Sum.ToString();
-            vis.Visualisation.numXBins = 5;
-            vis.Visualisation.numZBins = 5;
-            vis.Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Y);
         }
 
         public void CreateRandom3DBarChart()
@@ -166,15 +156,10 @@ namespace SSVis
             string yDimension = DataSource[random.Next(0, numDimensions)].Identifier;
             string zDimension = DataSource[random.Next(0, numDimensions)].Identifier;
 
-            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.BAR, AbstractVisualisation.GeometryType.Bars, xDimension: xDimension, yDimension: yDimension, zDimension:zDimension, scale: VisualisationScale);
+            DataVisualisation vis = CreateDataVisualisation(DataSource, AbstractVisualisation.VisualisationTypes.BAR, AbstractVisualisation.GeometryType.Bars, xDimension: xDimension, yDimension: yDimension, zDimension:zDimension, scale: VisualisationScale, barAggregation: BarAggregation.Sum, numXBins: 5, numZBins: 5);
 
             vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
             vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
-
-            vis.Visualisation.barAggregation = BarAggregation.Sum.ToString();
-            vis.Visualisation.numXBins = 5;
-            vis.Visualisation.numZBins = 5;
-            vis.Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.Y);
         }
 
         public void DestroyAllDataVisualisations()

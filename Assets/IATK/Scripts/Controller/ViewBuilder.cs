@@ -189,18 +189,21 @@ namespace IATK
             Debug.Assert(dimension == VIEW_DIMENSION.Y);
             Debug.Assert(aggregation != BarAggregation.None);
 
-            // Extract list versions of the position values for the x and z dimensions
-            List<float> xValues = new List<float>();
-            List<float> zValues = new List<float>();
+            // Extract independent arrays of the position values for the x and z dimensions
+            float[] xData = new float[positions.Count];
+            float[] zData = new float[positions.Count];
             for (int i = 0; i < positions.Count; i++)
             {
-                xValues.Add(positions[i].x);
-                zValues.Add(positions[i].z);
+                xData[i] = positions[i].x;
+                zData[i] = positions[i].z;
             }
 
             // Get the unique "categories" of the x and z dimensions (these are technically floats)
-            var xCategories = xValues.Distinct();
-            var zCategories = zValues.Distinct();
+            var xCategories = xData.Distinct();
+            var zCategories = zData.Distinct();
+
+            // LAZY HACK: Set a value in the mesh's normal.y value to designate whether to show or hide the point to prevent z-fighting and mass lag
+            float[] masterBars = new float[positions.Count];
 
             // Create a dictionary that will store the values assocatied with each (x, z) pairs of aggregating values (x bins * z bins = n lists)
             Dictionary<float, Dictionary<float, List<float>>> aggGroups = new Dictionary<float, Dictionary<float, List<float>>>();
@@ -208,17 +211,18 @@ namespace IATK
             for (int i = 0; i < positions.Count; i++)
             {
                 Dictionary<float, List<float>> innerDict;
-                if (!aggGroups.TryGetValue(xValues[i], out innerDict))
+                if (!aggGroups.TryGetValue(xData[i], out innerDict))
                 {
                     innerDict = new Dictionary<float, List<float>>();
-                    aggGroups[xValues[i]] = innerDict;
+                    aggGroups[xData[i]] = innerDict;
                 }
 
                 List<float> innerList;
-                if (!innerDict.TryGetValue(zValues[i], out innerList))
+                if (!innerDict.TryGetValue(zData[i], out innerList))
                 {
                     innerList = new List<float>();
-                    innerDict[zValues[i]] = innerList;
+                    innerDict[zData[i]] = innerList;
+                    masterBars[i] = 1;
                 }
 
                 // If the aggregation type is count, we don't need to use the y axis values
@@ -226,6 +230,14 @@ namespace IATK
                     innerList.Add(0);
                 else
                     innerList.Add(data[i]);
+            }
+
+            // LAZY HACK: Send the master values to the mesh now
+            for (int i = 0; i < positions.Count; i++)
+            {
+                Vector4 uv = uvs[i];
+                uv.y = masterBars[i];
+                uvs[i] = uv;
             }
 
             // Create another dictionary that will store the aggregated value for each (x, z) pair group
