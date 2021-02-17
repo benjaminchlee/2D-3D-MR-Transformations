@@ -12,6 +12,7 @@ namespace SSVis
     {
         private List<DataVisualisation> facetVisualisations = new List<DataVisualisation>();
         private List<TextMeshPro> facetLabels = new List<TextMeshPro>();
+        private TextMeshPro mainLabel;
 
         private const float maxFacetWidth = 1.25f;
         private const float maxFacetHeight = 1.25f;
@@ -77,28 +78,30 @@ namespace SSVis
                         facet.HideAxisManipulators();
                         facet.IsPrototype = true;
 
-                        // Set filtering
-                        AttributeFilter filter = new AttributeFilter();
-                        filter.Attribute = facetingDimension;
-                        filter.minFilter = Mathf.Max(index / (float)numFacets - 0.001f, 0);
-                        filter.maxFilter = Mathf.Min((index + 1) / (float)numFacets + 0.001f, 1);
-                        facet.Visualisation.attributeFilters = new AttributeFilter[] { filter };
-                        facet.Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.AttributeFiltering);
+                        // Set filtering to only show within the required range for each category
+                        float[] data = DataSource[facet.ZDimension].Data;
+                        float min = data.Min();
+                        float max = data.Max();
+                        facet.Visualisation.zDimension.minFilter = Mathf.Lerp(min, max, index / (float) numFacets);
+                        facet.Visualisation.zDimension.maxFilter = Mathf.Lerp(min, max, (index + 1) / (float) numFacets);
+                        facet.Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.DimensionFiltering);
 
-                        // Set to the starting position and rotation
-                        facet.transform.position = transform.position;
+                        // Set the facet's starting position, rotation, and depth
+                        float barWidth = DataVisualisation.Depth / numFacets;
+                        facet.transform.position = transform.position + DataVisualisation.transform.forward * barWidth * index - DataVisualisation.transform.forward * ((DataVisualisation.Depth / 2) - (barWidth / 2));
                         facet.transform.rotation = transform.rotation;
+                        facet.Scale = new Vector3(DataVisualisation.Width, DataVisualisation.Height, barWidth);
+                        // We also override the bar size such that it takes up the full facet's amount pre-animation
+                        facet.Visualisation.theVisualizationObject.viewList[0].BigMesh.SharedMaterial.SetFloat("_Depth", 0.5f);
 
                         // Calculate and animate towards the target position for this facet
                         float x = j * visWidth - (visWidth * numCols) / 2f + visWidth / 2;
                         float y = i * visHeight - (visHeight * numRows) / 2f + visHeight / 2;
                         float z = DataVisualisation.Depth / 2;
                         Vector3 targetPos = target.transform.position + x * right - up * y + z * forward;
-                        facet.transform.DOMove(targetPos, 0.1f);
-                        facet.transform.DORotate(target.transform.eulerAngles, 0.1f);
-
-                        // Set scale, make it a bit smaller in order to have some gaps between them
-                        facet.Scale = new Vector3(visWidth - 0.075f, visHeight - 0.075f, 0.0025f);
+                        facet.transform.DOMove(targetPos, 2f).SetEase(Ease.InOutCubic);
+                        facet.transform.DORotate(target.transform.eulerAngles, 2f).SetEase(Ease.InOutCubic);
+                        DOTween.To(() => facet.Scale, _ => facet.Scale = _, new Vector3(visWidth - 0.075f, visHeight - 0.075f, 0.0025f), 2f).SetEase(Ease.InOutCubic);  // make it a bit smaller in order to have some gaps between them
 
                         // Create a label and place it above
                         TextMeshPro label = new GameObject("FacetLabel").AddComponent<TextMeshPro>();
@@ -128,7 +131,7 @@ namespace SSVis
             }
 
             // Create a main label above everything that shows the faceting dimension
-            TextMeshPro mainLabel = new GameObject("FacetLabel").AddComponent<TextMeshPro>();
+            mainLabel = new GameObject("FacetLabel").AddComponent<TextMeshPro>();
             facetLabels.Add(mainLabel);
             mainLabel.GetComponent<RectTransform>().sizeDelta = new Vector2(0.5f, 0.05f);
             mainLabel.autoSizeTextContainer = false;
@@ -159,6 +162,7 @@ namespace SSVis
             {
                 Destroy(textMesh.gameObject);
             }
+            Destroy(mainLabel.gameObject);
 
             DataVisualisation.Scale = originalScale;
             DataVisualisation.gameObject.layer = LayerMask.NameToLayer("Default");
