@@ -23,19 +23,19 @@ namespace SSVis
         {
             if (!isInitialised)
             {
-                Debug.LogError("Bar Facet Splatting: Cannot apply the splat before Initialise() has been called.");
+                Debug.LogError("Bar Cracking Splatting: Cannot apply the splat before Initialise() has been called.");
                 return;
             }
 
             if (DataVisualisation.XDimension == "Undefined" || DataVisualisation.ZDimension == "Undefined" || DataVisualisation.VisualisationType != IATK.AbstractVisualisation.VisualisationTypes.BAR)
             {
-                Debug.LogError("Bar Facet Splatting: A 3 dimensional bar chart is required.");
+                Debug.LogError("Bar Cracking Splatting: A 3 dimensional bar chart is required.");
                 return;
             }
 
             if (placementValues == null)
                 placementValues = new System.Tuple<Vector3, Vector3>(Vector3.zero, Vector3.zero);
-
+            // Create temporary gameobject which will make it easier to position facets
             GameObject target = new GameObject();
             target.transform.position = placementValues.Item1;
             target.transform.eulerAngles = placementValues.Item2;

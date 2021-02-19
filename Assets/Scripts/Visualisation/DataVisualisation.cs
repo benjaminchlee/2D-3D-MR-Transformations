@@ -55,8 +55,9 @@ namespace SSVis
         private bool isYAxisScaling = false;
         private bool isZAxisScaling = false;
 
-        // Variables for visualisation extrusion and splatting
+        // Variables for visualisation continuous transforms, extrusion, and splatting
         private GameObject ghostVisualisation;
+        private List<BaseVisualisationContinuous> visualisationContinuous = new List<BaseVisualisationContinuous>();
         private List<BaseVisualisationExtrusion> visualisationExtrusions = new List<BaseVisualisationExtrusion>();
         private List<BaseVisualisationSplatting> visualisationSplattings = new List<BaseVisualisationSplatting>();
         private bool isAttachedToSurface;
@@ -309,10 +310,7 @@ namespace SSVis
             }
         }
 
-        public bool AutoCenterVisualisation
-        {
-            get; set;
-        } = true;
+        public bool AutoCenterVisualisation { get; set; } = true;
 
         public BarAggregation BarAggregation
         {
@@ -386,6 +384,7 @@ namespace SSVis
             }
         }
 
+
         #endregion
 
         private void Awake()
@@ -409,6 +408,9 @@ namespace SSVis
                 DataSource = DataVisualisationManager.Instance.DataSource;
                 dataSource = DataSource;
             }
+
+            ghostVisualisation = (Instantiate(Resources.Load("GhostVisualisation") as GameObject));
+            ghostVisualisation.SetActive(false);
         }
 
         private void Start()
@@ -442,6 +444,7 @@ namespace SSVis
                 AdjustCollider();
             }
 
+            // Axis scaling
             if (isXAxisScaling && XDimension != "Undefined" && XAxisManipulator.transform.localPosition.x != Width)
             {
                 Width = XAxisManipulator.transform.localPosition.x;
@@ -455,13 +458,16 @@ namespace SSVis
                 Depth = ZAxisManipulator.transform.localPosition.z;
             }
 
+            // Check if this data visualisation is colliding with any surfaces
             if (isManipulating)
             {
                 if (collidingSurfaces.Count > 0)
                 {
-                    if (nearestSurfaceCheckCounter > 5)
+                    // Check for nearest surfaces every 4th frame to minimise lag
+                    if (nearestSurfaceCheckCounter > 4)
                     {
                         nearestSurfaceCheckCounter = 0;
+
                         // Find the closest colliding surface by distance
                         GameObject surface = null;
                         float min = Mathf.Infinity;
@@ -491,22 +497,44 @@ namespace SSVis
                         nearestSurfaceCheckCounter++;
                     }
 
+                    // If a nearest surface was found
                     if (nearestSurface != null)
                     {
-                        if (ghostVisualisation == null && visualisationSplattings.Count == 0 && visualisationExtrusions.Count == 0)
+                        // Check for continuous transformation scripts which can be added
+                        System.Tuple<Vector3, Vector3> placementValues = CalculatePositionAndRotationOnSurface(nearestSurface);
+                        if (visualisationContinuous.Count == 0)
+                            UpdateVisualisationContinuous(placementValues);
+
+                        // Call the update functions on the continuous transformation scripts
+                        foreach (var continuous in visualisationContinuous)
                         {
-                            ghostVisualisation = (Instantiate(Resources.Load("GhostVisualisation") as GameObject));
-                            System.Tuple<Vector3, Vector3> values = CalculatePositionAndRotationOnSurface(nearestSurface);
-                            ghostVisualisation.transform.position = values.Item1;
-                            ghostVisualisation.transform.eulerAngles = values.Item2;
+                            continuous.UpdateContinuous(nearestSurface, placementValues);
+                        }
+
+                        // Show a ghost visualisation if this data visualisation is not yet already in a continuous, splatting, or extrusion
+                        if (visualisationContinuous.Count == 0 && visualisationSplattings.Count == 0 && visualisationExtrusions.Count == 0)
+                        {
+                            ghostVisualisation.transform.position = placementValues.Item1;
+                            ghostVisualisation.transform.eulerAngles = placementValues.Item2;
                             ghostVisualisation.transform.localScale = boxCollider.size;
+                        }
+                        else
+                        {
+                            ghostVisualisation.SetActive(false);
                         }
                     }
                 }
                 else
                 {
-                    if (ghostVisualisation != null)
-                        Destroy(ghostVisualisation);
+                    nearestSurfaceCheckCounter = 0;
+                    ghostVisualisation.SetActive(false);
+
+                    if (visualisationContinuous.Count > 0)
+                    {
+                        foreach (var cont in visualisationContinuous)
+                            cont.DestroyThisContinuous();
+                        visualisationContinuous.Clear();
+                    }
                 }
             }
 
@@ -593,8 +621,7 @@ namespace SSVis
                 }
             }
 
-            if (ghostVisualisation != null)
-                Destroy(ghostVisualisation);
+            ghostVisualisation.SetActive(false);
         }
 
         public void VisualisationTouched(ManipulationEventData eventData)
@@ -735,6 +762,21 @@ namespace SSVis
         }
 
         /// <summary>
+        /// Contains logic to add continuous transformation scripts while this Data Visualisation is hovering over a surface.
+        /// </summary>
+        /// <param name="placementValues"></param>
+        public void UpdateVisualisationContinuous(System.Tuple<Vector3, Vector3> placementValues)
+        {
+            // Condition 1: Continuous cracking of 3D bar charts
+            if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension != "Undefined")
+            {
+                var barChartContinuous = gameObject.AddComponent<BarChartCrackingContinuous>();
+                barChartContinuous.Initialise(dataSource, this, visualisation);
+                visualisationContinuous.Add(barChartContinuous);
+            }
+        }
+
+        /// <summary>
         /// Contains logic to add splatting scripts *directly before* this Data Visualisation is placed on a surface.
         /// Expects a return tuple in case the splatting requires the placement of the visualisation to be modified in some fashion.
         /// </summary>
@@ -757,6 +799,7 @@ namespace SSVis
                 return new System.Tuple<Vector3, Vector3>(pos, nearestSurface.transform.eulerAngles);
             }
             // Condition 2: Cracking of 3D bar charts
+            /*
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension != "Undefined")
             {
                 var barChartCracking = gameObject.AddComponent<BarChartCrackingSplatting>();
@@ -771,7 +814,7 @@ namespace SSVis
                 Vector3 pos = nearestSurface.transform.TransformPoint(localPosOnSurface);
                 return new System.Tuple<Vector3, Vector3>(pos, placementValues.Item2);
             }
-
+            */
             return placementValues;
         }
 
