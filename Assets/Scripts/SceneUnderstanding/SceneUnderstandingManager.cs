@@ -126,7 +126,6 @@ namespace Microsoft.MixedReality.SceneUnderstanding.Samples.Unity
         [Tooltip("Tag for the World mesh")]
         public string TagForWorldObjects;
 
-
         [Header("Materials")]
         [Tooltip("Material for scene object meshes.")]
         public Material SceneObjectMeshMaterial = null;
@@ -442,7 +441,6 @@ namespace Microsoft.MixedReality.SceneUnderstanding.Samples.Unity
                 // Scenes Queried from a device are Scenes composed of one Scene Fragment
                 SceneFragment sceneFragment = GetLatestSceneSerialization();
                 SceneFragment[] sceneFragmentsArray = new SceneFragment[1] { sceneFragment };
-                suScene = SceneUnderstanding.Scene.FromFragments(sceneFragmentsArray);
                 suScene = SceneUnderstanding.Scene.FromFragments(sceneFragmentsArray);
 
                 // Get Latest Scene GUID
@@ -763,7 +761,7 @@ namespace Microsoft.MixedReality.SceneUnderstanding.Samples.Unity
 
             foreach (SceneUnderstanding.SceneMesh suMesh in suMeshes)
             {
-                if (suMeshes == null)
+                if (suMesh == null)
                 {
                     Debug.LogWarning("SceneUnderstandingManager.GenerateUnityMeshFromSceneObjectMeshes: Mesh is null.");
                     continue;
@@ -775,7 +773,7 @@ namespace Microsoft.MixedReality.SceneUnderstanding.Samples.Unity
                 System.Numerics.Vector3[] meshVertices = new System.Numerics.Vector3[suMesh.VertexCount];
                 suMesh.GetVertexPositions(meshVertices);
 
-                uint indexOffset = (uint)combinedMeshIndices.Count;
+                uint indexOffset = (uint)combinedMeshVertices.Count;
 
                 // Store the Indices and Vertices
                 for (int i = 0; i < meshVertices.Length; i++)

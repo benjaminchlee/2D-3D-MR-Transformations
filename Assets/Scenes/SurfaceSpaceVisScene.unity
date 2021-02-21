@@ -505,7 +505,7 @@ MonoBehaviour:
   ColorForInferredObjects: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   ColorForWorldObjects: {r: 0, g: 1, b: 1, a: 1}
   LayerForBackgroundObjects: 0
-  LayerForWallObjects: 0
+  LayerForWallObjects: 30
   LayerForFloorObjects: 0
   LayerForCeilingObjects: 0
   LayerForPlatformsObjects: 0
@@ -843,7 +843,7 @@ GameObject:
   - component: {fileID: 1845791439}
   - component: {fileID: 1845791442}
   - component: {fileID: 1845791438}
-  m_Layer: 0
+  m_Layer: 30
   m_Name: TempSurface
   m_TagString: SceneWall
   m_Icon: {fileID: 0}
@@ -938,7 +938,7 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 6.1232336e-17}
+  m_Size: {x: 1, y: 1, z: 0.001}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1894764495
 GameObject:

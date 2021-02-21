@@ -514,6 +514,7 @@ namespace SSVis
                         // Show a ghost visualisation if this data visualisation is not yet already in a continuous, splatting, or extrusion
                         if (visualisationContinuous.Count == 0 && visualisationSplattings.Count == 0 && visualisationExtrusions.Count == 0)
                         {
+                            ghostVisualisation.SetActive(true);
                             ghostVisualisation.transform.position = placementValues.Item1;
                             ghostVisualisation.transform.eulerAngles = placementValues.Item2;
                             ghostVisualisation.transform.localScale = boxCollider.size;
@@ -526,6 +527,7 @@ namespace SSVis
                 }
                 else
                 {
+                    nearestSurface = null;
                     nearestSurfaceCheckCounter = 0;
                     ghostVisualisation.SetActive(false);
 
@@ -621,6 +623,7 @@ namespace SSVis
                 }
             }
 
+            isManipulating = false;
             ghostVisualisation.SetActive(false);
         }
 

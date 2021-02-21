@@ -5,12 +5,6 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Experimental/CrossDimensionalTransfer/Scenes/SurfaceTouchScene.unity
-    guid: abad72de61991f24f84cc0cf82fc1090
-  - enabled: 0
-    path: Assets/Scenes/VisualisationSurfacesScene.unity
-    guid: 5439514e73efc6349b28ba009c7482df
   - enabled: 1
     path: Assets/Scenes/SurfaceSpaceVisScene.unity
     guid: c3a66b25307265549afb738c0bdc5261

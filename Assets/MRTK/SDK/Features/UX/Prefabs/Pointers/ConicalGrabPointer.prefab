@@ -82,7 +82,7 @@ MonoBehaviour:
   - serializedVersion: 2
     m_Bits: 512
   - serializedVersion: 2
-    m_Bits: 2147483703
+    m_Bits: 3221225527
   - serializedVersion: 2
     m_Bits: 1024
   - serializedVersion: 2
