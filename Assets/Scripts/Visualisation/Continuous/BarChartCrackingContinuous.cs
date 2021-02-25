@@ -12,19 +12,51 @@ namespace SSVis
     {
         private DataVisualisation[] facetVisualisations;
 
+
         private const float maxFacetWidth = 1.25f;
         private const float maxFacetHeight = 1.25f;
         private const float animationTime = 0.25f;
 
+        #region Pre-calculated transformation constants
+
+        /// <summary>
+        /// The axis that is being cracked. This will likely require a full re-calculation of the following variables
+        /// </summary>
+        private AxisDirection crackingDimension = AxisDirection.None;
+        /// <summary>
+        /// The total number of facets/slices that is to be created
+        /// </summary>
         private int totalFacets;
+        /// <summary>
+        /// The name of the dimension that is to be cracked by
+        /// </summary>
         private string facetingDimension;
-        private int numRows, numCols;
-        private float visWidth, visHeight;
-        private float xDelta, yDelta;
+        /// <summary>
+        /// An array of the original data
+        /// </summary>
         private float[] data;
+        /// <summary>
+        /// The minimum and maximum float values in the dataset
+        /// </summary>
         private float min, max;
+        /// <summary>
+        /// The number of rows and columns that make up a grid of small multiples on the surface
+        /// </summary>
+        private int numRows, numCols;
+        /// <summary>
+        /// The calculated width and height of the small multiples when they are on the surface
+        /// </summary>
+        private float visWidth, visHeight;
+        /// <summary>
+        /// The spacing betwen each small multiple when on the surface
+        /// </summary>
+        private float xDelta, yDelta;
+        /// <summary>
+        /// The physical width of each bar in the bar chart
+        /// </summary>
         private float barWidth;
 
+        #endregion
 
         private int numCracked = 0;
         private bool crackingFromZero = true;
@@ -37,11 +69,42 @@ namespace SSVis
         {
             base.Initialise(dataSource, dataVisualisation, visualisation);
 
-            float[] categories = null;
-            if (IsDimensionCategorical(DataVisualisation.ZDimension))
+
+        }
+
+        private bool CheckForCrackingDimensionChange(GameObject nearestSurface)
+        {
+            // Get the axis that is "sticking into" the surface
+            float dot = Vector3.Dot(DataVisualisation.transform.forward, nearestSurface.transform.forward);
+            AxisDirection newDirection = (-0.5f < dot && dot < 0.5f) ? AxisDirection.X : AxisDirection.Z;
+
+            // Depending on the newDirection we just found, determine if the visualisation is contacting the surface from the 0 or 1 side. The result is inverted between the two different dictions
+            if (newDirection == AxisDirection.X)    dot = Vector3.Dot(DataVisualisation.transform.right, nearestSurface.transform.forward);
+            bool newCrackingFromZero = (dot < 0);
+            
+            if (newDirection != crackingDimension || newCrackingFromZero != crackingFromZero)
             {
-                categories = DataSource[DataVisualisation.ZDimension].Data.Distinct().ToArray();
-                totalFacets = categories.Count();
+                crackingDimension = newDirection;
+                crackingFromZero = newCrackingFromZero;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Precomputes fixed variables based on the set crackingDimension and Data Visualisation
+        /// </summary>
+        private void CalculateCrackingProperties()
+        {
+            // Precompute fixed variables based off the given Data Visualisation
+            facetingDimension = (crackingDimension == AxisDirection.X) ? DataVisualisation.XDimension : DataVisualisation.ZDimension;
+
+            if (IsDimensionCategorical(facetingDimension))
+            {
+                if (crackingDimension == AxisDirection.X)
+                    totalFacets = DataSource[DataVisualisation.XDimension].Data.Distinct().Count();
+                else
+                    totalFacets = DataSource[DataVisualisation.ZDimension].Data.Distinct().Count();
             }
             else
             {
@@ -49,11 +112,9 @@ namespace SSVis
             }
             facetVisualisations = new DataVisualisation[totalFacets];
 
-            // Precompute fixed variables based off the given Data Visualisation
-            facetingDimension = DataVisualisation.ZDimension;
             numRows = (int)Mathf.Sqrt(totalFacets);
             numCols = (int)Mathf.Ceil(totalFacets / (float)numRows);
-            visWidth = Mathf.Min(maxFacetWidth / numCols, DataVisualisation.Width);
+            visWidth = Mathf.Min(maxFacetWidth / numCols, (crackingDimension == AxisDirection.X) ? DataVisualisation.Depth : DataVisualisation.Width);
             visHeight = Mathf.Min(maxFacetHeight / numRows, DataVisualisation.Height);
             xDelta = Mathf.Min(maxFacetWidth, visWidth * numCols) / (numCols * 2);
             yDelta = Mathf.Min(maxFacetHeight, visHeight * numCols) / (numRows * 2);
@@ -61,7 +122,7 @@ namespace SSVis
             data = DataSource[facetingDimension].Data;
             min = data.Min();
             max = data.Max();
-            barWidth = Mathf.Abs(DataVisualisation.Depth) / totalFacets;
+            barWidth = Mathf.Abs((crackingDimension == AxisDirection.X) ? DataVisualisation.Width : DataVisualisation.Depth) / totalFacets;
         }
 
         public override void UpdateContinuous(GameObject nearestSurface, System.Tuple<Vector3, Vector3> placementValues = null)
@@ -78,12 +139,10 @@ namespace SSVis
                 return;
             }
 
-            // Calculate how many facets to crack in the visualisation
-            CalculateNumCrackedFacets(nearestSurface);
-
-            // If the direction at which the bar chart is cracked has swapped, we need to reset the visualisation entirely before we do anything else
-            if (crackingFromZero != previousCrackingFromZero)
+            // Check if the dimension has changed between x and z
+            if (CheckForCrackingDimensionChange(nearestSurface))
             {
+                // If it has, we need to reset the visualisation entirely before we do anything else
                 for (int i = 0; i < totalFacets; i++)
                 {
                     if (facetVisualisations[i] != null)
@@ -92,13 +151,19 @@ namespace SSVis
                     }
                 }
 
+                Visualisation.xDimension.minFilter = 0;
+                Visualisation.xDimension.maxFilter = 1;
                 Visualisation.zDimension.minFilter = 0;
                 Visualisation.zDimension.maxFilter = 1;
-
                 previousNumCracked = 0;
+
+                // Calculate new fixed properties specific to this cracking dimension
+                CalculateCrackingProperties();
             }
 
-            // If the number of facets we need has decreased, we destroy existing facets and restore the original data visualisation
+            CalculateNumCrackedFacets(nearestSurface);
+
+            // If the number of facets we need has decreased, we destroy the appropriate number of facets and restore part (or all) of the original data visualisation
             if (numCracked < previousNumCracked)
             {
                 if (crackingFromZero)
@@ -152,15 +217,31 @@ namespace SSVis
                 Destroy(target);
             }
 
-            if (crackingFromZero)
+            if (crackingDimension == AxisDirection.X)
             {
-                Visualisation.zDimension.minFilter = Mathf.Lerp(min, max, numCracked / (float) totalFacets);
-                Visualisation.zDimension.maxFilter = 1;
+                if (crackingFromZero)
+                {
+                    Visualisation.xDimension.minFilter = Mathf.Lerp(min, max, numCracked / (float) totalFacets);
+                    Visualisation.xDimension.maxFilter = 1;
+                }
+                else
+                {
+                    Visualisation.xDimension.minFilter = 0;
+                    Visualisation.xDimension.maxFilter = Mathf.Lerp(max, min, numCracked / (float) totalFacets);
+                }
             }
             else
             {
-                Visualisation.zDimension.minFilter = 0;
-                Visualisation.zDimension.maxFilter = Mathf.Lerp(max, min, numCracked / (float) totalFacets);
+                if (crackingFromZero)
+                {
+                    Visualisation.zDimension.minFilter = Mathf.Lerp(min, max, numCracked / (float) totalFacets);
+                    Visualisation.zDimension.maxFilter = 1;
+                }
+                else
+                {
+                    Visualisation.zDimension.minFilter = 0;
+                    Visualisation.zDimension.maxFilter = Mathf.Lerp(max, min, numCracked / (float) totalFacets);
+                }
             }
 
             // Apply visualisation changes
@@ -187,6 +268,8 @@ namespace SSVis
                 }
             }
 
+            Visualisation.xDimension.minFilter = 0;
+            Visualisation.xDimension.maxFilter = 1;
             Visualisation.zDimension.minFilter = 0;
             Visualisation.zDimension.maxFilter = 1;
             Visualisation.updateViewProperties(AbstractVisualisation.PropertyType.DimensionFiltering);
@@ -196,15 +279,23 @@ namespace SSVis
 
         private void CalculateNumCrackedFacets(GameObject nearestSurface)
         {
-            // Determine if the visualisation is contacting the surface from the 0 or 1 side
-            float dot = Vector3.Dot(nearestSurface.transform.forward, DataVisualisation.transform.forward);
-            crackingFromZero = (dot < 0);
-
             // Do overlap boxes along the different segments of the barchart to see which ones are colliding with the surface
             Vector3 centre = DataVisualisation.transform.position;
-            Vector3 forward = DataVisualisation.transform.forward;
-            Vector3 offset = forward * ((DataVisualisation.Depth / 2) - barWidth / 2);
-            Vector3 halfExtents = new Vector3(Mathf.Abs(DataVisualisation.Width), Mathf.Abs(DataVisualisation.Height), barWidth) / 2f;
+            // Different values depending on if it's cracking along the x or z dimension
+            Vector3 forward, offset, halfExtents;
+            if (crackingDimension == AxisDirection.X)
+            {
+                forward = DataVisualisation.transform.right;
+                offset = forward * ((DataVisualisation.Width / 2) - barWidth / 2);
+                halfExtents = new Vector3(barWidth, Mathf.Abs(DataVisualisation.Height), Mathf.Abs(DataVisualisation.Depth)) / 2f;
+            }
+            else
+            {
+                forward = DataVisualisation.transform.forward;
+                offset = forward * ((DataVisualisation.Depth / 2) - barWidth / 2);
+                halfExtents = new Vector3(Mathf.Abs(DataVisualisation.Width), Mathf.Abs(DataVisualisation.Height), barWidth) / 2f;
+            }
+
             numCracked = 0;
 
             // We have to create a "dummy" version of the nearest surface, because for some reason OverlapBox doesn't work on surfaces generated by the Scene Understanding API
@@ -222,7 +313,7 @@ namespace SSVis
             rb.isKinematic = true;
             rb.useGravity = false;
             Physics.SyncTransforms();
-
+            
             if (crackingFromZero)
             {
                 for (int i = 0; i < totalFacets; i++)
@@ -241,7 +332,7 @@ namespace SSVis
                     j++;
                 }
             }
-
+    
             Destroy(dummyWall);
         }
 
@@ -252,7 +343,17 @@ namespace SSVis
             // Create the facet object if it does not yet exist
             if (facet == null)
             {
-                facet = DataVisualisationManager.Instance.CloneDataVisualisation(DataVisualisation);
+                if (crackingDimension == AxisDirection.X)
+                {
+                    facet = DataVisualisationManager.Instance.CreateDataVisualisation(DataVisualisation.DataSource, AbstractVisualisation.VisualisationTypes.BAR, AbstractVisualisation.GeometryType.Bars,
+                                                                                        xDimension: DataVisualisation.ZDimension, yDimension: DataVisualisation.YDimension, zDimension: DataVisualisation.XDimension,
+                                                                                        numXBins: DataVisualisation.NumXBins, numZBins: DataVisualisation.NumZBins, barAggregation: DataVisualisation.BarAggregation
+                                                                                        );
+                }
+                else
+                {
+                    facet = DataVisualisationManager.Instance.CloneDataVisualisation(DataVisualisation);
+                }
                 facetVisualisations[index] = facet;
                 facet.SetZAxisVisibility(false);
                 facet.HideAxisManipulators();
@@ -284,7 +385,7 @@ namespace SSVis
             Vector3 targetPos = target.transform.position + x * right - up * y + z * forward;
             facet.transform.DOMove(targetPos, animationTime).SetEase(Ease.InOutCubic);
             facet.transform.DORotate(target.transform.eulerAngles, animationTime).SetEase(Ease.InOutCubic);
-            DOTween.To(() => facet.Scale, _ => facet.Scale = _, new Vector3(visWidth - 0.075f, visHeight - 0.075f, 0.0025f), animationTime).SetEase(Ease.InOutCubic);  // make it a bit smaller in order to have some gaps between them
+            DOTween.To(() => facet.Scale, _ => facet.Scale = _, new Vector3(visWidth - 0.075f, visHeight - 0.075f, 0.0025f), animationTime).SetEase(Ease.InOutCubic);  // make it a bit smaller in order to have some gaps between them=
         }
 
         private void RemoveFacet(int index)
@@ -293,7 +394,11 @@ namespace SSVis
             if (facet == null)
                 return;
 
-            Vector3 targetPos = new Vector3(0, 0, barWidth * index - DataVisualisation.Depth / 2);
+            Vector3 targetPos;
+            if (crackingDimension == AxisDirection.X)
+                targetPos = new Vector3(0, 0, barWidth * index - DataVisualisation.Width / 2);
+            else
+                targetPos = new Vector3(0, 0, barWidth * index - DataVisualisation.Depth / 2);
             Vector3 targetRot = Vector3.zero;
 
             facet.transform.SetParent(DataVisualisation.transform);
