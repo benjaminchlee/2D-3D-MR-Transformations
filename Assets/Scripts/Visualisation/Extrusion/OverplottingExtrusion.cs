@@ -20,11 +20,12 @@ namespace SSVis
 
         public override ExtrusionIdiom Idiom { get { return ExtrusionIdiom.Overplotting; }}
         public Mode ExtrusionMode = Mode.ColourGradient;
+        public bool LiftOnMaxDistance;
+        public bool AlertSmallMultiples = true;
 
         private ExtrusionHandle extrusionHandle;
         private string extrusionDimensionKey;
         private float[] extrusionDataPointOffset;
-
         private Color[] colours;
 
         public override void InitialiseExtrusionHandles()
@@ -37,7 +38,8 @@ namespace SSVis
             });
             extrusionHandle.OnExtrusionCloneDistanceReached.AddListener((e) =>
             {
-                DataVisualisation.LiftFromSurface(e);
+                if (LiftOnMaxDistance)
+                    DataVisualisation.LiftFromSurface(e);
             });
         }
 
@@ -85,9 +87,20 @@ namespace SSVis
             }
         }
 
+        private void LateUpdate()
+        {
+            AlertSmallMultiples = true;
+        }
+
         // Note: This Overplotting Extrusion only uses the distance variable
         public override void ExtrudeDimension(float distance, Vector3? extrusionPoint1 = null, Quaternion? extrusionRotation1 = null, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
         {
+            // Update other visualisations in the SPLOM
+            if (DataVisualisation.IsSmallMultiple && AlertSmallMultiples)
+                DataVisualisation.ParentSplomExtrusion.UpdateSmallMultipleGroupExtrusion<OverplottingExtrusion>(distance, extrusionPoint1, extrusionRotation1, extrusionPoint2, extrusionRotation2);
+
+            AlertSmallMultiples = false;
+
             // Check if extrusion has stopped
             if (CompareFloats(distance, 0))
             {
@@ -163,10 +176,11 @@ namespace SSVis
             }
 
             // Creates a new position array based on the pre-calculated offset
+            float absoluteDistance = Mathf.Abs(distance);
             float[] positions = new float[DataSource.DataCount];
             for (int i = 0; i < DataSource.DataCount; i++)
             {
-                positions[i] = extrusionDataPointOffset[i] * Mathf.Abs(distance);
+                positions[i] = extrusionDataPointOffset[i] * absoluteDistance;
             }
 
             // Set position of the points

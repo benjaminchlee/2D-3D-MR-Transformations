@@ -10,8 +10,7 @@ namespace SSVis
 {
     public class SurfaceCuttingPlane : MonoBehaviour
     {
-        private List<BrushingAndLinking> brushingAndLinkingScripts = new List<BrushingAndLinking>();
-        private List<Transform> brushingAndLinkingTransforms = new List<Transform>();
+        private List<BrushingAndLinking> brushingAndLinkingWalls = new List<BrushingAndLinking>();
 
         private void Start()
         {
@@ -21,9 +20,34 @@ namespace SSVis
             sceneUnderstanding.OnLoadFinished.AddListener(SceneWallsUpdated);
             #else
             SceneWallsUpdated();
-            DataVisualisationManager.Instance.OnVisualisationCreated.AddListener(UpdateBrushingAndLinkingVisualisations);
             #endif
 
+        }
+
+        private void Update()
+        {
+            foreach (BrushingAndLinking brushing in brushingAndLinkingWalls)
+            {
+                if (!brushing.enabled)
+                    continue;
+
+                var visualisations = Physics.OverlapBox(brushing.transform.position, brushing.transform.localScale / 2, brushing.transform.rotation)
+                                                .Where(x => x.gameObject.tag == "DataVisualisation")
+                                                .Select(x => x.GetComponent<DataVisualisation>())
+                                                .Where(x => !x.isAttachedToSurface && !x.IsSmallMultiple)
+                                                .Select(x => x.Visualisation);
+
+                if (visualisations.Count() > 0)
+                {
+                    brushing.brushingVisualisations = visualisations.ToList();
+                    brushing.isBrushing = true;
+                }
+                else
+                {
+                    brushing.brushingVisualisations.Clear();
+                    brushing.isBrushing = false;
+                }
+            }
         }
 
         /// <summary>
@@ -32,13 +56,6 @@ namespace SSVis
         public void SceneWallsUpdated()
         {
             Debug.Log("Scene walls updated");
-
-            // Clean all previous transforms
-            foreach (var t in brushingAndLinkingTransforms)
-            {
-                Destroy(t.gameObject);
-            }
-            brushingAndLinkingTransforms.Clear();
 
             // Find all SceneWalls
             var sceneWalls = GameObject.FindGameObjectsWithTag("SceneWall");
@@ -49,74 +66,51 @@ namespace SSVis
 
                 // Check for a cached BrushingAndLinking, otherwise create a new one if there isn't a spare one
                 BrushingAndLinking bal = null;
-                if (idx < brushingAndLinkingScripts.Count)
+                if (idx < brushingAndLinkingWalls.Count)
                 {
-                    bal = brushingAndLinkingScripts[idx];
+                    bal = brushingAndLinkingWalls[idx];
+                    bal.enabled = true;
                 }
                 else
                 {
                     bal = ((GameObject)GameObject.Instantiate(Resources.Load("BrushingAndLinking"))).GetComponent<BrushingAndLinking>();
-                    brushingAndLinkingScripts.Add(bal);
+                    brushingAndLinkingWalls.Add(bal);
                 }
+
                 ConfigureBrushingAndLinking(wall, bal);
                 idx++;
             }
 
             // Disable all unused BrushingAndLinking scripts
-            for (int i = idx; i < brushingAndLinkingScripts.Count; i++)
+            for (int i = idx; i < brushingAndLinkingWalls.Count; i++)
             {
-                BrushingAndLinking bal = brushingAndLinkingScripts[i];
+                BrushingAndLinking bal = brushingAndLinkingWalls[i];
                 bal.isBrushing = false;
+                bal.enabled = false;
             }
-
-            UpdateBrushingAndLinkingVisualisations();
         }
 
-        private void ConfigureBrushingAndLinking(GameObject wall, BrushingAndLinking brushingAndLinkingScript)
+        private void ConfigureBrushingAndLinking(GameObject sceneWall, BrushingAndLinking brushingAndLinkingScript)
         {
+
             brushingAndLinkingScript.BRUSH_TYPE = BrushingAndLinking.BrushType.OVERLAPBOX;
             brushingAndLinkingScript.SELECTION_TYPE = BrushingAndLinking.SelectionType.FREE;
-            brushingAndLinkingScript.isBrushing = true;
             brushingAndLinkingScript.showBrush = true;
 
-            Vector3 right = wall.transform.right;
-            Vector3 up = wall.transform.up;
-            Vector3 forward = wall.transform.forward;
+            Vector3 right = sceneWall.transform.right;
+            Vector3 up = sceneWall.transform.up;
+            Vector3 forward = sceneWall.transform.forward;
 
-            Transform overlapBoxPoint = new GameObject("OverlapBoxPoint").transform;
-            overlapBoxPoint.position = wall.transform.position;
-            overlapBoxPoint.rotation = wall.transform.rotation;
-            Vector3 halfExtents = wall.transform.localScale / 2;
+            Transform brushingAndLinkingTransform = brushingAndLinkingScript.transform;
+            brushingAndLinkingTransform.position = sceneWall.transform.position;
+            brushingAndLinkingTransform.rotation = sceneWall.transform.rotation;
+            brushingAndLinkingTransform.transform.localScale = sceneWall.transform.localScale;
+            Vector3 halfExtents = sceneWall.transform.localScale / 2;
             halfExtents.z = 0.005f;
 
-            brushingAndLinkingScript.input1 = overlapBoxPoint;
-            brushingAndLinkingScript.input2 = transform;
+            brushingAndLinkingScript.input1 = brushingAndLinkingTransform;
+            brushingAndLinkingScript.input2 = brushingAndLinkingTransform;
             brushingAndLinkingScript.OverlapBoxHalfExtents = halfExtents;
-
-            brushingAndLinkingTransforms.Add(overlapBoxPoint);
-        }
-
-        private void UpdateBrushingAndLinkingVisualisations()
-        {
-            var dataVisualisations = GameObject.FindGameObjectsWithTag("DataVisualisation");
-            var visualisations = new List<Visualisation>();
-
-            for (int i = 0; i < dataVisualisations.Length; i++)
-            {
-                var dataVis = dataVisualisations[i].GetComponent<DataVisualisation>();
-                if (dataVis.DataSource != null)
-                {
-                    if (((CSVDataSource)dataVis.DataSource).data.name == ((CSVDataSource)DataVisualisationManager.Instance.DataSource).data.name)
-                    {
-                        visualisations.Add(dataVis.Visualisation);
-                    }
-                }
-            }
-
-            foreach (var bal in brushingAndLinkingScripts)
-            {
-                bal.brushingVisualisations = visualisations;
-            }
         }
     }
 }

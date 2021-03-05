@@ -109,6 +109,9 @@ namespace SSVis
                                        (maximumSplomHeight - originalVisualisationScale.y) / (float)numDimensions);
 
                 isExtruding = true;
+
+                DataVisualisation.ParentSplomExtrusion = this;
+                DataVisualisation.IsSmallMultiple = true;
             }
 
             currentExtrusionDistance = distance;
@@ -156,10 +159,35 @@ namespace SSVis
                 isCreatingNewVisualisations = false;
                 previousExtrusionDistance = 0;
                 isExtruding = false;
+
+                DataVisualisation.ParentSplomExtrusion = null;
+                DataVisualisation.IsSmallMultiple = false;
             }
 
-
             splomSize = newSplomSize;
+        }
+
+        public void UpdateSmallMultipleGroupExtrusion<T>(float distance, Vector3? extrusionPoint1 = null, Quaternion? extrusionRotation1 = null, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
+        {
+            if (isExtruding)
+            {
+                for (int i = 0; i < splomSize; i++)
+                {
+                    for (int j = 0; j < splomSize; j++)
+                    {
+                        DataVisualisation vis = splomVisualisations[i, j];
+                        if (vis != null)
+                        {
+                            if (typeof(T) == typeof(OverplottingExtrusion))
+                            {
+                                var overplotting = vis.GetComponentInChildren<OverplottingExtrusion>();
+                                overplotting.AlertSmallMultiples = false;
+                                overplotting.ExtrudeDimension(distance, extrusionPoint1, extrusionRotation1, extrusionPoint2, extrusionRotation2);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private void Update()
@@ -219,6 +247,12 @@ namespace SSVis
 
                             // Mark the visualisation as a prototype so the user can grab a copy of any visualisation
                             vis.IsPrototype = true;
+
+                            // Mark the visualisation as a small multiple so that the user can share its extrusions across the entire SPLOM
+                            // vis.IsSmallMultiple = true;
+                            // vis.ParentSplomExtrusion = this;
+                            // vis.protrudingDimension = AxisDirection.Z;
+                            // vis.UpdateVisualisationExtrusion();
 
                             instantiationCount++;
                         }

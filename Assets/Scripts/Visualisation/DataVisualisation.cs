@@ -50,6 +50,8 @@ namespace SSVis
 
         [Header("Misc Visualisation Properties")]
         public bool IsPrototype = false;
+        public bool IsSmallMultiple = false;
+        public SPLOMExtrusion ParentSplomExtrusion = null;
 
         private bool isXAxisScaling = false;
         private bool isYAxisScaling = false;
@@ -60,10 +62,10 @@ namespace SSVis
         private List<BaseVisualisationContinuous> visualisationContinuous = new List<BaseVisualisationContinuous>();
         private List<BaseVisualisationExtrusion> visualisationExtrusions = new List<BaseVisualisationExtrusion>();
         private List<BaseVisualisationSplatting> visualisationSplattings = new List<BaseVisualisationSplatting>();
-        private bool isAttachedToSurface;
+        public bool isAttachedToSurface;
         private List<GameObject> collidingSurfaces = new List<GameObject>();
         private GameObject nearestSurface;
-        private AxisDirection protrudingDimension = AxisDirection.None;
+        public AxisDirection protrudingDimension = AxisDirection.None;
         private bool preventExtrusionForThisPlacement = false;      // Flag for when a splat script needs to prevent any extrusions from being added
 
         private bool isManipulating = false;
@@ -316,23 +318,14 @@ namespace SSVis
         {
             get
             {
-                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
-                {
-                    Debug.LogError("Data Visualisation must be of Bar type to have an aggregation!");
-                    return BarAggregation.None;
-                }
                 return (BarAggregation)Enum.Parse(typeof(BarAggregation), visualisation.barAggregation);
             }
             set
             {
-                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
-                {
-                    Debug.LogError("Data Visualisation must be of Bar type to set an aggregation!");
-                    return;
-                }
-
                 visualisation.barAggregation = value.ToString();
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.AggregationType);
+
+                if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR)
+                    visualisation.updateViewProperties(AbstractVisualisation.PropertyType.AggregationType);
             }
         }
 
@@ -340,23 +333,14 @@ namespace SSVis
         {
             get
             {
-                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
-                {
-                    Debug.LogError("Data Visualisation must be of Bar type to have a num bins value!");
-                    return 0;
-                }
                 return visualisation.numXBins;
             }
             set
             {
-                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
-                {
-                    Debug.LogError("Data Visualisation must be of Bar type to set a num bins value!");
-                    return;
-                }
-
                 visualisation.numXBins = Mathf.Max(value, 1);
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.NumXBins);
+
+                if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR)
+                    visualisation.updateViewProperties(AbstractVisualisation.PropertyType.NumXBins);
             }
         }
 
@@ -364,23 +348,14 @@ namespace SSVis
         {
             get
             {
-                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
-                {
-                    Debug.LogError("Data Visualisation must be of Bar type to have a num bins value!");
-                    return 0;
-                }
                 return visualisation.numZBins;
             }
             set
             {
-                if (VisualisationType != AbstractVisualisation.VisualisationTypes.BAR)
-                {
-                    Debug.LogError("Data Visualisation must be of Bar type to set a num bins value!");
-                    return;
-                }
-
                 visualisation.numZBins = Mathf.Max(value, 1);
-                visualisation.updateViewProperties(AbstractVisualisation.PropertyType.NumZBins);
+                
+                if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR)
+                    visualisation.updateViewProperties(AbstractVisualisation.PropertyType.NumZBins);
             }
         }
 
@@ -410,6 +385,7 @@ namespace SSVis
             }
 
             ghostVisualisation = (Instantiate(Resources.Load("GhostVisualisation") as GameObject));
+            ghostVisualisation.transform.SetParent(transform);
             ghostVisualisation.SetActive(false);
         }
 
@@ -719,6 +695,8 @@ namespace SSVis
         public void LiftFromSurface(GameObject pointer = null)
         {
             isAttachedToSurface = false;
+            IsSmallMultiple = false;
+            ParentSplomExtrusion = null;
             collidingSurfaces.Clear();  // Clear all surfaces as a failsafe if the OnTriggerExit event does not fire in time
 
             // Handle visualisation splatting scripts
@@ -824,7 +802,7 @@ namespace SSVis
         /// <summary>
         /// Contains logic to add extrusion scripts *after* this Data Visualisation is placed on a surface
         /// </summary>
-        private void UpdateVisualisationExtrusion()
+        public void UpdateVisualisationExtrusion()
         {
             if (preventExtrusionForThisPlacement)
             {
@@ -842,32 +820,39 @@ namespace SSVis
                 {
                     var overplottingExtrusion = gameObject.AddComponent<OverplottingExtrusion>();
                     overplottingExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
+                    overplottingExtrusion.LiftOnMaxDistance = !IsSmallMultiple;
                     visualisationExtrusions.Add(overplottingExtrusion);
                 }
             }
-            // Condition 2: PCPs for scatterplots with only 2 dimensions along the X and Y axes, and if the z dimension is also the protruding direction
+            // Condition 2: PCPs for scatterplots with only 2 dimensions along the X and Y axes, and if the z dimension is also the protruding direction, and if it is not a small multiple
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined")
             {
                 if (protrudingDimension == AxisDirection.Z)
                 {
-                    var xPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
-                    xPCPExtrusion.Initialise(dataSource, this, visualisation, AxisDirection.X);
-                    visualisationExtrusions.Add(xPCPExtrusion);
+                    if (!IsSmallMultiple)
+                    {
+                        var xPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
+                        xPCPExtrusion.Initialise(dataSource, this, visualisation, AxisDirection.X);
+                        visualisationExtrusions.Add(xPCPExtrusion);
 
-                    var yPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
-                    yPCPExtrusion.Initialise(dataSource, this, visualisation, AxisDirection.Y);
-                    visualisationExtrusions.Add(yPCPExtrusion);
+                        var yPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
+                        yPCPExtrusion.Initialise(dataSource, this, visualisation, AxisDirection.Y);
+                        visualisationExtrusions.Add(yPCPExtrusion);
+                    }
                 }
             }
 
-            // Condition 3: SPLOMs for scatterplots with only 2 dimensions along the X and Y axes, and if the z dimension is also the protruding direction
+            // Condition 3: SPLOMs for scatterplots with only 2 dimensions along the X and Y axes, and if the z dimension is also the protruding direction, and if it is not a small multiple
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined")
             {
                 if (protrudingDimension == AxisDirection.Z)
                 {
-                    var splomExtrusion = gameObject.AddComponent<SPLOMExtrusion>();
-                    splomExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
-                    visualisationExtrusions.Add(splomExtrusion);
+                    if (!IsSmallMultiple)
+                    {
+                        var splomExtrusion = gameObject.AddComponent<SPLOMExtrusion>();
+                        splomExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
+                        visualisationExtrusions.Add(splomExtrusion);
+                    }
                 }
             }
         }
@@ -1096,6 +1081,8 @@ namespace SSVis
             }
         }
 
+        #endregion // Axis Scaling
+
         public void ShowAxisManipulators()
         {
             if (XAxisManipulator != null)
@@ -1152,8 +1139,10 @@ namespace SSVis
                 visualisation.theVisualizationObject.Z_AXIS.SetActive(visible);
         }
 
-
-        #endregion // Axis Scaling
-
+        public void UpdateSmallMultipleGroupExtrusion<T>(float distance, Vector3? extrusionPoint1 = null, Quaternion? extrusionRotation1 = null, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
+        {
+            if (IsSmallMultiple && ParentSplomExtrusion != null)
+                ParentSplomExtrusion.UpdateSmallMultipleGroupExtrusion<T>(distance, extrusionPoint1, extrusionRotation1, extrusionPoint2, extrusionRotation2);
+        }
     }
 }
