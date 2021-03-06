@@ -20,7 +20,7 @@ namespace SSVis
 
         public override ExtrusionIdiom Idiom { get { return ExtrusionIdiom.Overplotting; }}
         public Mode ExtrusionMode = Mode.ColourGradient;
-        public bool LiftOnMaxDistance;
+        public bool LiftOnMaxDistance = true;
         public bool AlertSmallMultiples = true;
 
         private ExtrusionHandle extrusionHandle;
