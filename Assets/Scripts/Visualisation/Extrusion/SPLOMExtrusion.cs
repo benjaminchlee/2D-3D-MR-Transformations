@@ -96,7 +96,7 @@ namespace SSVis
         public override void ExtrudeDimension(float distance, Vector3? extrusionPoint1 = null, Quaternion? extrusionRotation1 = null, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
         {
             // If this is the first time the extrusion distance has changed, we quickly store the original visualisation's scale and starting dimensions
-            if (!isExtruding && distance > 0)
+            if (!isExtruding)
             {
                 originalVisualisationPosition = DataVisualisation.transform.position;
                 originalVisualisationScale = DataVisualisation.Scale;
