@@ -12,6 +12,7 @@ namespace SSVis
         public static DataVisualisationManager Instance { get; private set; }
 
         public DataSource DataSource;
+        public DataSource NetworkDataSource;
 
         [Header("Default Visualisation Properties")]
         public Color VisualisationColour = Color.white;
@@ -162,6 +163,21 @@ namespace SSVis
             vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
         }
 
+        public void CreateNetworkGraph()
+        {
+            DataVisualisation vis = CreateDataVisualisation(NetworkDataSource, AbstractVisualisation.VisualisationTypes.SCATTERPLOT, AbstractVisualisation.GeometryType.LinesAndDots, xDimension: "Longitude", yDimension: "Latitude", size: 0.1f, scale: VisualisationScale);
+            
+            vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
+            vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
+        }
+
+        public void CreateVolumeRendering()
+        {
+            GameObject volume = GameObject.Instantiate(Resources.Load("VolumeRendering")) as GameObject;
+
+            volume.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.4f;
+        }
+
         public void DestroyAllDataVisualisations()
         {
             var visualisations = GameObject.FindGameObjectsWithTag("DataVisualisation");
@@ -177,22 +193,13 @@ namespace SSVis
             }
 
             OnVisualisationsDestroyed.Invoke();
-        }
 
-        public void CreateVolumeRendering()
-        {
-            GameObject volume = GameObject.Instantiate(Resources.Load("VolumeRendering")) as GameObject;
-
-            volume.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.4f;
-        }
-
-        public void DestroyAllVolumeRenderings()
-        {
             var volumes = FindObjectsOfType<VolumeRendering.VolumeRendering>();
             foreach (var volume in volumes)
             {
                 Destroy(volume.gameObject);
             }
         }
+
     }
 }

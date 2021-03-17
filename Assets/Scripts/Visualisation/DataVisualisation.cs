@@ -377,7 +377,9 @@ namespace SSVis
             if (visualisation.linkingDimension == null ||visualisation.linkingDimension == "")
                 visualisation.linkingDimension = "Undefined";
             if (dataSource != null)
+            {
                 DataSource = dataSource;
+            }
             else if (DataSource == null)
             {
                 DataSource = DataVisualisationManager.Instance.DataSource;
@@ -752,7 +754,7 @@ namespace SSVis
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension != "Undefined")
             {
                 var barChartContinuous = gameObject.AddComponent<BarChartCrackingContinuous>();
-                barChartContinuous.Initialise(dataSource, this, visualisation);
+                barChartContinuous.Initialise(DataSource, this, visualisation);
                 visualisationContinuous.Add(barChartContinuous);
             }
         }
@@ -767,7 +769,7 @@ namespace SSVis
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && (new string[] { XDimension, YDimension, ZDimension}).Where(x => x != "Undefined").Count() == 3)
             {
                 var projectionFlattening = gameObject.AddComponent<ProjectionFlatteningSplatting>();
-                projectionFlattening.Initialise(dataSource, this, visualisation);
+                projectionFlattening.Initialise(DataSource, this, visualisation);
                 projectionFlattening.ApplySplat();
                 visualisationSplattings.Add(projectionFlattening);
                 preventExtrusionForThisPlacement = true;
@@ -784,7 +786,7 @@ namespace SSVis
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension != "Undefined")
             {
                 var barChartCracking = gameObject.AddComponent<BarChartCrackingSplatting>();
-                barChartCracking.Initialise(dataSource, this, visualisation);
+                barChartCracking.Initialise(DataSource, this, visualisation);
                 barChartCracking.ApplySplat(placementValues);
                 visualisationSplattings.Add(barChartCracking);
                 preventExtrusionForThisPlacement = true;
@@ -810,61 +812,77 @@ namespace SSVis
                 return;
             }
 
-            // Condition 1: Overplotting extrusion for scatterplots with only 2 dimensions, and if the undefined dimension is also the protruding direction
-            if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && (new string[] { XDimension, YDimension, ZDimension}).Where(x => x != "Undefined").Count() == 2)
+            if (GeometryType != AbstractVisualisation.GeometryType.LinesAndDots)
             {
-                if (XDimension == "Undefined" && protrudingDimension == AxisDirection.X ||
-                    YDimension == "Undefined" && protrudingDimension == AxisDirection.Y ||
-                    ZDimension == "Undefined" && protrudingDimension == AxisDirection.Z
-                )
+                // Condition 1: Overplotting extrusion for scatterplots with only 2 dimensions, and if the undefined dimension is also the protruding direction
+                if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && (new string[] { XDimension, YDimension, ZDimension }).Where(x => x != "Undefined").Count() == 2)
                 {
-                    var overplottingExtrusion = gameObject.AddComponent<OverplottingExtrusion>();
-                    overplottingExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
-                    overplottingExtrusion.LiftOnMaxDistance = !IsSmallMultiple;
-                    visualisationExtrusions.Add(overplottingExtrusion);
-                }
-            }
-
-            // Condition 2: PCPs for scatterplots with only 2 dimensions along the X and Y axes, and if the z dimension is also the protruding direction, and if it is not a small multiple
-            if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined")
-            {
-                if (protrudingDimension == AxisDirection.Z)
-                {
-                    if (!IsSmallMultiple)
+                    if (XDimension == "Undefined" && protrudingDimension == AxisDirection.X ||
+                        YDimension == "Undefined" && protrudingDimension == AxisDirection.Y ||
+                        ZDimension == "Undefined" && protrudingDimension == AxisDirection.Z
+                    )
                     {
-                        var xPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
-                        xPCPExtrusion.Initialise(dataSource, this, visualisation, AxisDirection.X);
-                        visualisationExtrusions.Add(xPCPExtrusion);
+                        var overplottingExtrusion = gameObject.AddComponent<OverplottingExtrusion>();
+                        overplottingExtrusion.Initialise(DataSource, this, visualisation, protrudingDimension);
+                        overplottingExtrusion.LiftOnMaxDistance = !IsSmallMultiple;
+                        visualisationExtrusions.Add(overplottingExtrusion);
+                    }
+                }
 
-                        var yPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
-                        yPCPExtrusion.Initialise(dataSource, this, visualisation, AxisDirection.Y);
-                        visualisationExtrusions.Add(yPCPExtrusion);
+                // Condition 2: PCPs for scatterplots with only 2 dimensions along the X and Y axes, and if the z dimension is also the protruding direction, and if it is not a small multiple
+                if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined")
+                {
+                    if (protrudingDimension == AxisDirection.Z)
+                    {
+                        if (!IsSmallMultiple)
+                        {
+                            var xPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
+                            xPCPExtrusion.Initialise(DataSource, this, visualisation, AxisDirection.X);
+                            visualisationExtrusions.Add(xPCPExtrusion);
+
+                            var yPCPExtrusion = gameObject.AddComponent<PCPExtrusion>();
+                            yPCPExtrusion.Initialise(DataSource, this, visualisation, AxisDirection.Y);
+                            visualisationExtrusions.Add(yPCPExtrusion);
+                        }
+                    }
+                }
+
+                // Condition 3: SPLOMs for scatterplots with only 2 dimensions along the X and Y axes, and if the z dimension is also the protruding direction, and if it is not a small multiple
+                if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined")
+                {
+                    if (protrudingDimension == AxisDirection.Z)
+                    {
+                        if (!IsSmallMultiple)
+                        {
+                            var splomExtrusion = gameObject.AddComponent<SPLOMExtrusion>();
+                            splomExtrusion.Initialise(DataSource, this, visualisation, protrudingDimension);
+                            visualisationExtrusions.Add(splomExtrusion);
+                        }
+                    }
+                }
+
+                // Condition 4: Histogram extrusion for barcharts with no z dimension
+                if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension == "Undefined")
+                {
+                    if (protrudingDimension == AxisDirection.Z)
+                    {
+                        var histogramExtrusion = gameObject.AddComponent<HistogramExtrusion>();
+                        histogramExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
+                        visualisationExtrusions.Add(histogramExtrusion);
                     }
                 }
             }
-
-            // Condition 3: SPLOMs for scatterplots with only 2 dimensions along the X and Y axes, and if the z dimension is also the protruding direction, and if it is not a small multiple
-            if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined")
+            else
             {
-                if (protrudingDimension == AxisDirection.Z)
-                {
-                    if (!IsSmallMultiple)
+                // Condition 4: Network extrusion for node-link diagrams with an X and Y dimension
+                if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined" && GeometryType == AbstractVisualisation.GeometryType.LinesAndDots)
+                { 
+                    if (protrudingDimension == AxisDirection.Z)
                     {
-                        var splomExtrusion = gameObject.AddComponent<SPLOMExtrusion>();
-                        splomExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
-                        visualisationExtrusions.Add(splomExtrusion);
+                        var networkExtrusion = gameObject.AddComponent<NetworkExtrusion>();
+                        networkExtrusion.Initialise(DataSource, this, visualisation, protrudingDimension);
+                        visualisationExtrusions.Add(networkExtrusion);
                     }
-                }
-            }
-
-            // Condition 4: Histogram extrusion for barcharts with no z dimension
-            if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension == "Undefined")
-            {
-                if (protrudingDimension == AxisDirection.Z)
-                {
-                    var histogramExtrusion = gameObject.AddComponent<HistogramExtrusion>();
-                    histogramExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
-                    visualisationExtrusions.Add(histogramExtrusion);
                 }
             }
         }
