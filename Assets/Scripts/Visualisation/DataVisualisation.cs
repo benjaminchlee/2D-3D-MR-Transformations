@@ -353,7 +353,7 @@ namespace SSVis
             set
             {
                 visualisation.numZBins = Mathf.Max(value, 1);
-                
+
                 if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR)
                     visualisation.updateViewProperties(AbstractVisualisation.PropertyType.NumZBins);
             }
@@ -824,6 +824,7 @@ namespace SSVis
                     visualisationExtrusions.Add(overplottingExtrusion);
                 }
             }
+
             // Condition 2: PCPs for scatterplots with only 2 dimensions along the X and Y axes, and if the z dimension is also the protruding direction, and if it is not a small multiple
             if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined")
             {
@@ -853,6 +854,17 @@ namespace SSVis
                         splomExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
                         visualisationExtrusions.Add(splomExtrusion);
                     }
+                }
+            }
+
+            // Condition 4: Histogram extrusion for barcharts with no z dimension
+            if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension == "Undefined")
+            {
+                if (protrudingDimension == AxisDirection.Z)
+                {
+                    var histogramExtrusion = gameObject.AddComponent<HistogramExtrusion>();
+                    histogramExtrusion.Initialise(dataSource, this, visualisation, protrudingDimension);
+                    visualisationExtrusions.Add(histogramExtrusion);
                 }
             }
         }
