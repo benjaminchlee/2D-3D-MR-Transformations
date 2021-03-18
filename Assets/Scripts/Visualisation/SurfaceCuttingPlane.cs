@@ -12,6 +12,9 @@ namespace SSVis
     {
         private List<BrushingAndLinking> brushingAndLinkingWalls = new List<BrushingAndLinking>();
 
+        private int frameCount = 0;
+        private const int checkEachFrames = 4;
+
         private void Start()
         {
             #if !UNITY_EDITOR
@@ -26,26 +29,32 @@ namespace SSVis
 
         private void Update()
         {
-            foreach (BrushingAndLinking brushing in brushingAndLinkingWalls)
+            frameCount++;
+            if (frameCount > checkEachFrames)
             {
-                if (!brushing.enabled)
-                    continue;
+                frameCount = 0;
 
-                var visualisations = Physics.OverlapBox(brushing.transform.position, brushing.transform.localScale / 2, brushing.transform.rotation)
-                                                .Where(x => x.gameObject.tag == "DataVisualisation")
-                                                .Select(x => x.GetComponent<DataVisualisation>())
-                                                .Where(x => !x.isAttachedToSurface && !x.IsSmallMultiple)
-                                                .Select(x => x.Visualisation);
+                foreach (BrushingAndLinking brushing in brushingAndLinkingWalls)
+                {
+                    if (!brushing.enabled)
+                        continue;
 
-                if (visualisations.Count() > 0)
-                {
-                    brushing.brushingVisualisations = visualisations.ToList();
-                    brushing.isBrushing = true;
-                }
-                else
-                {
-                    brushing.brushingVisualisations.Clear();
-                    brushing.isBrushing = false;
+                    var visualisations = Physics.OverlapBox(brushing.transform.position, brushing.transform.localScale / 2, brushing.transform.rotation)
+                                                    .Where(x => x.gameObject.tag == "DataVisualisation")
+                                                    .Select(x => x.GetComponent<DataVisualisation>())
+                                                    .Where(x => !x.isAttachedToSurface && !x.IsSmallMultiple)
+                                                    .Select(x => x.Visualisation);
+
+                    if (visualisations.Count() > 0)
+                    {
+                        brushing.brushingVisualisations = visualisations.ToList();
+                        brushing.isBrushing = true;
+                    }
+                    else
+                    {
+                        brushing.brushingVisualisations.Clear();
+                        brushing.isBrushing = false;
+                    }
                 }
             }
         }
