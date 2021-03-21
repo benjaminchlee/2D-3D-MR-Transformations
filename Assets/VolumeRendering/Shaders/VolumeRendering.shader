@@ -27,7 +27,7 @@
 		{
 			CGPROGRAM
 
-      #define ITERATIONS 100
+      #define ITERATIONS 20
 			#include "./VolumeRendering.cginc"
 			#pragma vertex vert
 			#pragma fragment frag

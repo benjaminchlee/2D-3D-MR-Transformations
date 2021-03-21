@@ -34,7 +34,7 @@ namespace SSVis
                 var visualisations = Physics.OverlapBox(brushing.transform.position, brushing.transform.localScale / 2, brushing.transform.rotation)
                                                 .Where(x => x.gameObject.tag == "DataVisualisation")
                                                 .Select(x => x.GetComponent<DataVisualisation>())
-                                                .Where(x => !x.isAttachedToSurface && !x.IsSmallMultiple)
+                                                .Where(x => !(x.isAttachedToSurface || x.IsSmallMultiple))
                                                 .Select(x => x.Visualisation);
 
                 if (visualisations.Count() > 0)

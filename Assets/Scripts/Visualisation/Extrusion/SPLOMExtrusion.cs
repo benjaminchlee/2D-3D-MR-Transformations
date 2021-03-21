@@ -249,10 +249,10 @@ namespace SSVis
                             vis.IsPrototype = true;
 
                             // Mark the visualisation as a small multiple so that the user can share its extrusions across the entire SPLOM
-                            // vis.IsSmallMultiple = true;
-                            // vis.ParentSplomExtrusion = this;
-                            // vis.protrudingDimension = AxisDirection.Z;
-                            // vis.UpdateVisualisationExtrusion();
+                            vis.IsSmallMultiple = true;
+                            vis.ParentSplomExtrusion = this;
+                            vis.protrudingDimension = AxisDirection.Z;
+                            vis.UpdateVisualisationExtrusion();
 
                             instantiationCount++;
                         }

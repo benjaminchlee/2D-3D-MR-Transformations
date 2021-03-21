@@ -100,7 +100,7 @@ MonoBehaviour:
   shader: {fileID: 4800000, guid: 2cd044507c209714393a12c7018c0e3f, type: 3}
   color: {r: 0.5661765, g: 0.7486815, b: 1, a: 1}
   threshold: 1
-  intensity: 1
+  intensity: 2
   sliceXMin: 0
   sliceXMax: 1
   sliceYMin: 0
