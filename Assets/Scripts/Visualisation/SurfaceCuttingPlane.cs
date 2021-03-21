@@ -12,9 +12,6 @@ namespace SSVis
     {
         private List<BrushingAndLinking> brushingAndLinkingWalls = new List<BrushingAndLinking>();
 
-        private int frameCount = 0;
-        private const int checkEachFrames = 4;
-
         private void Start()
         {
             #if !UNITY_EDITOR
@@ -29,32 +26,26 @@ namespace SSVis
 
         private void Update()
         {
-            frameCount++;
-            if (frameCount > checkEachFrames)
+            foreach (BrushingAndLinking brushing in brushingAndLinkingWalls)
             {
-                frameCount = 0;
+                if (!brushing.enabled)
+                    continue;
 
-                foreach (BrushingAndLinking brushing in brushingAndLinkingWalls)
+                var visualisations = Physics.OverlapBox(brushing.transform.position, brushing.transform.localScale / 2, brushing.transform.rotation)
+                                                .Where(x => x.gameObject.tag == "DataVisualisation")
+                                                .Select(x => x.GetComponent<DataVisualisation>())
+                                                .Where(x => !(x.isAttachedToSurface || x.IsSmallMultiple))
+                                                .Select(x => x.Visualisation);
+
+                if (visualisations.Count() > 0)
                 {
-                    if (!brushing.enabled)
-                        continue;
-
-                    var visualisations = Physics.OverlapBox(brushing.transform.position, brushing.transform.localScale / 2, brushing.transform.rotation)
-                                                    .Where(x => x.gameObject.tag == "DataVisualisation")
-                                                    .Select(x => x.GetComponent<DataVisualisation>())
-                                                    .Where(x => !x.isAttachedToSurface && !x.IsSmallMultiple)
-                                                    .Select(x => x.Visualisation);
-
-                    if (visualisations.Count() > 0)
-                    {
-                        brushing.brushingVisualisations = visualisations.ToList();
-                        brushing.isBrushing = true;
-                    }
-                    else
-                    {
-                        brushing.brushingVisualisations.Clear();
-                        brushing.isBrushing = false;
-                    }
+                    brushing.brushingVisualisations = visualisations.ToList();
+                    brushing.isBrushing = true;
+                }
+                else
+                {
+                    brushing.brushingVisualisations.Clear();
+                    brushing.isBrushing = false;
                 }
             }
         }

@@ -30,7 +30,7 @@ namespace SSVis
         public string EdgeWeightName = "UnimpededRunningTime";
 
         private ExtrusionHandle extrusionHandle;
-        
+
         private float[] extrusionDataPointOffset;
         private Dictionary<string, int> networkNodeStringToIndex;
         private Dictionary<int, List<int>> networkConnectedNodes;
@@ -72,7 +72,7 @@ namespace SSVis
             extrusionHandle.Initialise(DataVisualisation, ExtrusionDirection, Vector3.zero, DataVisualisation.Scale, extrusionCloneDistance: 0.25f);
             extrusionHandle.OnExtrusionDistanceChanged.AddListener((e) =>
             {
-                ExtrudeDimension(e.distance, extrusionPoint1: e.extrusionPointLeft, extrusionPoint2: e.extrusionPointRight);
+                ExtrudeDimension(e.distance * 4, extrusionPoint1: e.extrusionPointLeft, extrusionPoint2: e.extrusionPointRight);
             });
             extrusionHandle.OnExtrusionCloneDistanceReached.AddListener((e) =>
             {
@@ -103,7 +103,7 @@ namespace SSVis
             Destroy(extrusionHandle.gameObject);
             Destroy(this);
         }
-        
+
         public override void ExtrudeDimension(float distance, Vector3? extrusionPoint1 = null, Quaternion? extrusionRotation1 = null, Vector3? extrusionPoint2 = null, Quaternion? extrusionRotation2 = null)
         {
             // Check if extrusion has stopped
