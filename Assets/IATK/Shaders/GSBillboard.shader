@@ -287,15 +287,25 @@ Shader "IATK/OutlineDots"
 					float4 BrushColor = UNITY_ACCESS_INSTANCED_PROP(Props, _BrushColor);
 					float ShowBrush = UNITY_ACCESS_INSTANCED_PROP(Props, _ShowBrush);
 
-                    // Sample _MainTex for colour which creates the circular dot, changing colour depending if it is brushed
-                    if (input.isBrushed > 0 && ShowBrush > 0.0)
-                        output.color = tex2D(_MainTex, input.tex0.xy) * BrushColor;
+                    if (input.color.w == 0)
+                    {
+						discard;
+						output.color = float4(0.0, 0.0, 0.0, 0.0);
+						output.depth = 0;
+						return output;
+                    }
                     else
-                        output.color = tex2D(_MainTex, input.tex0.xy) * input.color;;
+                    {
+                        // Sample _MainTex for colour which creates the circular dot, changing colour depending if it is brushed
+                        if (input.isBrushed > 0 && ShowBrush > 0.0)
+                            output.color = tex2D(_MainTex, input.tex0.xy) * BrushColor;
+                        else
+                            output.color = tex2D(_MainTex, input.tex0.xy) * input.color;;
 
-                    output.depth = output.color.a > 0.5 ? input.pos.z : 0;
+                        output.depth = output.color.a > 0.5 ? input.pos.z : 0;
 
-                    return output;
+                        return output;
+                    }
                 }
 
             ENDCG
