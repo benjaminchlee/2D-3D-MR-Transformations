@@ -60,7 +60,7 @@ namespace SSVis
                         {
                             Color[] colours = new Color[brushing.brushedIndices.Count];
                             for (int i = 0; i < colours.Length; i++)
-                                    colours[i] = new Color(1, 1, 1, 0.25f);
+                                    colours[i] = new Color(1, 1, 1, 0.05f);
 
                             foreach (var vis in visualisations)
                                 vis.theVisualizationObject.viewList[0].SetColors(colours);

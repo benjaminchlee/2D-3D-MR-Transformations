@@ -13,6 +13,7 @@ namespace SSVis
 
         public DataSource DataSource;
         public DataSource NetworkDataSource;
+        public DataSource TemporalDataSource;
 
         [Header("Default Visualisation Properties")]
         public Color VisualisationColour = Color.white;
@@ -176,6 +177,14 @@ namespace SSVis
             GameObject volume = GameObject.Instantiate(Resources.Load("VolumeRendering")) as GameObject;
 
             volume.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.4f;
+        }
+
+        public void CreateTemporal2DScatterplot()
+        {
+            DataVisualisation vis = CreateDataVisualisation(TemporalDataSource, AbstractVisualisation.VisualisationTypes.SCATTERPLOT, AbstractVisualisation.GeometryType.Points, xDimension: "Longitude", yDimension: "Latitude", size: VisualisationSize, scale: VisualisationScale);
+
+            vis.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 0.25f;
+            vis.transform.rotation = Quaternion.LookRotation(vis.transform.position - Camera.main.transform.position);
         }
 
         public void DestroyAllDataVisualisations()

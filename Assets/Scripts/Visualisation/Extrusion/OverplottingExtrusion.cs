@@ -31,7 +31,7 @@ namespace SSVis
         public override void InitialiseExtrusionHandles()
         {
             extrusionHandle = (GameObject.Instantiate(Resources.Load("ExtrusionHandle")) as GameObject).GetComponent<ExtrusionHandle>();
-            extrusionHandle.Initialise(DataVisualisation, ExtrusionDirection, Vector3.zero, DataVisualisation.Scale, extrusionCloneDistance: 0.25f);
+            extrusionHandle.Initialise(DataVisualisation, ExtrusionDirection, Vector3.zero, DataVisualisation.Scale, extrusionCloneDistance: 0.25f, extrusionPersists: false);
             extrusionHandle.OnExtrusionDistanceChanged.AddListener((e) =>
             {
                 ExtrudeDimension(e.distance);

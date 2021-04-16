@@ -607,7 +607,7 @@ PlayerSettings:
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
   metroPackageName: ARCollabFRAUS
-  metroPackageVersion: 1.0.157.0
+  metroPackageVersion: 1.0.163.0
   metroCertificatePath: Assets\WSATestCertificate.pfx
   metroCertificatePassword: 
   metroCertificateSubject: DefaultCompany

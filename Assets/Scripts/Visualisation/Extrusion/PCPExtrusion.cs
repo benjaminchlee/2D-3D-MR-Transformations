@@ -161,12 +161,12 @@ namespace SSVis
             {
                 case AxisDirection.X:
                     xDimension = DataVisualisation.XDimension;
-                    yDimension = pcpOrdering[visualisations.Count];
+                    yDimension = pcpOrdering[visualisations.Count + 1];
                     break;
 
                 case AxisDirection.Y:
                     yDimension = DataVisualisation.YDimension;
-                    xDimension = pcpOrdering[visualisations.Count];
+                    xDimension = pcpOrdering[visualisations.Count + 1];
                     break;
             }
 
@@ -254,7 +254,7 @@ namespace SSVis
 
                 linkVis.visualisationSource = vis1.Visualisation;
                 linkVis.visualisationTarget = vis2.Visualisation;
-                linkVis.linkTransparency = 1;
+                linkVis.linkTransparency = 0.5f;
             }
 
             for (int i = linkingVisualisations.Count - 1; i >= visesToLink.Count - 1; i--)

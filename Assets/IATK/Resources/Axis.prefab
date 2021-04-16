@@ -427,7 +427,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 1
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0.04, y: 0, z: 0.04, w: 0}
+  m_margin: {x: 0.04, y: 0, z: 0.022500552, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -1057,7 +1057,6 @@ MonoBehaviour:
   minFilterObject: {fileID: 4741826101255928}
   maxFilterObject: {fileID: 4551393065374534}
   AxisTickSpacing: 0.075
-  AttributeName: 
   AttributeFilter:
     Attribute: Undefined
     minFilter: 0

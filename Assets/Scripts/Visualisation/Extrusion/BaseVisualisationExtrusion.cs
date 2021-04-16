@@ -13,7 +13,8 @@ namespace SSVis
         Histogram,
         ParallelCoordinates,
         DepthAxis,
-        ScatterplotMatrix
+        ScatterplotMatrix,
+        Temporal
     }
 
     public abstract class BaseVisualisationExtrusion : MonoBehaviour

@@ -781,23 +781,21 @@ namespace SSVis
                 pos = pos - nearestSurface.transform.forward * ((boxCollider.size.z + 0.01f) / 2);
                 return new System.Tuple<Vector3, Vector3>(pos, nearestSurface.transform.eulerAngles);
             }
-            // Condition 2: Cracking of 3D bar charts
-            /*
-            if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension != "Undefined")
-            {
-                var barChartCracking = gameObject.AddComponent<BarChartCrackingSplatting>();
-                barChartCracking.Initialise(DataSource, this, visualisation);
-                barChartCracking.ApplySplat(placementValues);
-                visualisationSplattings.Add(barChartCracking);
-                preventExtrusionForThisPlacement = true;
+            // // Condition 2: Cracking of 3D bar charts
+            // if (VisualisationType == AbstractVisualisation.VisualisationTypes.BAR && XDimension != "Undefined" && ZDimension != "Undefined")
+            // {
+            //     var barChartCracking = gameObject.AddComponent<BarChartCrackingSplatting>();
+            //     barChartCracking.Initialise(DataSource, this, visualisation);
+            //     barChartCracking.ApplySplat(placementValues);
+            //     visualisationSplattings.Add(barChartCracking);
+            //     preventExtrusionForThisPlacement = true;
 
-                // Override the position to place it directly on the surface
-                Vector3 localPosOnSurface = nearestSurface.transform.InverseTransformPoint(placementValues.Item1);
-                localPosOnSurface.z = 0;
-                Vector3 pos = nearestSurface.transform.TransformPoint(localPosOnSurface);
-                return new System.Tuple<Vector3, Vector3>(pos, placementValues.Item2);
-            }
-            */
+            //     // Override the position to place it directly on the surface
+            //     Vector3 localPosOnSurface = nearestSurface.transform.InverseTransformPoint(placementValues.Item1);
+            //     localPosOnSurface.z = 0;
+            //     Vector3 pos = nearestSurface.transform.TransformPoint(localPosOnSurface);
+            //     return new System.Tuple<Vector3, Vector3>(pos, placementValues.Item2);
+            // }
             return placementValues;
         }
 
@@ -811,8 +809,8 @@ namespace SSVis
                 preventExtrusionForThisPlacement = false;
                 return;
             }
-
-            if (GeometryType != AbstractVisualisation.GeometryType.LinesAndDots)
+            
+            if (((CSVDataSource)DataSource).data.name.Contains("Wine"))
             {
                 // Condition 1: Overplotting extrusion for scatterplots with only 2 dimensions, and if the undefined dimension is also the protruding direction
                 if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && (new string[] { XDimension, YDimension, ZDimension }).Where(x => x != "Undefined").Count() == 2)
@@ -872,9 +870,9 @@ namespace SSVis
                     }
                 }
             }
-            else
+            else if (((CSVDataSource)DataSource).data.name.Contains("Stations"))
             {
-                // Condition 4: Network extrusion for node-link diagrams with an X and Y dimension
+                // Condition 5: Network extrusion for node-link diagrams with an X and Y dimension
                 if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined" && GeometryType == AbstractVisualisation.GeometryType.LinesAndDots)
                 { 
                     if (protrudingDimension == AxisDirection.Z)
@@ -882,6 +880,19 @@ namespace SSVis
                         var networkExtrusion = gameObject.AddComponent<NetworkExtrusion>();
                         networkExtrusion.Initialise(DataSource, this, visualisation, protrudingDimension);
                         visualisationExtrusions.Add(networkExtrusion);
+                    }
+                }
+            }
+            else if (((CSVDataSource)DataSource).data.name.Contains("housing"))
+            {
+                // Condition 6: Z dimension extrusion for space time cubes
+                if (VisualisationType == AbstractVisualisation.VisualisationTypes.SCATTERPLOT && XDimension != "Undefined" && YDimension != "Undefined" && ZDimension == "Undefined")
+                {
+                    if (protrudingDimension == AxisDirection.Z)
+                    {
+                        var temporalExtrusion = gameObject.AddComponent<TemporalExtrusion>();
+                        temporalExtrusion.Initialise(DataSource, this, visualisation, protrudingDimension);
+                        visualisationExtrusions.Add(temporalExtrusion);
                     }
                 }
             }
