@@ -12,8 +12,8 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: DefaultCompany
-  productName: ARCollabFRAUS
+  companyName: Benjamin Lee
+  productName: 2D-3D MR Transformations
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -585,7 +585,7 @@ PlayerSettings:
     4: PHOTON_UNITY_NETWORKING;PUN_2_0_OR_NEWER;PUN_2_OR_NEWER;PUN_2_19_OR_NEWER
     7: PHOTON_UNITY_NETWORKING;PUN_2_0_OR_NEWER;PUN_2_OR_NEWER;PUN_2_19_OR_NEWER
     13: PHOTON_UNITY_NETWORKING;PUN_2_0_OR_NEWER;PUN_2_OR_NEWER;PUN_2_19_OR_NEWER
-    14: release;PHOTON_UNITY_NETWORKING;PUN_2_0_OR_NEWER;PUN_2_OR_NEWER;PUN_2_19_OR_NEWER;DOTNETWINRT_PRESENT
+    14: master;PHOTON_UNITY_NETWORKING;PUN_2_0_OR_NEWER;PUN_2_OR_NEWER;PUN_2_19_OR_NEWER;DOTNETWINRT_PRESENT
     19: PHOTON_UNITY_NETWORKING;PUN_2_0_OR_NEWER;PUN_2_OR_NEWER;PUN_2_19_OR_NEWER
     21: PHOTON_UNITY_NETWORKING;PUN_2_0_OR_NEWER;PUN_2_OR_NEWER;PUN_2_19_OR_NEWER
     25: PHOTON_UNITY_NETWORKING;PUN_2_0_OR_NEWER;PUN_2_OR_NEWER;PUN_2_19_OR_NEWER
@@ -606,16 +606,16 @@ PlayerSettings:
   apiCompatibilityLevelPerPlatform: {}
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  metroPackageName: ARCollabFRAUS
-  metroPackageVersion: 1.0.163.0
-  metroCertificatePath: Assets\WSATestCertificate.pfx
+  metroPackageName: 2D-3DMRTransformations
+  metroPackageVersion: 1.0.1.0
+  metroCertificatePath: Assets/WSATestCertificate.pfx
   metroCertificatePassword: 
-  metroCertificateSubject: DefaultCompany
-  metroCertificateIssuer: DefaultCompany
-  metroCertificateNotAfter: 00ed37042687d701
-  metroApplicationDescription: ARCollabFRAUS
+  metroCertificateSubject: Benjamin Lee
+  metroCertificateIssuer: Benjamin Lee
+  metroCertificateNotAfter: 80c767c7f4ffd801
+  metroApplicationDescription: 2D-3D MR Transformations
   wsaImages: {}
-  metroTileShortName: ARCollabFRAUS
+  metroTileShortName: 2D-3D MR Transformations
   metroTileShowName: 0
   metroMediumTileShowName: 0
   metroLargeTileShowName: 0
