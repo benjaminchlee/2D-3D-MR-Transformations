@@ -6,9 +6,13 @@ This is the repository for the publication:
 > By Benjamin Lee, Maxime Cordeil, Arnaud Prouzeau, Bernhard Jenny, and Tim Dwyer<br>
 > *To be published in ACM CHI '22*
 
-The Unity project contains a number of demonstrative visualisation transformation techniques that were described in the aforementioned paper (link TBD). A built version that is ready for deployment on the Microsoft HoloLens 2 is provided in the Releases section of this repository.
+The Unity project contains a number of demonstrative visualisation transformation techniques that were described in the aforementioned paper (pre-print found [here](https://benjaminchlee.github.io/files/Lee2022DesignSpace.pdf)). A built version that is ready for deployment on the Microsoft HoloLens 2 is provided in the Releases section of this repository.
 
 <img src="https://user-images.githubusercontent.com/36180947/143182993-5204a53f-60a7-42e9-923a-7ab799e76685.png" width="600px">
+
+The supplemental video for the submission can be found in the following Youtube link. It contains video versions of all of the techniques with voice-over explanations.
+
+[![Supplemental video](https://img.youtube.com/vi/jjB99Ruc5gY/0.jpg)](https://www.youtube.com/watch?v=jjB99Ruc5gY)
 
 ## Running the Protoype
 To try the prototype techniques on your desktop using a simulator, you will need Unity 2019.4.20f1.  Open the MainScene.unity scene and simply press Play to use the MRTK Simulator. Controls for the simulator can be found [here](https://docs.microsoft.com/en-us/windows/mixed-reality/mrtk-unity/features/input-simulation/input-simulation-service?view=mrtkunity-2021-05).
